@@ -1,5 +1,7 @@
 import { InvoiceData } from "../types";
-import SwissQRBill from "swissqrbill/lib/browser";
+
+// QR code generation is handled by a global swissqrbill object from the CDN script
+declare const swissqrbill: any;
 
 export async function generateQrCode(data: InvoiceData): Promise<string> {
   if (!data || !data.total || Number(data.total) <= 0) {
@@ -32,7 +34,7 @@ export async function generateQrCode(data: InvoiceData): Promise<string> {
     // A4 paper size in mm is 210 x 297. The QR Bill part is 210 x 105.
     // The QR Code itself is 46x46mm. We generate an SVG which is scalable.
     // The library handles the sizing internally when generating the bill.
-    const bill = new SwissQRBill.Generator(billData, { size: "A4-PERFORATED-SHEET" });
+    const bill = new swissqrbill.Generator(billData, { size: "A4-PERFORATED-SHEET" });
     
     // We only need the QR code part for the preview, not the whole bill.
     // The library doesn't have a public method for just the QR SVG, so we extract it.
