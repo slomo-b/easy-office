@@ -10,6 +10,8 @@ import InvoiceForm from '../components/InvoiceForm';
 import InvoicePreview from '../components/InvoicePreview';
 import HtmlEditor from '../components/HtmlEditor';
 import { Download, X } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 
 const InvoiceEditor = () => {
@@ -124,26 +126,50 @@ const InvoiceEditor = () => {
     }
   };
   
-  const handlePrintPdf = () => {
+  const handlePrintPdf = async () => {
     if (!invoiceData) return;
     setIsPrinting(true);
 
-    // Create a temporary container for the content to be printed.
     const printContainer = document.createElement('div');
-    // The processed template *contains* the #print-area element, which is targeted by the print styles.
-    printContainer.innerHTML = processedTemplate;
-
-    // Hide it from view on the screen, but it will be picked up by @media print.
     printContainer.style.position = 'absolute';
     printContainer.style.left = '-9999px';
     document.body.appendChild(printContainer);
+    printContainer.innerHTML = processedTemplate;
+    
+    const elementToRender = printContainer.querySelector<HTMLElement>('#print-area');
+    if (!elementToRender) {
+        console.error("Could not find element with id 'print-area' in the template.");
+        document.body.removeChild(printContainer);
+        setIsPrinting(false);
+        return;
+    }
 
-    // Trigger the browser's print dialog.
-    window.print();
+    try {
+        const canvas = await html2canvas(elementToRender, {
+            scale: 2, // Higher scale for better quality
+            useCORS: true,
+        });
 
-    // Clean up the temporary container after the print dialog is handled.
-    document.body.removeChild(printContainer);
-    setIsPrinting(false);
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+            orientation: 'p',
+            unit: 'mm',
+            format: 'a4',
+        });
+        
+        const pdfWidth = 210;
+        const pdfHeight = 297;
+
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`rechnung-${invoiceData.unstructuredMessage || 'entwurf'}.pdf`);
+
+    } catch (error) {
+        console.error("Error generating PDF:", error);
+        alert("PDF konnte nicht generiert werden.");
+    } finally {
+        document.body.removeChild(printContainer);
+        setIsPrinting(false);
+    }
   };
 
   if (!invoiceData || !settings) {
@@ -176,7 +202,7 @@ const InvoiceEditor = () => {
                     className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 flex items-center gap-2 disabled:bg-gray-500"
                 >
                     <Download size={16} />
-                    {isPrinting ? 'Vorbereiten...' : 'Drucken / PDF speichern'}
+                    {isPrinting ? 'Generiere PDF...' : 'PDF herunterladen'}
                 </button>
                 <button onClick={handleSave} disabled={isSaving} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 disabled:bg-gray-500">
                     {isSaving ? 'Speichern...' : 'Speichern & Schliessen'}
