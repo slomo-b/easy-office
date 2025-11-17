@@ -63,39 +63,8 @@ export const DEFAULT_HTML_TEMPLATE = `
     <!-- QR Bill Section -->
     <div class="border-t-2 border-dashed border-gray-400 my-8 -ml-12 -mr-12"></div>
     
-    <div class="grid grid-cols-3 gap-4">
-        <div class="col-span-1">
-            <h2 class="font-bold mb-2">Zahlteil</h2>
-            {{qrCodeImage}}
-        </div>
-        <div class="col-span-2 text-sm pl-4">
-            <div class="grid grid-cols-2 gap-x-4 gap-y-2">
-                <div>
-                    <p class="font-bold">Konto / Zahlbar an</p>
-                    <p>{{creditorIban}}</p>
-                    <p>{{creditorName}}</p>
-                    <p>{{creditorStreet}} {{creditorHouseNr}}</p>
-                    <p>{{creditorZip}} {{creditorCity}}</p>
-                </div>
-                <div>
-                    <p class="font-bold">Referenz</p>
-                    <p>{{reference}}</p>
-                </div>
-                <div>
-                    <p class="font-bold">Zahlbar durch</p>
-                    <p>{{debtorName}}</p>
-                    <p>{{debtorStreet}} {{debtorHouseNr}}</p>
-                    <p>{{debtorZip}} {{debtorCity}}</p>
-                </div>
-                <div>
-                    <p class="font-bold">Währung</p>
-                    <p>{{currency}}</p>
-                    <p class="font-bold mt-2">Betrag</p>
-                    <p>{{total}}</p>
-                </div>
-            </div>
-        </div>
-    </div>
+    {{qrBillSvg}}
+
 </div>
 `;
 
