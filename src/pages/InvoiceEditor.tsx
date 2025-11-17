@@ -1,11 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-// FIX: Import SettingsData type.
 import { InvoiceData, CustomerData, InvoiceItem, SettingsData } from '../types';
-// FIX: Import calculateInvoiceTotals to correctly calculate invoice totals with VAT.
 import { getInvoiceById, saveInvoice, createNewInvoice, calculateInvoiceTotals } from '../services/invoiceService';
 import { getCustomers } from '../services/customerService';
-// FIX: Import getSettings to fetch settings data.
 import { getSettings } from '../services/settingsService';
 import { generateQrCode } from '../services/qrBillService';
 import InvoiceForm from '../components/InvoiceForm';
@@ -18,7 +15,6 @@ const InvoiceEditor = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
-  // FIX: Add state for settings.
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [customers, setCustomers] = useState<CustomerData[]>([]);
   const [qrCodeSvg, setQrCodeSvg] = useState<string>('');
@@ -28,7 +24,6 @@ const InvoiceEditor = () => {
 
   useEffect(() => {
     const loadData = async () => {
-        // FIX: Fetch settings along with other data.
         const [fetchedCustomers, fetchedSettings] = await Promise.all([
             getCustomers(),
             getSettings(),
@@ -44,7 +39,6 @@ const InvoiceEditor = () => {
             navigate('/invoices'); // Invoice not found, redirect
           }
         } else {
-          // FIX: Pass settings to createNewInvoice.
           const newInvoice = await createNewInvoice(fetchedSettings);
           setInvoiceData(newInvoice);
         }
@@ -54,7 +48,6 @@ const InvoiceEditor = () => {
   
 
   const regenerateQrCode = useCallback(async () => {
-    // FIX: Property 'amount' does not exist on type 'InvoiceData'. Use 'total' instead.
     if (!invoiceData || !invoiceData.total || Number(invoiceData.total) <= 0) {
         setQrCodeSvg('');
         setIsLoadingQr(false);
@@ -82,7 +75,6 @@ const InvoiceEditor = () => {
 
         let updatedData: InvoiceData = { ...prev, [field]: value };
 
-        // FIX: Recalculate totals when items or VAT setting change.
         if (field === 'items' || field === 'vatEnabled') {
             const items = field === 'items' ? value : updatedData.items;
             const vatEnabled = field === 'vatEnabled' ? value : updatedData.vatEnabled;
@@ -144,7 +136,6 @@ const InvoiceEditor = () => {
   };
 
 
-  // FIX: Wait for both invoiceData and settings to be loaded.
   if (!invoiceData || !settings) {
     return <div className="text-center p-10">Lade Rechnungsdaten...</div>;
   }
@@ -181,7 +172,6 @@ const InvoiceEditor = () => {
         
         <main className="flex flex-col lg:flex-row gap-6">
             <div className="lg:w-1/3 flex flex-col gap-6">
-            {/* FIX: Pass required 'defaultVatRate' prop to InvoiceForm. */}
             <InvoiceForm 
                 data={invoiceData}
                 customers={customers}

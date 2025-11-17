@@ -78,17 +78,11 @@ const deleteFile = async (path: string): Promise<void> => {
 async function recursiveZip(handle: FileSystemDirectoryHandle, zipFolder: JSZip) {
     for await (const entry of handle.values()) {
         if (entry.kind === 'file') {
-            // FIX: Property 'getFile' does not exist on type 'FileSystemHandle'.
-            // TypeScript's type narrowing doesn't work correctly inside a for-await-of loop with FileSystemHandle.
-            // We explicitly cast `entry` to `FileSystemFileHandle`.
             const file = await (entry as FileSystemFileHandle).getFile();
             zipFolder.file(entry.name, await file.arrayBuffer());
         } else if (entry.kind === 'directory') {
             const subFolder = zipFolder.folder(entry.name);
             if(subFolder) {
-                // FIX: Argument of type 'FileSystemHandle' is not assignable to parameter of type 'FileSystemDirectoryHandle'.
-                // TypeScript's type narrowing doesn't work correctly inside a for-await-of loop with FileSystemHandle.
-                // We explicitly cast `entry` to `FileSystemDirectoryHandle`.
                 await recursiveZip(entry as FileSystemDirectoryHandle, subFolder);
             }
         }

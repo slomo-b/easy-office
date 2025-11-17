@@ -36,7 +36,6 @@ export interface InvoiceData {
   unstructuredMessage: string;
   projectName?: string; // Optional project name
   items: InvoiceItem[];
-  // FIX: Added status and paidAt fields to track invoice payment status.
   status: 'open' | 'paid';
   paidAt: string | null;
 
@@ -54,7 +53,6 @@ export interface ExpenseData {
   currency: 'CHF' | 'EUR';
   category: string;
   projectId?: string; // Optional link to a Project
-  // FIX: Added status and paidAt fields to track expense payment status.
   status: 'due' | 'paid';
   paidAt: string | null;
 }

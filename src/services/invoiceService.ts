@@ -1,11 +1,9 @@
 import { InvoiceData, InvoiceItem, ProjectData, CustomerData, ServiceData, ExpenseData, SettingsData } from '../types';
 import { DEFAULT_INVOICE_DATA, DEFAULT_HTML_TEMPLATE } from '../constants';
 import * as fileSystem from './fileSystem';
-import { getSettings } from './settingsService';
 
 const INVOICES_DIR = 'invoices';
 
-// FIX: Export function to be used in InvoiceEditor for real-time total calculation.
 export const calculateInvoiceTotals = (items: InvoiceItem[], vatEnabled: boolean): { subtotal: number, vatAmount: number, total: number } => {
     let subtotal = 0;
     let vatAmount = 0;

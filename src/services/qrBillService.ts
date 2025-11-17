@@ -2,14 +2,12 @@ import { InvoiceData } from "../types";
 import { Generator } from 'swissqrbill';
 
 export async function generateQrCode(data: InvoiceData): Promise<string> {
-  // FIX: Property 'amount' does not exist on type 'InvoiceData'. Use 'total' instead.
   if (!data || !data.total || Number(data.total) <= 0) {
     throw new Error('Amount must be greater than zero to generate a QR code.');
   }
 
   const billData = {
       currency: data.currency,
-      // FIX: Property 'amount' does not exist on type 'InvoiceData'. Use 'total' instead.
       amount: Number(data.total),
       reference: data.reference.replace(/\s/g, ''),
       additionalInformation: data.unstructuredMessage,

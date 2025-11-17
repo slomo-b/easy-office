@@ -19,11 +19,11 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, qrCodeSvg, isLoad
 
   let qrBillHtml: string;
   if (isLoadingQr) {
-    qrBillHtml = `<div style="height: 110mm; display: flex; align-items: center; justify-content: center;" class="bg-gray-200 animate-pulse text-gray-500">Generiere QR-Rechnung...</div>`;
+    qrBillHtml = `<div style="height: 105mm; display: flex; align-items: center; justify-content: center;" class="bg-gray-200 animate-pulse text-gray-500">Generiere QR-Rechnung...</div>`;
   } else if (qrCodeSvg) {
     qrBillHtml = qrCodeSvg;
   } else {
-    qrBillHtml = `<div style="height: 110mm; display: flex; align-items: center; justify-content: center;" class="bg-gray-100 text-center text-xs text-gray-500 p-2 border border-dashed border-gray-300">QR-Rechnung kann nicht generiert werden.<br/>(Betrag muss grösser als 0 sein)</div>`;
+    qrBillHtml = `<div style="height: 105mm; display: flex; align-items: center; justify-content: center;" class="bg-gray-100 text-center text-xs text-gray-500 p-2 border border-dashed border-gray-300">QR-Rechnung kann nicht generiert werden.<br/>(Betrag muss grösser als 0 sein)</div>`;
   }
   
   const itemsHtml = data.items.map((item, index) => {
@@ -47,7 +47,6 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, qrCodeSvg, isLoad
     ? `<p><span class="font-semibold text-gray-600">Projekt:</span> ${data.projectName}</p>`
     : '';
 
-  // FIX: Dynamically generate the totals block to support VAT.
   const totalsBlockHtml = data.vatEnabled
     ? `<div class="text-sm">
         <div class="flex justify-between py-1 text-gray-600"><span>Zwischentotal</span><span>${data.currency} ${formatAmount(data.subtotal)}</span></div>
@@ -74,7 +73,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, qrCodeSvg, isLoad
     .replace(/{{debtorZip}}/g, data.debtorZip)
     .replace(/{{debtorCity}}/g, data.debtorCity)
     .replace(/{{currency}}/g, data.currency)
-    // FIX: Property 'amount' does not exist on type 'InvoiceData'. Use 'total' instead. Keep for backward compatibility with user templates.
+    // Keep for backward compatibility with user templates.
     .replace(/{{amount}}/g, formatAmount(data.total))
     .replace(/{{reference}}/g, data.reference)
     .replace(/{{unstructuredMessage}}/g, data.unstructuredMessage)

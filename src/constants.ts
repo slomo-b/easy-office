@@ -1,6 +1,5 @@
 import { InvoiceData, ExpenseData } from './types';
 
-// FIX: Updated HTML template to use a placeholder for the totals block to better support VAT display.
 export const DEFAULT_HTML_TEMPLATE = `
 <div id="print-area" class="bg-white text-gray-800 p-12" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; font-size: 10pt; line-height: 1.6;">
     <!-- Header -->
@@ -70,7 +69,6 @@ export const DEFAULT_HTML_TEMPLATE = `
 </div>
 `;
 
-// FIX: Updated default invoice data to match the new InvoiceData type structure.
 export const DEFAULT_INVOICE_DATA: Omit<InvoiceData, 'id'> = {
   createdAt: new Date().toISOString(),
   creditorIban: 'CH4431999123000889012',
@@ -103,7 +101,6 @@ export const DEFAULT_INVOICE_DATA: Omit<InvoiceData, 'id'> = {
   htmlTemplate: DEFAULT_HTML_TEMPLATE,
 };
 
-// FIX: Added missing 'status' and 'paidAt' properties to conform to ExpenseData type.
 export const DEFAULT_EXPENSE_DATA: Omit<ExpenseData, 'id'> = {
     date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
     vendor: '',
