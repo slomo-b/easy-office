@@ -93,14 +93,23 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, customers, onDataChange
     <div className="space-y-6">
        <FormSection title="Rechnungspositionen">
             <div className="col-span-2">
-                 <label className="flex items-center space-x-3 cursor-pointer">
-                    <input type="checkbox" checked={data.vatEnabled} onChange={(e) => onDataChange('vatEnabled', e.target.checked)} className="form-checkbox h-5 w-5 text-emerald-600 bg-gray-700 border-gray-600 rounded focus:ring-emerald-500" />
-                    <span className="text-gray-300">Mehrwertsteuer (MwSt.) aktivieren</span>
+                 <label htmlFor="vat-toggle" className="flex items-center cursor-pointer">
+                    <span className="mr-3 text-gray-300">Mehrwertsteuer (MwSt.) aktivieren</span>
+                    <div className="relative">
+                        <input
+                        type="checkbox"
+                        id="vat-toggle"
+                        className="sr-only peer"
+                        checked={data.vatEnabled}
+                        onChange={(e) => onDataChange('vatEnabled', e.target.checked)}
+                        />
+                        <div className="w-11 h-6 bg-gray-600 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                    </div>
                 </label>
             </div>
             <div className="col-span-2 space-y-2">
                 {data.items.map((item, index) => (
-                    <div key={index} className={`grid ${data.vatEnabled ? 'grid-cols-12' : 'grid-cols-11'} gap-2 items-center bg-gray-900/50 p-2 rounded-md`}>
+                    <div key={index} className="grid grid-cols-12 gap-2 items-center bg-gray-900/50 p-2 rounded-md">
                         <input type="text" placeholder="Beschreibung" value={item.description} onChange={e => handleItemChange(index, 'description', e.target.value)} className={`bg-gray-700 border-gray-600 rounded px-2 py-1 text-sm ${data.vatEnabled ? 'col-span-12 md:col-span-4' : 'col-span-12 md:col-span-5'}`}/>
                         <input type="number" placeholder="Menge" value={item.quantity} onChange={e => handleItemChange(index, 'quantity', e.target.value)} className="col-span-4 md:col-span-2 bg-gray-700 border-gray-600 rounded px-2 py-1 text-sm"/>
                         <input type="text" placeholder="Einheit" value={item.unit} onChange={e => handleItemChange(index, 'unit', e.target.value)} className="col-span-4 md:col-span-2 bg-gray-700 border-gray-600 rounded px-2 py-1 text-sm"/>

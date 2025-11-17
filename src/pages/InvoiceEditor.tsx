@@ -9,8 +9,7 @@ import { generateQrCode } from '../services/qrBillService';
 import InvoiceForm from '../components/InvoiceForm';
 import InvoicePreview from '../components/InvoicePreview';
 import HtmlEditor from '../components/HtmlEditor';
-// FIX: Added ZoomIn and X icons for the new preview modal feature.
-import { Download, Printer, ZoomIn, X } from 'lucide-react';
+import { Download, ZoomIn, X } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 
 const InvoiceEditor = () => {
@@ -108,7 +107,6 @@ const InvoiceEditor = () => {
     setInvoiceData(prev => prev ? { ...prev, htmlTemplate: template } : null);
   };
   
-  // FIX: Added logic to process the invoice template with data, which is then passed to the InvoicePreview component.
   const processedTemplate = useMemo(() => {
     if (!invoiceData) return '';
 
@@ -192,15 +190,10 @@ const InvoiceEditor = () => {
     }
   };
   
-  const handlePrint = () => {
-    window.print();
-  };
-  
   const handleDownloadPdf = () => {
     if (!invoiceData) return;
     setIsDownloadingPdf(true);
     
-    // Create a temporary element to render the template for PDF generation
     const printElement = document.createElement('div');
     printElement.innerHTML = processedTemplate;
     document.body.appendChild(printElement);
@@ -260,13 +253,6 @@ const InvoiceEditor = () => {
                     <Download size={16} />
                     {isDownloadingPdf ? 'Generiere...' : 'PDF herunterladen'}
                 </button>
-                 <button
-                    onClick={handlePrint}
-                    className="bg-gray-600 hover:bg-gray-700 text-white font-bold p-2 rounded-lg transition-colors duration-300"
-                    title="Drucken"
-                >
-                    <Printer size={20} />
-                </button>
                 <button
                     onClick={handleSave}
                     disabled={isSaving}
@@ -293,19 +279,10 @@ const InvoiceEditor = () => {
             
             <div className="lg:w-1/3">
               <div className="sticky top-6">
-                <div className="relative">
-                  <button
-                      onClick={() => setIsZoomModalOpen(true)}
-                      className="absolute top-6 right-6 z-10 p-2 bg-gray-900/40 text-white rounded-full hover:bg-gray-900/60 transition-all"
-                      title="Vorschau vergrössern"
-                      aria-label="Vorschau vergrössern"
-                  >
-                      <ZoomIn size={20} />
-                  </button>
                   <InvoicePreview
                       processedTemplate={processedTemplate}
+                      onZoomClick={() => setIsZoomModalOpen(true)}
                   />
-                </div>
               </div>
             </div>
         </main>

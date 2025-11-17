@@ -1,11 +1,13 @@
 
 import React, { useRef, useState, useLayoutEffect } from 'react';
+import { ZoomIn } from 'lucide-react';
 
 interface InvoicePreviewProps {
   processedTemplate: string;
+  onZoomClick: () => void;
 }
 
-const InvoicePreview: React.FC<InvoicePreviewProps> = ({ processedTemplate }) => {
+const InvoicePreview: React.FC<InvoicePreviewProps> = ({ processedTemplate, onZoomClick }) => {
   const viewportRef = useRef<HTMLDivElement>(null);
   // Start with a small, non-zero scale to avoid division by zero and initial overflow
   const [scale, setScale] = useState(0.1);
@@ -46,7 +48,17 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ processedTemplate }) =>
 
   return (
     <div className="bg-gray-800 p-4 rounded-lg shadow-md">
-      <h3 className="text-lg font-semibold text-emerald-400 border-b border-gray-700 pb-2 mb-4">Vorschau</h3>
+      <div className="flex justify-between items-center border-b border-gray-700 pb-2 mb-4">
+        <h3 className="text-lg font-semibold text-emerald-400">Vorschau</h3>
+        <button
+            onClick={onZoomClick}
+            className="p-1 text-gray-400 rounded-full hover:bg-gray-700 hover:text-white transition-all"
+            title="Vorschau vergrössern"
+            aria-label="Vorschau vergrössern"
+        >
+            <ZoomIn size={20} />
+        </button>
+      </div>
       <div 
         ref={viewportRef}
         className="bg-white rounded-sm overflow-hidden" 

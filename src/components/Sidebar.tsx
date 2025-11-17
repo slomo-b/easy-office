@@ -30,12 +30,13 @@ const NavItem = ({ to, icon, label, isCollapsed }: { to: string, icon: React.Rea
 const Sidebar = ({ isCollapsed, setIsCollapsed }: { isCollapsed: boolean, setIsCollapsed: (isCollapsed: boolean) => void }) => {
   return (
     <div className={`bg-gray-800 shadow-lg flex flex-col transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
-      <div className={`p-4 border-b border-gray-700 transition-all duration-300 ${isCollapsed ? 'h-[69px]' : ''}`}>
+      <div className={`flex items-center border-b border-gray-700 transition-all duration-300 h-[69px] ${isCollapsed ? 'justify-center' : 'px-4'}`}>
+        <img src="/src/logo.svg" alt="easy office Logo" className="h-9 w-9 flex-shrink-0" />
         {!isCollapsed && (
-          <>
+          <div className="ml-3">
             <h1 className="text-2xl font-bold text-emerald-400 whitespace-nowrap">easy office</h1>
             <p className="text-sm text-gray-400 whitespace-nowrap">für Freelancer</p>
-          </>
+          </div>
         )}
       </div>
       <nav className="flex-1 px-2 py-4 space-y-2">
