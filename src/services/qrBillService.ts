@@ -1,8 +1,5 @@
-
-
-
 import { InvoiceData } from "../types";
-import { SwissQRBill } from 'swissqrbill/svg';
+import { SwissQRCode } from 'swissqrbill/svg';
 
 export async function generateQrCode(data: InvoiceData): Promise<string> {
   if (!data || !data.amount || Number(data.amount) <= 0) {
@@ -34,36 +31,20 @@ export async function generateQrCode(data: InvoiceData): Promise<string> {
   };
 
   try {
-    const bill = new SwissQRBill(billData);
-    const svgContainer = bill.element; // This is a DIV element
+    // Use the dedicated SwissQRCode class to generate only the QR code SVG.
+    // This is much more robust than generating the full bill and parsing the SVG.
+    const qrCode = new SwissQRCode(billData);
+    const svgString = qrCode.toString();
 
-    // The actual SVG is inside the container div
-    const fullSvgElement = svgContainer.querySelector('svg');
-    if (!fullSvgElement) {
-        throw new Error("Could not find SVG element within the generated bill container.");
-    }
+    // The library returns a full SVG string with width/height in mm.
+    // Replace them with a fixed pixel size for consistent display in the preview component.
+    let finalSvg = svgString.replace(/width="(\d+(\.\d+)?)mm"/, 'width="200"');
+    finalSvg = finalSvg.replace(/height="(\d+(\.\d+)?)mm"/, 'height="200"');
     
-    // Find the QR code group. Its parent should contain both the code and the cross, correctly positioned.
-    const qrCodeGroup = fullSvgElement.querySelector('.qr-code');
-    const qrCodeAndCrossContainer = qrCodeGroup?.parentElement;
-
-
-    if (qrCodeAndCrossContainer) {
-      // The container <g> has a `transform` to position it within the payment slip.
-      // We clone it and remove the transform to render it at origin (0,0) in our new SVG.
-      const containerClone = qrCodeAndCrossContainer.cloneNode(true) as SVGGElement;
-      containerClone.removeAttribute('transform');
-
-      // The innerHTML of this cleaned group contains both the qr-code and the swiss-cross paths.
-      const content = containerClone.innerHTML;
-
-      return `<svg viewBox="0 0 46 46" width="200" height="200" xmlns="http://www.w3.org/2000/svg">${content}</svg>`;
-    }
-    
-    throw new Error("Could not extract QR code from generated bill SVG.");
+    return finalSvg;
 
   } catch (error) {
-    console.error("Swiss QR Bill generation failed:", error);
+    console.error("Swiss QR Code generation failed:", error);
     if (error instanceof Error) {
       if (error.message.toLowerCase().includes("reference")) {
         throw new Error("Ungültige Referenz für QR-IBAN.\nBitte geben Sie eine 27-stellige QR-Referenz an, oder verwenden Sie eine normale IBAN und lassen Sie das Referenzfeld leer.");
