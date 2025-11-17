@@ -10,7 +10,6 @@ import InvoiceForm from '../components/InvoiceForm';
 import InvoicePreview from '../components/InvoicePreview';
 import HtmlEditor from '../components/HtmlEditor';
 import { Download, X } from 'lucide-react';
-import html2pdf from 'html2pdf.js';
 
 
 const InvoiceEditor = () => {
@@ -22,7 +21,7 @@ const InvoiceEditor = () => {
   const [qrCodeSvg, setQrCodeSvg] = useState<string>('');
   const [isLoadingQr, setIsLoadingQr] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [isDownloadingPdf, setIsDownloadingPdf] = useState<boolean>(false);
+  const [isPrinting, setIsPrinting] = useState<boolean>(false);
   const [isZoomModalOpen, setIsZoomModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
@@ -125,31 +124,26 @@ const InvoiceEditor = () => {
     }
   };
   
-  const handleDownloadPdf = () => {
+  const handlePrintPdf = () => {
     if (!invoiceData) return;
-    setIsDownloadingPdf(true);
+    setIsPrinting(true);
 
-    const element = document.createElement('div');
-    element.innerHTML = processedTemplate;
-    const elementToPrint = element.querySelector('#print-area');
+    // Create a temporary container for the content to be printed.
+    const printContainer = document.createElement('div');
+    // The processed template *contains* the #print-area element, which is targeted by the print styles.
+    printContainer.innerHTML = processedTemplate;
 
-    if (!elementToPrint) {
-      console.error("Could not find #print-area for PDF generation.");
-      setIsDownloadingPdf(false);
-      return;
-    }
-    
-    const opt = {
-      margin: 0,
-      filename: `Rechnung-${invoiceData.unstructuredMessage || invoiceData.id}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
+    // Hide it from view on the screen, but it will be picked up by @media print.
+    printContainer.style.position = 'absolute';
+    printContainer.style.left = '-9999px';
+    document.body.appendChild(printContainer);
 
-    html2pdf().from(elementToPrint).set(opt).save().then(() => {
-        setIsDownloadingPdf(false);
-    });
+    // Trigger the browser's print dialog.
+    window.print();
+
+    // Clean up the temporary container after the print dialog is handled.
+    document.body.removeChild(printContainer);
+    setIsPrinting(false);
   };
 
   if (!invoiceData || !settings) {
@@ -177,12 +171,12 @@ const InvoiceEditor = () => {
             <h2 className="text-3xl font-bold text-white">{id ? 'Rechnung bearbeiten' : 'Neue Rechnung erstellen'}</h2>
             <div className="flex items-center gap-2">
                  <button
-                    onClick={handleDownloadPdf}
-                    disabled={isDownloadingPdf}
+                    onClick={handlePrintPdf}
+                    disabled={isPrinting}
                     className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 flex items-center gap-2 disabled:bg-gray-500"
                 >
                     <Download size={16} />
-                    {isDownloadingPdf ? 'Generiere...' : 'PDF herunterladen'}
+                    {isPrinting ? 'Vorbereiten...' : 'Drucken / PDF speichern'}
                 </button>
                 <button onClick={handleSave} disabled={isSaving} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 disabled:bg-gray-500">
                     {isSaving ? 'Speichern...' : 'Speichern & Schliessen'}
