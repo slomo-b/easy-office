@@ -1,5 +1,6 @@
 
 
+
 import { InvoiceData } from "../types";
 import { SwissQRBill } from 'swissqrbill/svg';
 
@@ -34,24 +35,29 @@ export async function generateQrCode(data: InvoiceData): Promise<string> {
 
   try {
     const bill = new SwissQRBill(billData);
-    const svgElement = bill.element;
+    const svgContainer = bill.element; // This is a DIV element
 
-    const qrCodeGroup = svgElement.querySelector('.qr-code');
-    const swissCrossGroup = svgElement.querySelector('.swiss-cross');
+    // The actual SVG is inside the container div
+    const fullSvgElement = svgContainer.querySelector('svg');
+    if (!fullSvgElement) {
+        throw new Error("Could not find SVG element within the generated bill container.");
+    }
+    
+    // Find the QR code group. Its parent should contain both the code and the cross, correctly positioned.
+    const qrCodeGroup = fullSvgElement.querySelector('.qr-code');
+    const qrCodeAndCrossContainer = qrCodeGroup?.parentElement;
 
-    if (qrCodeGroup && swissCrossGroup) {
-      const qrCodePaths = qrCodeGroup.innerHTML;
-      const swissCrossPaths = swissCrossGroup.innerHTML;
-      
-      // The swiss cross (7x7mm) is centered inside the QR code (46x46mm).
-      // Its top-left corner is therefore at half the size of the QR code minus half the size of the cross.
-      // (46 / 2) - (7 / 2) = 23 - 3.5 = 19.5
-      const crossTranslate = 19.5;
 
-      return `<svg viewBox="0 0 46 46" width="200" height="200" xmlns="http://www.w3.org/2000/svg">
-        <g>${qrCodePaths}</g>
-        <g transform="translate(${crossTranslate}, ${crossTranslate})">${swissCrossPaths}</g>
-      </svg>`;
+    if (qrCodeAndCrossContainer) {
+      // The container <g> has a `transform` to position it within the payment slip.
+      // We clone it and remove the transform to render it at origin (0,0) in our new SVG.
+      const containerClone = qrCodeAndCrossContainer.cloneNode(true) as SVGGElement;
+      containerClone.removeAttribute('transform');
+
+      // The innerHTML of this cleaned group contains both the qr-code and the swiss-cross paths.
+      const content = containerClone.innerHTML;
+
+      return `<svg viewBox="0 0 46 46" width="200" height="200" xmlns="http://www.w3.org/2000/svg">${content}</svg>`;
     }
     
     throw new Error("Could not extract QR code from generated bill SVG.");
