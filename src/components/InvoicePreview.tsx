@@ -9,7 +9,7 @@ interface InvoicePreviewProps {
 
 const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, qrCodeSvg, isLoadingQr }) => {
   const formatAmount = (amount: number | '') => {
-      if (amount === '' || amount === null || amount === undefined) return '...';
+      if (amount === '') return '...';
       return Number(amount).toFixed(2);
   }
 
@@ -47,34 +47,14 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, qrCodeSvg, isLoad
     ? `<p><span class="font-semibold text-gray-600">Projekt:</span> ${data.projectName}</p>`
     : '';
 
-  let totalsBlockHtml: string;
-  if (data.vatEnabled) {
-      totalsBlockHtml = `
-        <div class="bg-gray-100 p-4 rounded-lg space-y-2 text-sm">
-            <div class="flex justify-between text-gray-600">
-                <span>Zwischentotal (Netto)</span>
-                <span>${data.currency} ${formatAmount(data.subtotal)}</span>
-            </div>
-            <div class="flex justify-between text-gray-600">
-                <span>MwSt.</span>
-                <span>${data.currency} ${formatAmount(data.vatAmount)}</span>
-            </div>
-            <div class="flex justify-between py-2 font-bold text-lg text-gray-900 border-t border-gray-300 mt-2">
-                <span>Total</span>
-                <span>${data.currency} ${formatAmount(data.total)}</span>
-            </div>
-        </div>
-      `;
-  } else {
-      totalsBlockHtml = `
-        <div class="bg-gray-100 p-4 rounded-lg">
-             <div class="flex justify-between py-2 font-bold text-lg text-gray-900">
-                <span>Total</span>
-                <span>${data.currency} ${formatAmount(data.total)}</span>
-            </div>
-        </div>
-      `;
-  }
+  // FIX: Dynamically generate the totals block to support VAT.
+  const totalsBlockHtml = data.vatEnabled
+    ? `<div class="text-sm">
+        <div class="flex justify-between py-1 text-gray-600"><span>Zwischentotal</span><span>${data.currency} ${formatAmount(data.subtotal)}</span></div>
+        <div class="flex justify-between py-1 text-gray-600"><span>MwSt.</span><span>${data.currency} ${formatAmount(data.vatAmount)}</span></div>
+        <div class="flex justify-between py-2 font-bold text-lg text-gray-900 border-t border-gray-300 mt-2"><span>Total</span><span>${data.currency} ${formatAmount(data.total)}</span></div>
+       </div>`
+    : `<div class="flex justify-between py-2 font-bold text-lg text-gray-900"><span>Total</span><span>${data.currency} ${formatAmount(data.total)}</span></div>`;
 
   const processedTemplate = data.htmlTemplate
     .replace(/{{logoImage}}/g, logoHtml)
@@ -94,8 +74,8 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, qrCodeSvg, isLoad
     .replace(/{{debtorZip}}/g, data.debtorZip)
     .replace(/{{debtorCity}}/g, data.debtorCity)
     .replace(/{{currency}}/g, data.currency)
-    .replace(/{{total}}/g, formatAmount(data.total))
-    .replace(/{{amount}}/g, formatAmount(data.total)) // Backwards compatibility for old templates
+    // FIX: Property 'amount' does not exist on type 'InvoiceData'. Use 'total' instead. Keep for backward compatibility with user templates.
+    .replace(/{{amount}}/g, formatAmount(data.total))
     .replace(/{{reference}}/g, data.reference)
     .replace(/{{unstructuredMessage}}/g, data.unstructuredMessage)
 

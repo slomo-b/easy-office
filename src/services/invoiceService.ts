@@ -5,7 +5,8 @@ import { getSettings } from './settingsService';
 
 const INVOICES_DIR = 'invoices';
 
-const calculateInvoiceTotals = (items: InvoiceItem[], vatEnabled: boolean): { subtotal: number, vatAmount: number, total: number } => {
+// FIX: Export function to be used in InvoiceEditor for real-time total calculation.
+export const calculateInvoiceTotals = (items: InvoiceItem[], vatEnabled: boolean): { subtotal: number, vatAmount: number, total: number } => {
     let subtotal = 0;
     let vatAmount = 0;
 
@@ -97,7 +98,6 @@ export const createNewInvoice = async (settings: SettingsData): Promise<InvoiceD
     logoSrc: settings.logoSrc,
   };
 
-  // FIX: Explicitly type `newItems` as InvoiceItem[] to prevent TypeScript from inferring `price` as a generic `string`.
   const newItems: InvoiceItem[] = [{
       description: '',
       quantity: 1,
@@ -204,7 +204,7 @@ export const createInvoiceFromProject = async (
 
     newInvoice.items = [...timeItems, ...expenseItems];
     
-    // FIX: Manually calculate totals before saving to ensure QR code generation works.
+    // Manually calculate totals before saving to ensure QR code generation works.
     const { subtotal, vatAmount, total } = calculateInvoiceTotals(newInvoice.items, newInvoice.vatEnabled);
     newInvoice.subtotal = subtotal;
     newInvoice.vatAmount = vatAmount;
