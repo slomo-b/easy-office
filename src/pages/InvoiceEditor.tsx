@@ -164,7 +164,6 @@ const styles = StyleSheet.create({
 });
 
 const InvoicePDF: React.FC<{ invoiceData: InvoiceData; qrCodeSvg: string; }> = ({ invoiceData, qrCodeSvg }) => {
-    const qrCodeDataUrl = qrCodeSvg ? `data:image/svg+xml;base64,${btoa(qrCodeSvg)}` : null;
     const formatAmount = (amount: number | '') => Number(amount).toFixed(2);
 
     return (
@@ -243,9 +242,9 @@ const InvoicePDF: React.FC<{ invoiceData: InvoiceData; qrCodeSvg: string; }> = (
                     <Text>Vielen Dank für Ihren Auftrag. Bitte begleichen Sie den Betrag innert 30 Tagen.</Text>
                     <Text>{invoiceData.creditorName} - {invoiceData.creditorIban}</Text>
                 </View>
-                {/* QR Bill Section (Fixed) */}
-                {qrCodeDataUrl && (
-                    <Image src={qrCodeDataUrl} style={styles.qrBillContainer} fixed />
+                {/* QR Bill Section */}
+                {qrCodeSvg && (
+                    <Image src={qrCodeSvg} style={styles.qrBillContainer} />
                 )}
             </Page>
         </Document>
@@ -295,8 +294,8 @@ const InvoiceEditor = () => {
         return;
     };
     try {
-      const svg = await generateQrCode(invoiceData);
-      setQrCodeSvg(svg);
+      const dataUrl = await generateQrCode(invoiceData);
+      setQrCodeSvg(dataUrl);
     } catch (error) {
       console.error('Failed to generate QR code:', error);
       setQrCodeSvg('');
