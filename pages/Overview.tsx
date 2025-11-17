@@ -44,22 +44,22 @@ const Overview = () => {
     const [loading, setLoading] = useState(true);
     const location = useLocation();
 
-    const fetchData = useCallback(async () => {
-        setLoading(true);
-        const [inv, exp, recExp] = await Promise.all([
-            getInvoices(), 
-            getExpenses(),
-            getRecurringExpenses()
-        ]);
-        setInvoices(inv);
-        setExpenses(exp);
-        setRecurringExpenses(recExp);
-        setLoading(false);
-    }, []);
-
     useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            const [inv, exp, recExp] = await Promise.all([
+                getInvoices(), 
+                getExpenses(),
+                getRecurringExpenses()
+            ]);
+            setInvoices(inv);
+            setExpenses(exp);
+            setRecurringExpenses(recExp);
+            setLoading(false);
+        };
+        
         fetchData();
-    }, [fetchData, location]);
+    }, [location]);
     
     const currentYear = new Date().getFullYear();
 
