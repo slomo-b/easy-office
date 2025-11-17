@@ -1,5 +1,5 @@
 import { InvoiceData } from "../types";
-import SwissQRBill from "swissqrbill";
+import SwissQRBill from "swissqrbill/lib/browser";
 
 export async function generateQrCode(data: InvoiceData): Promise<string> {
   if (!data || !data.total || Number(data.total) <= 0) {
