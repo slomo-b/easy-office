@@ -36,7 +36,7 @@ export const DEFAULT_HTML_TEMPLATE = `
 
         <!-- Items Table -->
         <section class="mb-12">
-            <table class="w-full text-sm">
+            <table class="w-full text-sm" style="border-collapse: separate; border-spacing: 0;">
                 <thead class="bg-gray-800 text-white">
                     <tr>
                         <th class="text-left font-semibold py-2 px-4 w-3/5 rounded-l-md">Beschreibung</th>
