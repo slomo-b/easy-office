@@ -1,6 +1,7 @@
 
+
 import { InvoiceData } from "../types";
-import { Generator } from 'swissqrbill';
+import { SwissQRBill } from 'swissqrbill/svg';
 
 export async function generateQrCode(data: InvoiceData): Promise<string> {
   if (!data || !data.amount || Number(data.amount) <= 0) {
@@ -14,38 +15,43 @@ export async function generateQrCode(data: InvoiceData): Promise<string> {
       additionalInformation: data.unstructuredMessage,
       creditor: {
           name: data.creditorName,
-          address: `${data.creditorStreet} ${data.creditorHouseNr}`,
-          zip: data.creditorZip,
+          address: data.creditorStreet,
+          buildingNumber: data.creditorHouseNr,
+          zip: Number(data.creditorZip),
           city: data.creditorCity,
           account: data.creditorIban.replace(/\s/g, ''),
           country: data.creditorCountry,
       },
       debtor: {
           name: data.debtorName,
-          address: `${data.debtorStreet} ${data.debtorHouseNr}`,
-          zip: data.debtorZip,
+          address: data.debtorStreet,
+          buildingNumber: data.debtorHouseNr,
+          zip: Number(data.debtorZip),
           city: data.debtorCity,
           country: data.debtorCountry,
       }
   };
 
   try {
-    // A4 paper size in mm is 210 x 297. The QR Bill part is 210 x 105.
-    // The QR Code itself is 46x46mm. We generate an SVG which is scalable.
-    // The library handles the sizing internally when generating the bill.
-    const bill = new Generator(billData, { size: "A4-PERFORATED-SHEET" });
-    
-    // We only need the QR code part for the preview, not the whole bill.
-    // The library doesn't have a public method for just the QR SVG, so we extract it.
-    // This is a bit of a hack, but it works with the current library version.
-    const fullSvg = bill.getSVG();
-    const qrCodeMatch = fullSvg.match(/<g transform="translate\(17.000, 17.000\)"(?:.|\n)*?<\/g>/);
-    
-    if (qrCodeMatch) {
-      // The extracted part is just the QR code paths and the swiss cross.
-      // We need to wrap it in an SVG tag to make it a valid, renderable SVG.
-      const qrCodeContent = qrCodeMatch[0];
-      return `<svg viewBox="0 0 46 46" width="200" height="200" xmlns="http://www.w3.org/2000/svg">${qrCodeContent}</svg>`;
+    const bill = new SwissQRBill(billData);
+    const svgElement = bill.element;
+
+    const qrCodeGroup = svgElement.querySelector('.qr-code');
+    const swissCrossGroup = svgElement.querySelector('.swiss-cross');
+
+    if (qrCodeGroup && swissCrossGroup) {
+      const qrCodePaths = qrCodeGroup.innerHTML;
+      const swissCrossPaths = swissCrossGroup.innerHTML;
+      
+      // The swiss cross (7x7mm) is centered inside the QR code (46x46mm).
+      // Its top-left corner is therefore at half the size of the QR code minus half the size of the cross.
+      // (46 / 2) - (7 / 2) = 23 - 3.5 = 19.5
+      const crossTranslate = 19.5;
+
+      return `<svg viewBox="0 0 46 46" width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+        <g>${qrCodePaths}</g>
+        <g transform="translate(${crossTranslate}, ${crossTranslate})">${swissCrossPaths}</g>
+      </svg>`;
     }
     
     throw new Error("Could not extract QR code from generated bill SVG.");

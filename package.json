@@ -16,7 +16,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.25.1",
-    "swissqrbill": "^2.2.0"
+    "swissqrbill": "^4.2.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.9",
