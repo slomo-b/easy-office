@@ -7,15 +7,20 @@ import { generateQrCode } from '../services/qrBillService';
 import InvoiceForm from '../components/InvoiceForm';
 import InvoicePreview from '../components/InvoicePreview';
 import HtmlEditor from '../components/HtmlEditor';
+import { Download, Printer } from 'lucide-react';
+
+// html2pdf is loaded from a CDN script in index.html
+declare const html2pdf: any;
 
 const InvoiceEditor = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
   const [customers, setCustomers] = useState<CustomerData[]>([]);
-  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
+  const [qrCodeSvg, setQrCodeSvg] = useState<string>('');
   const [isLoadingQr, setIsLoadingQr] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState<boolean>(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -40,17 +45,17 @@ const InvoiceEditor = () => {
 
   const regenerateQrCode = useCallback(async () => {
     if (!invoiceData || !invoiceData.amount || Number(invoiceData.amount) <= 0) {
-        setQrCodeDataUrl('');
+        setQrCodeSvg('');
         setIsLoadingQr(false);
         return;
     };
     setIsLoadingQr(true);
     try {
-      const url = await generateQrCode(invoiceData);
-      setQrCodeDataUrl(url);
+      const svg = await generateQrCode(invoiceData);
+      setQrCodeSvg(svg);
     } catch (error) {
       console.error('Failed to generate QR code:', error);
-      setQrCodeDataUrl('');
+      setQrCodeSvg('');
     } finally {
       setIsLoadingQr(false);
     }
@@ -94,6 +99,24 @@ const InvoiceEditor = () => {
   const handlePrint = () => {
     window.print();
   };
+  
+  const handleDownloadPdf = () => {
+    if (!invoiceData) return;
+    setIsDownloadingPdf(true);
+    const element = document.getElementById('print-area');
+    const opt = {
+      margin:       0,
+      filename:     `Rechnung-${invoiceData.unstructuredMessage || invoiceData.id}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().from(element).set(opt).save().then(() => {
+        setIsDownloadingPdf(false);
+    });
+  };
+
 
   if (!invoiceData) {
     return <div className="text-center p-10">Lade Rechnungsdaten...</div>;
@@ -103,12 +126,21 @@ const InvoiceEditor = () => {
     <div>
         <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-bold text-white">{id ? 'Rechnung bearbeiten' : 'Neue Rechnung erstellen'}</h2>
-            <div>
+            <div className="flex items-center gap-2">
+                 <button
+                    onClick={handleDownloadPdf}
+                    disabled={isDownloadingPdf}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 flex items-center gap-2 disabled:bg-gray-500"
+                >
+                    <Download size={16} />
+                    {isDownloadingPdf ? 'Generiere...' : 'PDF herunterladen'}
+                </button>
                  <button
                     onClick={handlePrint}
-                    className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 mr-4"
+                    className="bg-gray-600 hover:bg-gray-700 text-white font-bold p-2 rounded-lg transition-colors duration-300"
+                    title="Drucken"
                 >
-                    Drucken / PDF
+                    <Printer size={20} />
                 </button>
                 <button
                     onClick={handleSave}
@@ -136,7 +168,7 @@ const InvoiceEditor = () => {
             <div className="lg:w-2/3">
             <InvoicePreview
                 data={invoiceData}
-                qrCodeSrc={qrCodeDataUrl}
+                qrCodeSvg={qrCodeSvg}
                 isLoadingQr={isLoadingQr}
             />
             </div>

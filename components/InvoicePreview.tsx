@@ -4,11 +4,11 @@ import { InvoiceData } from '../types';
 
 interface InvoicePreviewProps {
   data: InvoiceData;
-  qrCodeSrc: string;
+  qrCodeSvg: string;
   isLoadingQr: boolean;
 }
 
-const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, qrCodeSrc, isLoadingQr }) => {
+const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, qrCodeSvg, isLoadingQr }) => {
   const formatAmount = (amount: number | '') => {
       if (amount === '') return '...';
       return Number(amount).toFixed(2);
@@ -20,11 +20,11 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, qrCodeSrc, isLoad
 
   let qrCodeHtml: string;
   if (isLoadingQr) {
-    qrCodeHtml = `<div class="w-[200px] h-[200px] bg-gray-200 animate-pulse flex items-center justify-center text-gray-500">Generiere QR...</div>`;
-  } else if (qrCodeSrc) {
-    qrCodeHtml = `<img src="${qrCodeSrc}" alt="Swiss QR Code" style="width: 200px; height: 200px;" />`;
+    qrCodeHtml = `<div style="width: 200px; height: 200px;" class="bg-gray-200 animate-pulse flex items-center justify-center text-gray-500">Generiere QR...</div>`;
+  } else if (qrCodeSvg) {
+    qrCodeHtml = qrCodeSvg;
   } else {
-    qrCodeHtml = `<div class="w-[200px] h-[200px] bg-gray-100 flex items-center justify-center text-center text-xs text-gray-500 p-2" style="border: 1px dashed #d1d5db;">QR-Code kann nicht generiert werden.<br/>(Betrag muss grösser als 0 sein)</div>`;
+    qrCodeHtml = `<div style="width: 200px; height: 200px;" class="bg-gray-100 flex items-center justify-center text-center text-xs text-gray-500 p-2 border border-dashed border-gray-300">QR-Code kann nicht generiert werden.<br/>(Betrag muss grösser als 0 sein)</div>`;
   }
   
   const itemsHtml = data.items.map((item, index) => {
