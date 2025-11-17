@@ -1,6 +1,6 @@
 
 import { InvoiceData, InvoiceItem, ProjectData, CustomerData, ServiceData, ExpenseData, SettingsData } from '../types';
-import { DEFAULT_INVOICE_DATA } from '../constants';
+import { DEFAULT_INVOICE_DATA, DEFAULT_HTML_TEMPLATE } from '../constants';
 import * as fileSystem from './fileSystem';
 
 const INVOICES_DIR = 'invoices';
@@ -119,6 +119,7 @@ export const createNewInvoice = async (settings: SettingsData): Promise<InvoiceD
     subtotal,
     vatAmount,
     total,
+    htmlTemplate: DEFAULT_HTML_TEMPLATE,
     status: 'open',
     paidAt: null,
   };

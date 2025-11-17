@@ -218,7 +218,6 @@ const ProjectEditor = () => {
 
         setIsSaving(true);
         try {
-            // FIX: Pass the required 'settings' object to the service function.
             const newInvoice = await createInvoiceFromProject(project, customer, services, projectExpenses, settings);
             navigate(`/invoice/edit/${newInvoice.id}`);
         } catch (error) {
@@ -229,8 +228,6 @@ const ProjectEditor = () => {
         }
     };
     
-    // --- Modal Handlers ---
-
     const openNewExpenseModal = () => {
         if (!project) return;
         setNewExpenseData(createNewExpense(project.id));
@@ -242,7 +239,6 @@ const ProjectEditor = () => {
         await saveExpense(newExpenseData);
         setIsExpenseModalOpen(false);
         setNewExpenseData(null);
-        // Reload expenses
         const allExpenses = await getExpenses();
         setProjectExpenses(allExpenses.filter(e => e.projectId === id));
     };
@@ -251,7 +247,6 @@ const ProjectEditor = () => {
         setSelectedTaskForTimeLog(task);
         const now = new Date();
         const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-        // Format for datetime-local input: YYYY-MM-DDTHH:mm
         const formatForInput = (date: Date) => new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
         setManualLog({ start: formatForInput(oneHourAgo), end: formatForInput(now) });
         setIsTimeLogModalOpen(true);
@@ -259,7 +254,6 @@ const ProjectEditor = () => {
 
     const handleSaveManualLog = () => {
         if (!project || !selectedTaskForTimeLog || !manualLog.start || !manualLog.end) return;
-        
         const startDate = new Date(manualLog.start);
         const endDate = new Date(manualLog.end);
 
@@ -268,63 +262,38 @@ const ProjectEditor = () => {
             return;
         }
         
-        const newLog: TaskTimeLog = {
-            startTime: startDate.toISOString(),
-            endTime: endDate.toISOString(),
-        };
-        
-        const updatedTasks = project.tasks.map(task => {
-            if (task.id === selectedTaskForTimeLog.id) {
-                return { ...task, timeLogs: [...task.timeLogs, newLog] };
-            }
-            return task;
-        });
-        
+        const newLog: TaskTimeLog = { startTime: startDate.toISOString(), endTime: endDate.toISOString() };
+        const updatedTasks = project.tasks.map(task => 
+            task.id === selectedTaskForTimeLog.id ? { ...task, timeLogs: [...task.timeLogs, newLog] } : task
+        );
         setProject({ ...project, tasks: updatedTasks });
         setIsTimeLogModalOpen(false);
     };
-
 
     if (!project || !settings) return <div className="text-center p-10">Lade Projektdaten...</div>;
     
     const totalProjectHours = project.tasks.reduce((sum, task) => sum + calculateTaskDuration(task), 0) / (1000 * 60 * 60);
 
-    // FIX: Explicitly type TaskCard as a React.FC to correctly handle the 'key' prop.
-    interface TaskCardProps {
-        task: TaskData;
-    }
+    interface TaskCardProps { task: TaskData }
     const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
         const service = services.find(s => s.id === task.serviceId);
         const isRunning = activeTimerTaskId === task.id;
         const totalDurationMs = isRunning ? elapsedTime : calculateTaskDuration(task);
 
         return (
-            <div 
-                draggable 
-                onDragStart={(e) => e.dataTransfer.setData('taskId', task.id)}
-                className={`bg-gray-700 p-3 rounded-md shadow-lg space-y-2 relative ${isRunning ? 'ring-2 ring-emerald-500' : ''}`}
-            >
+            <div draggable onDragStart={(e) => e.dataTransfer.setData('taskId', task.id)} className={`bg-gray-700 p-3 rounded-md shadow-lg space-y-2 relative ${isRunning ? 'ring-2 ring-emerald-500' : ''}`}>
                 <div className="flex justify-between items-start">
                     <p className="font-bold text-white text-sm pr-10">{task.title}</p>
                     <button onClick={() => handleDeleteTask(task.id)} className="absolute top-2 right-2 text-gray-500 hover:text-red-400"><Trash2 size={14}/></button>
                 </div>
-                
                 <p className="text-xs text-gray-400">{task.description}</p>
                 <div className="mt-3 pt-3 border-t border-gray-600/50 space-y-2">
-                    <div>
-                        <span className="text-xs font-semibold bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full">{service?.name || '...'}</span>
-                    </div>
+                    <div><span className="text-xs font-semibold bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full">{service?.name || '...'}</span></div>
                     <div className="flex justify-between items-center gap-2">
                         <span className="text-base font-mono text-white">{formatDuration(totalDurationMs)}</span>
                         <div className="flex items-center gap-2">
-                            <button onClick={() => openManualTimeLogModal(task)} className="p-1 text-gray-400 hover:text-white" title="Zeit manuell erfassen">
-                                <Clock size={16} />
-                            </button>
-                            <button 
-                                onClick={() => handleTimerToggle(task.id)} 
-                                className={`flex items-center justify-center h-7 w-7 rounded-full ${isRunning ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'} text-white transition-colors`} 
-                                title={isRunning ? 'Timer stoppen' : 'Timer starten'}
-                            >
+                            <button onClick={() => openManualTimeLogModal(task)} className="p-1 text-gray-400 hover:text-white" title="Zeit manuell erfassen"><Clock size={16} /></button>
+                            <button onClick={() => handleTimerToggle(task.id)} className={`flex items-center justify-center h-7 w-7 rounded-full ${isRunning ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'} text-white transition-colors`} title={isRunning ? 'Timer stoppen' : 'Timer starten'}>
                                 {isRunning ? <Square size={14} fill="white" /> : <Play size={14} fill="white" className="ml-0.5"/>}
                             </button>
                         </div>
@@ -342,15 +311,11 @@ const ProjectEditor = () => {
 
     return (
         <div>
-            {/* --- Modals --- */}
             {isExpenseModalOpen && newExpenseData && (
                 <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
                      <div className="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-2xl">
                          <h3 className="text-xl font-bold mb-4 text-white">Neue Projektausgabe</h3>
-                         <ExpenseForm 
-                             data={newExpenseData}
-                             onDataChange={(field, value) => setNewExpenseData(prev => prev ? { ...prev, [field]: value } : null)}
-                         />
+                         <ExpenseForm data={newExpenseData} onDataChange={(field, value) => setNewExpenseData(prev => prev ? { ...prev, [field]: value } : null)} />
                          <div className="flex justify-end gap-4 mt-6">
                             <button onClick={() => setIsExpenseModalOpen(false)} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Abbrechen</button>
                             <button onClick={handleSaveExpense} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg">Speichern</button>
@@ -380,7 +345,6 @@ const ProjectEditor = () => {
               </div>
             )}
 
-            {/* --- Page Content --- */}
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-3xl font-bold text-white">{id ? 'Projekt bearbeiten' : 'Neues Projekt erstellen'}</h2>
                 <div className="flex items-center gap-4">
@@ -400,7 +364,6 @@ const ProjectEditor = () => {
                                <div key={status} onDragOver={(e) => e.preventDefault()} onDrop={(e) => handleTaskDrop(e, status)} className="bg-gray-900/50 p-3 rounded-lg flex flex-col gap-3">
                                    <h4 className="text-center font-semibold text-gray-300 mb-2">{title}</h4>
                                    {project.tasks.filter(t => t.status === status).map(task => <TaskCard key={task.id} task={task} />)}
-                                   
                                    {showNewTaskFormForStatus === status ? (
                                        <div className="bg-gray-700 p-3 rounded-md space-y-2">
                                            <input type="text" placeholder="Aufgabentitel" value={newTaskData.title} onChange={e => setNewTaskData({...newTaskData, title: e.target.value})} className="w-full bg-gray-600 border-gray-500 rounded px-2 py-1 text-sm"/>
@@ -410,9 +373,7 @@ const ProjectEditor = () => {
                                                 <option value="">-- Leistung --</option>
                                                 {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                             </select>
-                                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                                                <ChevronDown size={16} />
-                                            </div>
+                                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400"><ChevronDown size={16} /></div>
                                            </div>
                                            <div className="flex justify-end gap-2">
                                                <button onClick={() => setShowNewTaskFormForStatus(null)} className="text-gray-400 text-xs">Abbrechen</button>
@@ -437,14 +398,8 @@ const ProjectEditor = () => {
                         <ul className="space-y-2">
                            {projectExpenses.map(expense => (
                                <li key={expense.id} className="flex justify-between items-center bg-gray-700/50 p-2 rounded-md text-sm">
-                                   <div>
-                                       <p className="font-semibold text-white">{expense.vendor}</p>
-                                       <p className="text-gray-400 text-xs">{expense.description}</p>
-                                   </div>
-                                   <div className="text-right">
-                                        <p className="font-mono text-white">{expense.currency} {Number(expense.amount).toFixed(2)}</p>
-                                        <p className="text-gray-400 text-xs">{new Date(expense.date).toLocaleDateString('de-CH')}</p>
-                                   </div>
+                                   <div><p className="font-semibold text-white">{expense.vendor}</p><p className="text-gray-400 text-xs">{expense.description}</p></div>
+                                   <div className="text-right"><p className="font-mono text-white">{expense.currency} {Number(expense.amount).toFixed(2)}</p><p className="text-gray-400 text-xs">{new Date(expense.date).toLocaleDateString('de-CH')}</p></div>
                                </li>
                            ))}
                            {projectExpenses.length === 0 && <p className="text-gray-500 text-sm text-center py-4">Keine Ausgaben für dieses Projekt erfasst.</p>}
@@ -466,9 +421,7 @@ const ProjectEditor = () => {
                                   <option value="">-- Kunde auswählen --</option>
                                   {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                               </select>
-                              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                                  <ChevronDown size={20} />
-                              </div>
+                              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400"><ChevronDown size={20} /></div>
                             </div>
                         </div>
                          <div>
@@ -479,9 +432,7 @@ const ProjectEditor = () => {
                                   <option value="in-progress">In Arbeit</option>
                                   <option value="done">Erledigt</option>
                               </select>
-                              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                                  <ChevronDown size={20} />
-                              </div>
+                              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400"><ChevronDown size={20} /></div>
                             </div>
                         </div>
                         <div>
