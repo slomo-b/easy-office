@@ -77,9 +77,14 @@ const InvoiceEditor = () => {
                 return sum + (quantity * price);
             }, 0);
             return { ...prev, items: newItems, amount: total };
-        } else {
-            return { ...prev, [field]: value };
         }
+        
+        // When invoice number changes, also update the reference number
+        if (field === 'unstructuredMessage') {
+            return { ...prev, unstructuredMessage: value, reference: value };
+        }
+        
+        return { ...prev, [field]: value };
     });
   };
   

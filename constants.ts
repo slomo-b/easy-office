@@ -122,8 +122,8 @@ export const DEFAULT_INVOICE_DATA: Omit<InvoiceData, 'id'> = {
   
   amount: 0,
   currency: 'CHF',
-  reference: '210000000003139471430009017',
-  unstructuredMessage: '2024-001',
+  reference: '',
+  unstructuredMessage: '',
   projectName: '',
   items: [],
   logoSrc: '',

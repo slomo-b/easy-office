@@ -49,6 +49,23 @@ export const saveInvoice = async (invoice: InvoiceData): Promise<InvoiceData> =>
 export const createNewInvoice = async (): Promise<InvoiceData> => {
   const settings = await getSettings();
   
+  // Generate sequential invoice number
+  const allInvoices = await getInvoices();
+  const currentYear = new Date().getFullYear();
+  
+  const yearInvoices = allInvoices.filter(inv => {
+      const yearFromMsg = parseInt(inv.unstructuredMessage.split('-')[0], 10);
+      return yearFromMsg === currentYear;
+  });
+
+  const lastInvoiceNumberInYear = yearInvoices.reduce((max, inv) => {
+      const numberPart = parseInt(inv.unstructuredMessage.split('-')[1], 10);
+      return isNaN(numberPart) ? max : Math.max(max, numberPart);
+  }, 0);
+
+  const newInvoiceSequentialNumber = lastInvoiceNumberInYear + 1;
+  const newInvoiceNumber = `${currentYear}-${newInvoiceSequentialNumber.toString().padStart(4, '0')}`;
+  
   const creditorData = {
     creditorIban: settings.creditorIban,
     creditorName: settings.creditorName,
@@ -64,6 +81,8 @@ export const createNewInvoice = async (): Promise<InvoiceData> => {
     id: `inv_${new Date().getTime()}_${Math.random().toString(36).substring(2, 9)}`,
     ...DEFAULT_INVOICE_DATA,
     ...creditorData,
+    unstructuredMessage: newInvoiceNumber,
+    reference: newInvoiceNumber,
     items: [],
     amount: 0,
     htmlTemplate: DEFAULT_HTML_TEMPLATE,
