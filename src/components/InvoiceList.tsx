@@ -25,8 +25,9 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ invoices, onDelete }) => {
         <thead className="bg-gray-700">
           <tr>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Debitor</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Projekt</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Rechnungsnummer</th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Betrag</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Referenz</th>
             <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">Aktionen</th>
           </tr>
         </thead>
@@ -34,8 +35,9 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ invoices, onDelete }) => {
           {invoices.map(invoice => (
             <tr key={invoice.id} className="hover:bg-gray-700/50">
               <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{invoice.debtorName}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{invoice.projectName || '–'}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400 font-mono">{invoice.unstructuredMessage}</td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{invoice.currency} {Number(invoice.amount).toFixed(2)}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400 font-mono">{invoice.reference}</td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <Link to={`/invoice/edit/${invoice.id}`} className="text-emerald-400 hover:text-emerald-300 mr-4">
                   Bearbeiten

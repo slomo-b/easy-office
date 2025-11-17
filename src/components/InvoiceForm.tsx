@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import { InvoiceData, CustomerData, InvoiceItem } from '../types';
 import { Trash2 } from 'lucide-react';
@@ -104,6 +102,16 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, customers, onDataChange
             </div>
       </FormSection>
 
+      <FormSection title="Zahlungsempfänger (Kreditor)">
+        <InputField label="IBAN" id="creditorIban" value={data.creditorIban} onChange={handleChange} className="col-span-2" />
+        <InputField label="Name" id="creditorName" value={data.creditorName} onChange={handleChange} className="col-span-2" />
+        <InputField label="Strasse" id="creditorStreet" value={data.creditorStreet} onChange={handleChange} />
+        <InputField label="Nr." id="creditorHouseNr" value={data.creditorHouseNr} onChange={handleChange} />
+        <InputField label="PLZ" id="creditorZip" value={data.creditorZip} onChange={handleChange} />
+        <InputField label="Ort" id="creditorCity" value={data.creditorCity} onChange={handleChange} />
+        <InputField label="Land" id="creditorCountry" value={data.creditorCountry} onChange={handleChange} className="col-span-2" />
+      </FormSection>
+
       <FormSection title="Zahler (Debitor)">
          <div className="flex flex-col col-span-2">
             <label htmlFor="customer-select" className="mb-1 text-sm font-medium text-gray-400">
@@ -145,12 +153,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, customers, onDataChange
             </select>
         </div>
         <div></div>
-        <div className="col-span-2">
-          <InputField label="Referenznummer (QR-R)" id="reference" value={data.reference} onChange={handleChange} />
-          <p className="mt-1 text-xs text-gray-500 px-1">
-            Nur ausfüllen, wenn Sie eine QR-IBAN verwenden. Muss eine 27-stellige QR-Referenz sein. Ansonsten leer lassen.
-          </p>
-        </div>
+        <InputField label="Referenznummer (QR-R)" id="reference" value={data.reference} onChange={handleChange} className="col-span-2" />
         <InputField label="Zusätzliche Infos (z.B. Rechnungs-Nr)" id="unstructuredMessage" value={data.unstructuredMessage} onChange={handleChange} className="col-span-2" />
       </FormSection>
     </div>
