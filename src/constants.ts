@@ -1,7 +1,7 @@
 import { InvoiceData, ExpenseData } from './types';
 
 export const DEFAULT_HTML_TEMPLATE = `
-<div id="print-area" class="bg-white text-gray-800" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; font-size: 10pt; line-height: 1.6; width: 210mm; min-height: 297mm; position: relative; margin: auto; padding-bottom: 105mm;">
+<div id="print-area" class="bg-white text-gray-800" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; font-size: 10pt; line-height: 1.6; width: 210mm; position: relative; margin: auto; padding-bottom: 105mm;">
 
     <!-- Main invoice content with padding -->
     <div class="p-12">

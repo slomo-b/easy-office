@@ -74,15 +74,17 @@ const InvoiceEditor = () => {
     setInvoiceData(prev => prev ? { ...prev, htmlTemplate: template } : null);
   };
   
-  const processedTemplate = useMemo(() => {
-    if (!invoiceData) return '';
+  const { mainContentHtml, qrBillHtml, fullHtmlForPdf } = useMemo(() => {
+    if (!invoiceData) {
+      return { mainContentHtml: '', qrBillHtml: '', fullHtmlForPdf: '' };
+    }
+
     const formatAmount = (amount: number | '') => (amount === '' ? '...' : Number(amount).toFixed(2));
+    
     const logoHtml = invoiceData.logoSrc 
       ? `<img src="${invoiceData.logoSrc}" alt="Firmenlogo" style="max-height: 80px;"/>`
       : `<div class="h-20 w-40 flex items-center justify-center text-gray-500 text-sm" style="background-color: #f3f4f6; border: 1px dashed #d1d5db; border-radius: 0.5rem;">Ihr Logo</div>`;
-    let qrBillHtml = isLoadingQr 
-      ? `<div style="height: 105mm; display: flex; align-items: center; justify-content: center;" class="bg-gray-200 animate-pulse text-gray-500">Generiere QR-Rechnung...</div>`
-      : qrCodeSvg || `<div style="height: 105mm; display: flex; align-items: center; justify-content: center;" class="bg-gray-100 text-center text-xs text-gray-500 p-2 border border-dashed border-gray-300">QR-Rechnung kann nicht generiert werden.<br/>(Betrag muss grösser als 0 sein)</div>`;
+      
     const itemsHtml = invoiceData.items.map((item, index) => `
           <tr class="${index % 2 === 0 ? 'bg-gray-50' : ''}">
               <td class="py-3 px-4 text-gray-800">${item.description}</td>
@@ -90,30 +92,48 @@ const InvoiceEditor = () => {
               <td class="text-right py-3 px-4 text-gray-600">${formatAmount(item.price)}</td>
               <td class="text-right py-3 px-4 font-semibold text-gray-800">${formatAmount(Number(item.quantity) * Number(item.price))}</td>
           </tr>`).join('');
+          
     const projectLineHtml = invoiceData.projectName ? `<p><span class="font-semibold text-gray-600">Projekt:</span> ${invoiceData.projectName}</p>` : '';
+    
     const totalsBlockHtml = invoiceData.vatEnabled
       ? `<div class="text-sm"><div class="flex justify-between py-1 text-gray-600"><span>Zwischentotal</span><span>${invoiceData.currency} ${formatAmount(invoiceData.subtotal)}</span></div><div class="flex justify-between py-1 text-gray-600"><span>MwSt.</span><span>${invoiceData.currency} ${formatAmount(invoiceData.vatAmount)}</span></div><div class="flex justify-between py-2 font-bold text-lg text-gray-900 border-t border-gray-300 mt-2"><span>Total</span><span>${invoiceData.currency} ${formatAmount(invoiceData.total)}</span></div></div>`
       : `<div class="flex justify-between py-2 font-bold text-lg text-gray-900"><span>Total</span><span>${invoiceData.currency} ${formatAmount(invoiceData.total)}</span></div>`;
-    return invoiceData.htmlTemplate
-      .replace(/{{logoImage}}/g, logoHtml)
-      .replace(/{{qrBillSvg}}/g, qrBillHtml)
-      .replace(/{{invoiceItems}}/g, itemsHtml)
-      .replace(/{{projectLine}}/g, projectLineHtml)
-      .replace(/{{totalsBlock}}/g, totalsBlockHtml)
-      .replace(/{{creditorName}}/g, invoiceData.creditorName)
-      .replace(/{{creditorStreet}}/g, invoiceData.creditorStreet)
-      .replace(/{{creditorHouseNr}}/g, invoiceData.creditorHouseNr)
-      .replace(/{{creditorZip}}/g, invoiceData.creditorZip)
-      .replace(/{{creditorCity}}/g, invoiceData.creditorCity)
-      .replace(/{{creditorIban}}/g, invoiceData.creditorIban)
-      .replace(/{{debtorName}}/g, invoiceData.debtorName)
-      .replace(/{{debtorStreet}}/g, invoiceData.debtorStreet)
-      .replace(/{{debtorHouseNr}}/g, invoiceData.debtorHouseNr)
-      .replace(/{{debtorZip}}/g, invoiceData.debtorZip)
-      .replace(/{{debtorCity}}/g, invoiceData.debtorCity)
-      .replace(/{{currency}}/g, invoiceData.currency)
-      .replace(/{{date}}/g, new Date(invoiceData.createdAt).toLocaleDateString('de-CH'))
-      .replace(/{{unstructuredMessage}}/g, invoiceData.unstructuredMessage)
+
+    const qrHtmlResult = isLoadingQr 
+      ? `<div style="height: 105mm; display: flex; align-items: center; justify-content: center;" class="bg-gray-200 animate-pulse text-gray-500">Generiere QR-Rechnung...</div>`
+      : qrCodeSvg || `<div style="height: 105mm; display: flex; align-items: center; justify-content: center;" class="bg-gray-100 text-center text-xs text-gray-500 p-2 border border-dashed border-gray-300">QR-Rechnung kann nicht generiert werden.<br/>(Betrag muss grösser als 0 sein)</div>`;
+      
+    const replacePlaceholders = (template: string) => {
+        return template
+            .replace(/{{logoImage}}/g, logoHtml)
+            .replace(/{{invoiceItems}}/g, itemsHtml)
+            .replace(/{{projectLine}}/g, projectLineHtml)
+            .replace(/{{totalsBlock}}/g, totalsBlockHtml)
+            .replace(/{{creditorName}}/g, invoiceData.creditorName)
+            .replace(/{{creditorStreet}}/g, invoiceData.creditorStreet)
+            .replace(/{{creditorHouseNr}}/g, invoiceData.creditorHouseNr)
+            .replace(/{{creditorZip}}/g, invoiceData.creditorZip)
+            .replace(/{{creditorCity}}/g, invoiceData.creditorCity)
+            .replace(/{{creditorIban}}/g, invoiceData.creditorIban)
+            .replace(/{{debtorName}}/g, invoiceData.debtorName)
+            .replace(/{{debtorStreet}}/g, invoiceData.debtorStreet)
+            .replace(/{{debtorHouseNr}}/g, invoiceData.debtorHouseNr)
+            .replace(/{{debtorZip}}/g, invoiceData.debtorZip)
+            .replace(/{{debtorCity}}/g, invoiceData.debtorCity)
+            .replace(/{{currency}}/g, invoiceData.currency)
+            .replace(/{{date}}/g, new Date(invoiceData.createdAt).toLocaleDateString('de-CH'))
+            .replace(/{{unstructuredMessage}}/g, invoiceData.unstructuredMessage)
+    };
+    
+    // For the multi-page preview, we render only the main content. The QR part is passed separately.
+    const mainTemplate = invoiceData.htmlTemplate.replace('{{qrBillSvg}}', '');
+    const mainHtmlResult = replacePlaceholders(mainTemplate);
+    
+    // For PDF and Zoom, we render the full template with the QR bill included.
+    const fullHtmlResult = replacePlaceholders(invoiceData.htmlTemplate).replace('{{qrBillSvg}}', qrHtmlResult);
+
+    return { mainContentHtml: mainHtmlResult, qrBillHtml: qrHtmlResult, fullHtmlForPdf: fullHtmlResult };
+
   }, [invoiceData, qrCodeSvg, isLoadingQr]);
 
   const handleSave = async () => {
@@ -133,7 +153,7 @@ const InvoiceEditor = () => {
     printContainer.style.position = 'absolute';
     printContainer.style.left = '-9999px';
     document.body.appendChild(printContainer);
-    printContainer.innerHTML = processedTemplate;
+    printContainer.innerHTML = fullHtmlForPdf;
     
     const elementToRender = printContainer.querySelector<HTMLElement>('#print-area');
     if (!elementToRender) {
@@ -156,10 +176,16 @@ const InvoiceEditor = () => {
             format: 'a4',
         });
         
-        const pdfWidth = 210;
-        const pdfHeight = 297;
+        const contentHeight = canvas.height * 210 / canvas.width;
+        const pageCount = Math.ceil(contentHeight / 297);
+        
+        for (let i = 0; i < pageCount; i++) {
+            if (i > 0) {
+                pdf.addPage();
+            }
+            pdf.addImage(imgData, 'PNG', 0, -i * 297, 210, contentHeight);
+        }
 
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
         pdf.save(`rechnung-${invoiceData.unstructuredMessage || 'entwurf'}.pdf`);
 
     } catch (error) {
@@ -179,7 +205,7 @@ const InvoiceEditor = () => {
     <div>
         {isZoomModalOpen && (
             <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setIsZoomModalOpen(false)}>
-                <div className="relative bg-white rounded-md shadow-2xl overflow-y-auto h-[95vh] w-auto" style={{ aspectRatio: '210 / 297' }} onClick={e => e.stopPropagation()}>
+                <div className="relative bg-white rounded-md shadow-2xl overflow-y-auto h-[95vh]" onClick={e => e.stopPropagation()}>
                     <button 
                         onClick={() => setIsZoomModalOpen(false)} 
                         className="sticky top-2 right-2 z-10 p-1.5 bg-gray-800 text-white rounded-full hover:bg-gray-700 transition-colors"
@@ -187,7 +213,7 @@ const InvoiceEditor = () => {
                     >
                         <X size={24} />
                     </button>
-                    <div dangerouslySetInnerHTML={{ __html: processedTemplate }} />
+                    <div dangerouslySetInnerHTML={{ __html: fullHtmlForPdf }} />
                 </div>
             </div>
         )}
@@ -215,9 +241,11 @@ const InvoiceEditor = () => {
               <HtmlEditor template={invoiceData.htmlTemplate} onTemplateChange={handleTemplateChange} />
             </div>
             <div className="w-full lg:w-[420px] flex-shrink-0">
-              <div className="sticky top-6">
-                  <InvoicePreview processedTemplate={processedTemplate} onZoomClick={() => setIsZoomModalOpen(true)} />
-              </div>
+              <InvoicePreview 
+                  mainContent={mainContentHtml}
+                  qrBill={qrBillHtml}
+                  onZoomClick={() => setIsZoomModalOpen(true)}
+              />
             </div>
         </main>
     </div>
