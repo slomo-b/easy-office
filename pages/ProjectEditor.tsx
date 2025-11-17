@@ -301,13 +301,21 @@ const ProjectEditor = () => {
                 </div>
                 
                 <p className="text-xs text-gray-400">{task.description}</p>
-                <div className="flex justify-between items-center pt-2">
-                    <span className="text-xs font-semibold bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full">{service?.name || '...'}</span>
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm font-mono text-white">{formatDuration(totalDurationMs)}</span>
-                        <button onClick={() => openManualTimeLogModal(task)} className="p-1 text-gray-400 hover:text-white"><Clock size={16} /></button>
-                        <button onClick={() => handleTimerToggle(task.id)} className={`p-1 rounded-full ${isRunning ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>
-                            {isRunning ? <Square size={16} fill="white" /> : <Play size={16} fill="white" />}
+                <div className="mt-3 pt-3 border-t border-gray-600/50 space-y-2">
+                    <div className="flex justify-between items-center">
+                        <span className="text-xs font-semibold bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full">{service?.name || '...'}</span>
+                        <span className="text-base font-mono text-white">{formatDuration(totalDurationMs)}</span>
+                    </div>
+                    <div className="flex justify-end items-center gap-2">
+                        <button onClick={() => openManualTimeLogModal(task)} className="p-1 text-gray-400 hover:text-white" title="Zeit manuell erfassen">
+                            <Clock size={16} />
+                        </button>
+                        <button 
+                            onClick={() => handleTimerToggle(task.id)} 
+                            className={`flex items-center justify-center h-7 w-7 rounded-full ${isRunning ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'} text-white transition-colors`} 
+                            title={isRunning ? 'Timer stoppen' : 'Timer starten'}
+                        >
+                            {isRunning ? <Square size={14} fill="white" /> : <Play size={14} fill="white" className="ml-0.5"/>}
                         </button>
                     </div>
                 </div>
