@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { InvoiceData } from '../types';
+import { InvoiceData, CustomerData } from '../types';
 import { getInvoiceById, saveInvoice, createNewInvoice } from '../services/invoiceService';
+import { getCustomers } from '../services/customerService';
 import { generateQrCode } from '../services/qrBillService';
 import InvoiceForm from '../components/InvoiceForm';
 import InvoicePreview from '../components/InvoicePreview';
@@ -11,12 +12,16 @@ const InvoiceEditor = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
+  const [customers, setCustomers] = useState<CustomerData[]>([]);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
   const [isLoadingQr, setIsLoadingQr] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
   useEffect(() => {
-    const loadInvoice = async () => {
+    const loadData = async () => {
+        const fetchedCustomers = await getCustomers();
+        setCustomers(fetchedCustomers);
+
         if (id) {
           const existingInvoice = await getInvoiceById(id);
           if (existingInvoice) {
@@ -29,7 +34,7 @@ const InvoiceEditor = () => {
           setInvoiceData(newInvoice);
         }
     };
-    loadInvoice();
+    loadData();
   }, [id, navigate]);
 
   const regenerateQrCode = useCallback(async () => {
@@ -56,18 +61,6 @@ const InvoiceEditor = () => {
   
   const handleTemplateChange = (template: string) => {
     setInvoiceData(prev => prev ? { ...prev, htmlTemplate: template } : null);
-  };
-
-  const handleLogoChange = (file: File) => {
-    if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-         setInvoiceData(prev => prev ? { ...prev, logoSrc: e.target?.result as string } : null);
-      };
-      reader.readAsDataURL(file);
-    } else {
-       setInvoiceData(prev => prev ? { ...prev, logoSrc: '' } : null);
-    }
   };
 
   const handleSave = async () => {
@@ -112,8 +105,8 @@ const InvoiceEditor = () => {
             <div className="lg:w-1/3 flex flex-col gap-6">
             <InvoiceForm 
                 data={invoiceData}
+                customers={customers}
                 onDataChange={handleDataChange}
-                onLogoChange={handleLogoChange}
             />
             <HtmlEditor
                 template={invoiceData.htmlTemplate}

@@ -17,6 +17,10 @@ export const initializeFileSystem = async () => {
   // 3. Ensure functional subdirectories exist within the '/data' folder.
   await getDirectoryHandle('invoices', true);
   await getDirectoryHandle('expenses', true);
+  await getDirectoryHandle('customers', true);
+  await getDirectoryHandle('recurring-expenses', true);
+  await getDirectoryHandle('projects', true);
+  await getDirectoryHandle('services', true);
 };
 
 async function getDirectoryHandle(path: string, create = false): Promise<FileSystemDirectoryHandle> {

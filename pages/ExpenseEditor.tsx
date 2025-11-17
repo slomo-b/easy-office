@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ExpenseData } from '../types';
 import { getExpenseById, saveExpense, createNewExpense } from '../services/expenseService';
 import ExpenseForm from '../components/ExpenseForm';
@@ -7,6 +7,8 @@ import ExpenseForm from '../components/ExpenseForm';
 const ExpenseEditor = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+
   const [expenseData, setExpenseData] = useState<ExpenseData | null>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
@@ -20,11 +22,13 @@ const ExpenseEditor = () => {
             navigate('/expenses'); // Expense not found, redirect
           }
         } else {
-          setExpenseData(createNewExpense());
+          const searchParams = new URLSearchParams(location.search);
+          const projectId = searchParams.get('projectId') || undefined;
+          setExpenseData(createNewExpense(projectId));
         }
     };
     loadExpense();
-  }, [id, navigate]);
+  }, [id, navigate, location.search]);
 
   const handleDataChange = (field: keyof ExpenseData, value: string | number) => {
     setExpenseData(prev => prev ? { ...prev, [field]: value } : null);
@@ -35,13 +39,25 @@ const ExpenseEditor = () => {
       setIsSaving(true);
       await saveExpense(expenseData);
       setIsSaving(false);
-      navigate('/expenses');
+      if (expenseData.projectId) {
+          navigate(`/project/edit/${expenseData.projectId}`);
+      } else {
+          navigate('/expenses');
+      }
     }
   };
   
   if (!expenseData) {
     return <div className="text-center p-10">Lade Ausgabedaten...</div>;
   }
+  
+  const handleCancel = () => {
+      if (expenseData && expenseData.projectId) {
+          navigate(`/project/edit/${expenseData.projectId}`);
+      } else {
+          navigate('/expenses');
+      }
+  };
 
   return (
     <div>
@@ -49,7 +65,7 @@ const ExpenseEditor = () => {
             <h2 className="text-3xl font-bold text-white">{id ? 'Ausgabe bearbeiten' : 'Neue Ausgabe erfassen'}</h2>
             <div>
                 <button
-                    onClick={() => navigate('/expenses')}
+                    onClick={handleCancel}
                     className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 mr-4"
                 >
                     Abbrechen

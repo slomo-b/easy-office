@@ -7,6 +7,13 @@ import InvoiceEditor from './pages/InvoiceEditor';
 import Expenses from './pages/Expenses';
 import ExpenseEditor from './pages/ExpenseEditor';
 import Settings from './pages/Settings';
+import Customers from './pages/Customers';
+import CustomerEditor from './pages/CustomerEditor';
+import RecurringExpenseEditor from './pages/RecurringExpenseEditor';
+import Projects from './pages/Projects';
+import ProjectEditor from './pages/ProjectEditor';
+import Services from './pages/Services';
+import ServiceEditor from './pages/ServiceEditor';
 import { useFileSystem } from './context/FileSystemContext';
 
 function App() {
@@ -46,6 +53,17 @@ function App() {
             <Route path="/expenses" element={<Expenses />} />
             <Route path="/expense/new" element={<ExpenseEditor />} />
             <Route path="/expense/edit/:id" element={<ExpenseEditor />} />
+            <Route path="/recurring-expense/new" element={<RecurringExpenseEditor />} />
+            <Route path="/recurring-expense/edit/:id" element={<RecurringExpenseEditor />} />
+            <Route path="/customers" element={<Customers />} />
+            <Route path="/customer/new" element={<CustomerEditor />} />
+            <Route path="/customer/edit/:id" element={<CustomerEditor />} />
+            <Route path="/projects" element={<Projects />} />
+            <Route path="/project/new" element={<ProjectEditor />} />
+            <Route path="/project/edit/:id" element={<ProjectEditor />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/service/new" element={<ServiceEditor />} />
+            <Route path="/service/edit/:id" element={<ServiceEditor />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>

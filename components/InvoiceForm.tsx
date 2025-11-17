@@ -1,11 +1,11 @@
 
 import React from 'react';
-import { InvoiceData } from '../types';
+import { InvoiceData, CustomerData } from '../types';
 
 interface InvoiceFormProps {
   data: InvoiceData;
+  customers: CustomerData[];
   onDataChange: (field: keyof InvoiceData, value: string | number) => void;
-  onLogoChange: (file: File) => void;
 }
 
 const InputField: React.FC<{
@@ -41,34 +41,27 @@ const FormSection: React.FC<{ title: string; children: React.ReactNode }> = ({ t
     </div>
 );
 
-const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onDataChange, onLogoChange }) => {
+const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, customers, onDataChange }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target as HTMLInputElement;
     onDataChange(name as keyof InvoiceData, type === 'number' ? parseFloat(value) || '' : value);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      onLogoChange(e.target.files[0]);
+  const handleCustomerSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const customerId = e.target.value;
+    const selectedCustomer = customers.find(c => c.id === customerId);
+    if (selectedCustomer) {
+        onDataChange('debtorName', selectedCustomer.name);
+        onDataChange('debtorStreet', selectedCustomer.street);
+        onDataChange('debtorHouseNr', selectedCustomer.houseNr);
+        onDataChange('debtorZip', selectedCustomer.zip);
+        onDataChange('debtorCity', selectedCustomer.city);
+        onDataChange('debtorCountry', selectedCustomer.country);
     }
   };
 
   return (
     <div className="space-y-6">
-      <div className="bg-gray-800 p-4 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold text-emerald-400 border-b border-gray-700 pb-2 mb-4">Logo</h3>
-          <label htmlFor="logo" className="mb-1 text-sm font-medium text-gray-400">
-              Firmenlogo (optional)
-          </label>
-          <input
-              type="file"
-              id="logo"
-              accept="image/png, image/jpeg, image/svg+xml"
-              onChange={handleFileChange}
-              className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-emerald-500 file:text-white hover:file:bg-emerald-600"
-          />
-      </div>
-
       <FormSection title="Zahlungsempfänger (Kreditor)">
         <InputField label="IBAN" id="creditorIban" value={data.creditorIban} onChange={handleChange} className="col-span-2" />
         <InputField label="Name" id="creditorName" value={data.creditorName} onChange={handleChange} className="col-span-2" />
@@ -80,6 +73,21 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onDataChange, onLogoCha
       </FormSection>
 
       <FormSection title="Zahler (Debitor)">
+         <div className="flex flex-col col-span-2">
+            <label htmlFor="customer-select" className="mb-1 text-sm font-medium text-gray-400">
+                Kunde auswählen (optional)
+            </label>
+            <select
+                id="customer-select"
+                onChange={handleCustomerSelect}
+                className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+            >
+                <option value="">-- Manuelle Eingabe --</option>
+                {customers.map(customer => (
+                    <option key={customer.id} value={customer.id}>{customer.name}</option>
+                ))}
+            </select>
+        </div>
         <InputField label="Name" id="debtorName" value={data.debtorName} onChange={handleChange} className="col-span-2" />
         <InputField label="Strasse" id="debtorStreet" value={data.debtorStreet} onChange={handleChange} />
         <InputField label="Nr." id="debtorHouseNr" value={data.debtorHouseNr} onChange={handleChange} />

@@ -36,11 +36,15 @@ export const saveExpense = async (expense: ExpenseData): Promise<ExpenseData> =>
   return expense;
 };
 
-export const createNewExpense = (): ExpenseData => {
-  return {
+export const createNewExpense = (projectId?: string): ExpenseData => {
+  const newExpense: ExpenseData = {
     id: `exp_${new Date().getTime()}_${Math.random().toString(36).substring(2, 9)}`,
     ...DEFAULT_EXPENSE_DATA,
   };
+  if (projectId) {
+    newExpense.projectId = projectId;
+  }
+  return newExpense;
 };
 
 export const deleteExpense = async (id: string): Promise<void> => {
