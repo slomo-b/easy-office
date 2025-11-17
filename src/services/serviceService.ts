@@ -6,7 +6,7 @@ const SERVICES_DIR = 'services';
 export const DEFAULT_SERVICE_DATA: Omit<ServiceData, 'id'> = {
   name: '',
   description: '',
-  unit: 'Stunde',
+  unit: 'Stunden',
   price: '',
 };
 

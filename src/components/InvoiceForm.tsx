@@ -74,7 +74,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, customers, onDataChange
   };
 
   const handleAddItem = () => {
-    const newItem: InvoiceItem = { description: '', quantity: 1, unit: 'Stunde', price: '' };
+    const newItem: InvoiceItem = { description: '', quantity: 1, unit: 'Stunden', price: '' };
     onDataChange('items', [...data.items, newItem]);
   };
 

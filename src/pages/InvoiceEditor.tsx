@@ -7,7 +7,7 @@ import { generateQrCode } from '../services/qrBillService';
 import InvoiceForm from '../components/InvoiceForm';
 import InvoicePreview from '../components/InvoicePreview';
 import HtmlEditor from '../components/HtmlEditor';
-import { Download, Printer } from 'lucide-react';
+import { Download } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 
 const InvoiceEditor = () => {
@@ -101,10 +101,6 @@ const InvoiceEditor = () => {
     }
   };
   
-  const handlePrint = () => {
-    window.print();
-  };
-  
   const handleDownloadPdf = () => {
     if (!invoiceData) return;
     setIsDownloadingPdf(true);
@@ -139,13 +135,6 @@ const InvoiceEditor = () => {
                 >
                     <Download size={16} />
                     {isDownloadingPdf ? 'Generiere...' : 'PDF herunterladen'}
-                </button>
-                 <button
-                    onClick={handlePrint}
-                    className="bg-gray-600 hover:bg-gray-700 text-white font-bold p-2 rounded-lg transition-colors duration-300"
-                    title="Drucken"
-                >
-                    <Printer size={20} />
                 </button>
                 <button
                     onClick={handleSave}

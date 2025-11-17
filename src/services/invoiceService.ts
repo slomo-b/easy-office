@@ -148,7 +148,7 @@ export const createInvoiceFromProject = async (
         return {
             description,
             quantity: Number(data.totalHours.toFixed(4)), // Use more precision for quantity
-            unit: service?.unit || 'Stunde',
+            unit: service?.unit || 'Stunden',
             price: Number(service?.price) || 0,
         };
     });

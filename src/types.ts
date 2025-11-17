@@ -89,7 +89,7 @@ export interface ServiceData {
   id: string;
   name: string;
   description: string;
-  unit: 'Stunde' | 'Tag' | 'Pauschal';
+  unit: 'Stunden' | 'Tag' | 'Pauschal';
   price: number | '';
 }
 
