@@ -204,6 +204,12 @@ export const createInvoiceFromProject = async (
 
     newInvoice.items = [...timeItems, ...expenseItems];
     
+    // FIX: Manually calculate totals before saving to ensure QR code generation works.
+    const { subtotal, vatAmount, total } = calculateInvoiceTotals(newInvoice.items, newInvoice.vatEnabled);
+    newInvoice.subtotal = subtotal;
+    newInvoice.vatAmount = vatAmount;
+    newInvoice.total = total;
+
     // Save (which also calculates total) and return the new invoice
     return saveInvoice(newInvoice);
 };
