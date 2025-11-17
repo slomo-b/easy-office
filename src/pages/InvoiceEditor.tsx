@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { InvoiceData, CustomerData, InvoiceItem, SettingsData } from '../types';
 import { getInvoiceById, saveInvoice, createNewInvoice, calculateInvoiceTotals } from '../services/invoiceService';
@@ -23,6 +22,7 @@ const InvoiceEditor = () => {
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState<boolean>(false);
   const [isZoomModalOpen, setIsZoomModalOpen] = useState<boolean>(false);
+  const printContainerRef = useRef<HTMLDivElement>(null); // Ref for the hidden print container
 
   useEffect(() => {
     const loadData = async () => {
@@ -191,26 +191,14 @@ const InvoiceEditor = () => {
   };
   
   const handleDownloadPdf = () => {
-    if (!invoiceData) return;
+    if (!invoiceData || !printContainerRef.current) return;
     setIsDownloadingPdf(true);
     
-    // Create a container for the print content that is off-screen but rendered
-    // by the browser, so all styles are applied correctly.
-    const printContainer = document.createElement('div');
-    printContainer.style.position = 'absolute';
-    printContainer.style.left = '-9999px';
-    printContainer.style.top = '0';
-    
-    // The processedTemplate contains the full HTML structure, including the #print-area div.
-    printContainer.innerHTML = processedTemplate;
-    document.body.appendChild(printContainer);
-    
-    // Now, select the element to be printed from within our off-screen container.
-    const elementToPrint = printContainer.querySelector('#print-area');
+    // The element to print is now referenced from our hidden, pre-rendered container
+    const elementToPrint = printContainerRef.current.querySelector('#print-area');
 
     if (!elementToPrint) {
       console.error("Could not find #print-area for PDF generation.");
-      document.body.removeChild(printContainer); // Cleanup on error
       setIsDownloadingPdf(false);
       return;
     }
@@ -225,11 +213,9 @@ const InvoiceEditor = () => {
 
     // Use a promise-based approach for better flow control and cleanup
     html2pdf().from(elementToPrint).set(opt).save().then(() => {
-        document.body.removeChild(printContainer);
         setIsDownloadingPdf(false);
     }).catch((error) => {
         console.error("PDF generation failed:", error);
-        document.body.removeChild(printContainer);
         setIsDownloadingPdf(false);
     });
   };
@@ -241,6 +227,13 @@ const InvoiceEditor = () => {
 
   return (
     <div>
+        {/* Hidden container for perfect PDF rendering */}
+        <div
+            ref={printContainerRef}
+            className="absolute left-[-9999px] top-0"
+            dangerouslySetInnerHTML={{ __html: processedTemplate }}
+        />
+
         {isZoomModalOpen && (
             <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setIsZoomModalOpen(false)}>
                 <div className="relative bg-white rounded-md shadow-2xl h-full w-auto overflow-y-auto" onClick={e => e.stopPropagation()}>
