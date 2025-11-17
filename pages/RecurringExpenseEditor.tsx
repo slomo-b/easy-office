@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { RecurringExpenseData } from '../types';
-import { getRecurringExpenseById, saveRecurringExpense, createNewRecurringExpense } from '../services/recurringExpenseService';
+import { 
+    getRecurringExpenseById, 
+    saveRecurringExpense, 
+    createNewRecurringExpense,
+    calculateNextDueDate
+} from '../services/recurringExpenseService';
+import { saveExpense, createNewExpense } from '../services/expenseService';
 import RecurringExpenseForm from '../components/RecurringExpenseForm';
 
 const RecurringExpenseEditor = () => {
@@ -40,7 +46,30 @@ const RecurringExpenseEditor = () => {
   const handleSave = async () => {
     if (expenseData) {
       setIsSaving(true);
-      await saveRecurringExpense(expenseData);
+      
+      const isNew = !id;
+
+      if (isNew) {
+          // For a new recurring expense, we first create the initial one-time expense
+          const initialExpense = createNewExpense();
+          initialExpense.date = expenseData.startDate;
+          initialExpense.vendor = expenseData.vendor;
+          initialExpense.description = expenseData.description;
+          initialExpense.amount = expenseData.amount;
+          initialExpense.currency = expenseData.currency;
+          initialExpense.category = expenseData.category;
+          await saveExpense(initialExpense);
+          
+          // Then we set the nextDueDate for the *next* occurrence and save the recurring template
+          const nextDueDate = calculateNextDueDate(expenseData.startDate, expenseData.interval);
+          const recurringTemplate = { ...expenseData, nextDueDate };
+          await saveRecurringExpense(recurringTemplate);
+
+      } else {
+          // For existing ones, just save the changes
+          await saveRecurringExpense(expenseData);
+      }
+
       setIsSaving(false);
       navigate('/expenses');
     }
