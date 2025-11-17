@@ -1,5 +1,5 @@
 import { RecurringExpenseData } from '../types';
-import * as fileSystem from './fileSystemService';
+import * as fileSystem from './fileSystem';
 
 const RECURRING_EXPENSES_DIR = 'recurring-expenses';
 

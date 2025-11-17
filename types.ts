@@ -120,3 +120,15 @@ export interface ProjectData {
   tasks: TaskData[];
   createdAt: string; // ISO String
 }
+
+// New Interface for abstracting file system operations
+export interface IFileSystemService {
+  initialize: () => Promise<void>;
+  writeFile: (path: string, content: object) => Promise<void>;
+  readFile: <T>(path: string) => Promise<T>;
+  readDirectory: (path: string) => Promise<string[]>;
+  deleteFile: (path: string) => Promise<void>;
+  isSupported: () => boolean;
+  exportAllData: () => Promise<void>;
+  importAllData: (file: File) => Promise<void>;
+}

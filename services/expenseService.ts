@@ -1,6 +1,6 @@
 import { ExpenseData } from '../types';
 import { DEFAULT_EXPENSE_DATA } from '../constants';
-import * as fileSystem from './fileSystemService';
+import * as fileSystem from './fileSystem';
 
 const EXPENSES_DIR = 'expenses';
 

@@ -1,6 +1,6 @@
 import { InvoiceData, InvoiceItem, ProjectData, CustomerData, ServiceData, ExpenseData } from '../types';
 import { DEFAULT_INVOICE_DATA, DEFAULT_HTML_TEMPLATE } from '../constants';
-import * as fileSystem from './fileSystemService';
+import * as fileSystem from './fileSystem';
 import { getSettings } from './settingsService';
 
 const INVOICES_DIR = 'invoices';

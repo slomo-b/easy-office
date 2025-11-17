@@ -1,5 +1,5 @@
 import { ProjectData } from '../types';
-import * as fileSystem from './fileSystemService';
+import * as fileSystem from './fileSystem';
 
 const PROJECTS_DIR = 'projects';
 

@@ -1,5 +1,5 @@
 import { SettingsData } from '../types';
-import * as fileSystem from './fileSystemService';
+import * as fileSystem from './fileSystem';
 
 const SETTINGS_FILE = 'settings.json';
 

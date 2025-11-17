@@ -1,5 +1,5 @@
 import { ServiceData } from '../types';
-import * as fileSystem from './fileSystemService';
+import * as fileSystem from './fileSystem';
 
 const SERVICES_DIR = 'services';
 

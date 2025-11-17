@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import { initializeFileSystem, isSupported } from '../services/fileSystemService';
+import { initializeFileSystem, isSupported } from '../services/fileSystem';
 
 interface FileSystemContextType {
   isReady: boolean;
@@ -16,7 +16,7 @@ export const FileSystemProvider = ({ children }: { children: ReactNode }) => {
     const init = async () => {
       setError(null);
       if (!isSupported()) {
-          setError('Dein Browser unterstützt das Origin Private File System nicht. Bitte nutze einen modernen Browser wie Chrome oder Edge.');
+          setError('Dein Browser unterstützt das benötigte Dateisystem API nicht. Bitte nutze einen modernen Browser wie Chrome oder Edge. Im Electron-Modus wird das lokale Dateisystem verwendet.');
           return;
       }
       try {

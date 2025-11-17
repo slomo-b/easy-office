@@ -1,5 +1,5 @@
 import { CustomerData } from '../types';
-import * as fileSystem from './fileSystemService';
+import * as fileSystem from './fileSystem';
 
 const CUSTOMERS_DIR = 'customers';
 
