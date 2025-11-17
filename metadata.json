@@ -1,0 +1,5 @@
+{
+  "name": "Swiss QR Invoice Generator",
+  "description": "A simple web application to easily create and customize Swiss QR invoices. Users can upload their own logo and modify the HTML styling of the invoice for a personalized look.",
+  "requestFramePermissions": []
+}

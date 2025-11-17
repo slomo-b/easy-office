@@ -1,0 +1,55 @@
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import Sidebar from './components/Sidebar';
+import Overview from './pages/Overview';
+import Invoices from './pages/Dashboard';
+import InvoiceEditor from './pages/InvoiceEditor';
+import Expenses from './pages/Expenses';
+import ExpenseEditor from './pages/ExpenseEditor';
+import { useFileSystem } from './context/FileSystemContext';
+
+function App() {
+  const { isReady, error } = useFileSystem();
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-900">
+        <div className="text-center bg-gray-800 p-10 rounded-lg shadow-2xl max-w-lg mx-auto">
+          <h1 className="text-3xl font-bold text-red-500 mb-4">Fehler</h1>
+          <p className="text-gray-300">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isReady) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
+        <div className="flex flex-col items-center">
+          <p>Initialisiere Dateisystem...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-screen bg-gray-900 text-gray-200 font-sans">
+      <Sidebar />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-6">
+          <Routes>
+            <Route path="/" element={<Overview />} />
+            <Route path="/invoices" element={<Invoices />} />
+            <Route path="/invoice/new" element={<InvoiceEditor />} />
+            <Route path="/invoice/edit/:id" element={<InvoiceEditor />} />
+            <Route path="/expenses" element={<Expenses />} />
+            <Route path="/expense/new" element={<ExpenseEditor />} />
+            <Route path="/expense/edit/:id" element={<ExpenseEditor />} />
+          </Routes>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+export default App;
