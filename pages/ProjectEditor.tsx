@@ -5,6 +5,7 @@ import { getProjectById, saveProject, createNewProject, deleteProject } from '..
 import { getCustomers } from '../services/customerService';
 import { getServices } from '../services/serviceService';
 import { getExpenses } from '../services/expenseService';
+import { createInvoiceFromProject } from '../services/invoiceService';
 
 const ProjectEditor = () => {
     const { id } = useParams<{ id: string }>();
@@ -112,6 +113,25 @@ const ProjectEditor = () => {
         }
     };
 
+    const handleCreateInvoice = async () => {
+        if (!project) return;
+        const customer = customers.find(c => c.id === project.customerId);
+        if (!customer) {
+            alert("Kunde nicht gefunden. Rechnung kann nicht erstellt werden.");
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            const newInvoice = await createInvoiceFromProject(project, customer, services, projectExpenses);
+            navigate(`/invoice/edit/${newInvoice.id}`);
+        } catch (error) {
+            console.error("Failed to create invoice from project", error);
+            alert("Rechnung konnte nicht erstellt werden.");
+            setIsSaving(false);
+        }
+    };
+
     if (!project) return <div className="text-center p-10">Lade Projektdaten...</div>;
 
     const totalHours = project.timeEntries.reduce((sum, entry) => sum + Number(entry.duration), 0);
@@ -120,8 +140,8 @@ const ProjectEditor = () => {
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-3xl font-bold text-white">{id ? 'Projekt bearbeiten' : 'Neues Projekt erstellen'}</h2>
-                <div>
-                    {id && <button onClick={handleDelete} className="text-red-500 hover:text-red-400 font-bold py-2 px-4 rounded-lg mr-4">Löschen</button>}
+                <div className="flex items-center gap-4">
+                    {id && <button onClick={handleDelete} className="text-red-500 hover:text-red-400 font-bold py-2 px-4 rounded-lg">Löschen</button>}
                     <button onClick={handleSave} disabled={isSaving} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 disabled:bg-gray-500">
                         {isSaving ? 'Speichern...' : 'Speichern & Schliessen'}
                     </button>
@@ -218,6 +238,13 @@ const ProjectEditor = () => {
                             <label className="mb-1 text-sm font-medium text-gray-400 block">Beschreibung</label>
                             <textarea value={project.description} onChange={e => handleProjectDataChange('description', e.target.value)} className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white" rows={4}></textarea>
                         </div>
+                         {id && (
+                            <div className="border-t border-gray-700 pt-4">
+                                <button onClick={handleCreateInvoice} disabled={isSaving} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 disabled:bg-gray-500">
+                                    Rechnung erstellen
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </main>

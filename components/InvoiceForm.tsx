@@ -1,11 +1,12 @@
 
 import React from 'react';
-import { InvoiceData, CustomerData } from '../types';
+import { InvoiceData, CustomerData, InvoiceItem } from '../types';
+import { Trash2 } from 'lucide-react';
 
 interface InvoiceFormProps {
   data: InvoiceData;
   customers: CustomerData[];
-  onDataChange: (field: keyof InvoiceData, value: string | number) => void;
+  onDataChange: (field: keyof InvoiceData, value: any) => void;
 }
 
 const InputField: React.FC<{
@@ -60,8 +61,48 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, customers, onDataChange
     }
   };
 
+  const handleItemChange = (index: number, field: keyof InvoiceItem, value: string | number) => {
+    const newItems = [...data.items];
+    const item = { ...newItems[index], [field]: value };
+    // Ensure numeric fields are numbers
+    if (field === 'quantity' || field === 'price') {
+        item[field] = value === '' ? '' : Number(value);
+    }
+    newItems[index] = item;
+    onDataChange('items', newItems);
+  };
+
+  const handleAddItem = () => {
+    const newItem: InvoiceItem = { description: '', quantity: 1, unit: 'Stunde', price: '' };
+    onDataChange('items', [...data.items, newItem]);
+  };
+
+  const handleRemoveItem = (index: number) => {
+    const newItems = data.items.filter((_, i) => i !== index);
+    onDataChange('items', newItems);
+  };
+
   return (
     <div className="space-y-6">
+       <FormSection title="Rechnungspositionen">
+            <div className="col-span-2 space-y-2">
+                {data.items.map((item, index) => (
+                    <div key={index} className="grid grid-cols-12 gap-2 items-center bg-gray-900/50 p-2 rounded-md">
+                        <input type="text" placeholder="Beschreibung" value={item.description} onChange={e => handleItemChange(index, 'description', e.target.value)} className="col-span-12 md:col-span-5 bg-gray-700 border-gray-600 rounded px-2 py-1 text-sm"/>
+                        <input type="number" placeholder="Menge" value={item.quantity} onChange={e => handleItemChange(index, 'quantity', e.target.value)} className="col-span-4 md:col-span-2 bg-gray-700 border-gray-600 rounded px-2 py-1 text-sm"/>
+                        <input type="text" placeholder="Einheit" value={item.unit} onChange={e => handleItemChange(index, 'unit', e.target.value)} className="col-span-4 md:col-span-2 bg-gray-700 border-gray-600 rounded px-2 py-1 text-sm"/>
+                        <input type="number" placeholder="Preis" value={item.price} onChange={e => handleItemChange(index, 'price', e.target.value)} className="col-span-4 md:col-span-2 bg-gray-700 border-gray-600 rounded px-2 py-1 text-sm"/>
+                        <button onClick={() => handleRemoveItem(index)} className="col-span-12 md:col-span-1 text-red-500 hover:text-red-400 flex justify-center items-center"><Trash2 size={16}/></button>
+                    </div>
+                ))}
+                <button onClick={handleAddItem} className="text-emerald-400 hover:text-emerald-300 text-sm font-semibold py-1">+ Position hinzufügen</button>
+            </div>
+            <div className="col-span-2 text-right mt-4 border-t border-gray-700 pt-2">
+                <span className="text-gray-400 font-medium">Total:</span>
+                <span className="text-white font-bold text-lg ml-2">{data.currency} {Number(data.amount).toFixed(2)}</span>
+            </div>
+      </FormSection>
+
       <FormSection title="Zahlungsempfänger (Kreditor)">
         <InputField label="IBAN" id="creditorIban" value={data.creditorIban} onChange={handleChange} className="col-span-2" />
         <InputField label="Name" id="creditorName" value={data.creditorName} onChange={handleChange} className="col-span-2" />
@@ -97,7 +138,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, customers, onDataChange
       </FormSection>
 
       <FormSection title="Zahlungsdetails">
-        <InputField label="Betrag" id="amount" value={data.amount} onChange={handleChange} type="number" />
         <div className="flex flex-col">
             <label htmlFor="currency" className="mb-1 text-sm font-medium text-gray-400">
                 Währung
@@ -113,8 +153,9 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, customers, onDataChange
                 <option value="EUR">EUR</option>
             </select>
         </div>
+        <div></div>
         <InputField label="Referenznummer (QR-R)" id="reference" value={data.reference} onChange={handleChange} className="col-span-2" />
-        <InputField label="Zusätzliche Infos" id="unstructuredMessage" value={data.unstructuredMessage} onChange={handleChange} className="col-span-2" />
+        <InputField label="Zusätzliche Infos (z.B. Rechnungs-Nr)" id="unstructuredMessage" value={data.unstructuredMessage} onChange={handleChange} className="col-span-2" />
       </FormSection>
     </div>
   );

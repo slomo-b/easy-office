@@ -10,7 +10,7 @@ interface InvoicePreviewProps {
 const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, qrCodeSrc, isLoadingQr }) => {
   const formatAmount = (amount: number | '') => {
       if (amount === '') return '...';
-      return amount.toFixed(2);
+      return Number(amount).toFixed(2);
   }
 
   const logoHtml = data.logoSrc 
@@ -21,9 +21,24 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, qrCodeSrc, isLoad
     ? `<div class="w-[200px] h-[200px] bg-gray-200 animate-pulse flex items-center justify-center text-gray-500">Generiere QR...</div>`
     : `<img src="${qrCodeSrc}" alt="Swiss QR Code" style="width: 200px; height: 200px;" />`;
   
+  const itemsHtml = data.items.map(item => {
+    const quantity = Number(item.quantity);
+    const price = Number(item.price);
+    const total = quantity * price;
+    return `
+        <tr class="border-b border-gray-200">
+            <td class="py-3 px-1">${item.description}</td>
+            <td class="text-right py-3 px-1">${quantity.toFixed(2)} ${item.unit}</td>
+            <td class="text-right py-3 px-1">${formatAmount(price)}</td>
+            <td class="text-right py-3 px-1">${formatAmount(total)}</td>
+        </tr>
+    `;
+  }).join('');
+
   const processedTemplate = data.htmlTemplate
     .replace(/{{logoImage}}/g, logoHtml)
     .replace(/{{qrCodeImage}}/g, qrCodeHtml)
+    .replace(/{{invoiceItems}}/g, itemsHtml)
     .replace(/{{creditorName}}/g, data.creditorName)
     .replace(/{{creditorStreet}}/g, data.creditorStreet)
     .replace(/{{creditorHouseNr}}/g, data.creditorHouseNr)

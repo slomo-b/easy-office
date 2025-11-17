@@ -1,4 +1,4 @@
-import { InvoiceData } from '../types';
+import { InvoiceData, InvoiceItem, ProjectData, CustomerData, ServiceData, ExpenseData } from '../types';
 import { DEFAULT_INVOICE_DATA, DEFAULT_HTML_TEMPLATE } from '../constants';
 import * as fileSystem from './fileSystemService';
 import { getSettings } from './settingsService';
@@ -28,13 +28,22 @@ export const getInvoiceById = async (id: string): Promise<InvoiceData | undefine
 };
 
 export const saveInvoice = async (invoice: InvoiceData): Promise<InvoiceData> => {
+   // Ensure total amount is correctly calculated before saving
+   const totalAmount = invoice.items.reduce((sum, item) => {
+       const quantity = Number(item.quantity) || 0;
+       const price = Number(item.price) || 0;
+       return sum + (quantity * price);
+   }, 0);
+   
+   const invoiceToSave = { ...invoice, amount: totalAmount };
+
    try {
-    await fileSystem.writeFile(`${INVOICES_DIR}/${invoice.id}.json`, invoice);
+    await fileSystem.writeFile(`${INVOICES_DIR}/${invoiceToSave.id}.json`, invoiceToSave);
   } catch (error) {
     console.error('Error saving invoice to file system', error);
     throw error;
   }
-  return invoice;
+  return invoiceToSave;
 };
 
 export const createNewInvoice = async (): Promise<InvoiceData> => {
@@ -55,6 +64,8 @@ export const createNewInvoice = async (): Promise<InvoiceData> => {
     id: `inv_${new Date().getTime()}_${Math.random().toString(36).substring(2, 9)}`,
     ...DEFAULT_INVOICE_DATA,
     ...creditorData,
+    items: [],
+    amount: 0,
     htmlTemplate: DEFAULT_HTML_TEMPLATE,
   };
 };
@@ -66,4 +77,49 @@ export const deleteInvoice = async (id: string): Promise<void> => {
     console.error('Error deleting invoice from file system', error);
     throw error;
   }
+};
+
+export const createInvoiceFromProject = async (
+    project: ProjectData, 
+    customer: CustomerData, 
+    services: ServiceData[], 
+    expenses: ExpenseData[]
+): Promise<InvoiceData> => {
+    const newInvoice = await createNewInvoice();
+
+    // Set customer as debtor
+    newInvoice.debtorName = customer.name;
+    newInvoice.debtorStreet = customer.street;
+    newInvoice.debtorHouseNr = customer.houseNr;
+    newInvoice.debtorZip = customer.zip;
+    newInvoice.debtorCity = customer.city;
+    newInvoice.debtorCountry = customer.country;
+    
+    newInvoice.unstructuredMessage = `Rechnung für Projekt: ${project.name}`;
+
+    // Create items from time entries
+    const timeItems: InvoiceItem[] = project.timeEntries.map(entry => {
+        const service = services.find(s => s.id === entry.serviceId);
+        return {
+            description: `${service?.name || 'Unbekannte Leistung'}${entry.description ? `: ${entry.description}` : ''}`,
+            quantity: Number(entry.duration) || 0,
+            unit: service?.unit || 'Stunde',
+            price: Number(service?.price) || 0,
+        };
+    });
+
+    // Create items from expenses
+    const expenseItems: InvoiceItem[] = expenses.map(expense => {
+        return {
+            description: `Weiterverrechnung: ${expense.vendor} - ${expense.description}`,
+            quantity: 1,
+            unit: 'Pauschal',
+            price: Number(expense.amount) || 0,
+        };
+    });
+
+    newInvoice.items = [...timeItems, ...expenseItems];
+    
+    // Save (which also calculates total) and return the new invoice
+    return saveInvoice(newInvoice);
 };

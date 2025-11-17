@@ -1,3 +1,10 @@
+export interface InvoiceItem {
+  description: string;
+  quantity: number | '';
+  unit: string;
+  price: number | '';
+}
+
 export interface InvoiceData {
   id: string;
   // Creditor
@@ -18,10 +25,11 @@ export interface InvoiceData {
   debtorCountry: string;
 
   // Payment
-  amount: number | '';
+  amount: number | ''; // Will be the calculated total
   currency: 'CHF' | 'EUR';
   reference: string;
   unstructuredMessage: string;
+  items: InvoiceItem[];
 
   // Customization
   htmlTemplate: string;

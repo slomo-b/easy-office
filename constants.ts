@@ -34,15 +34,14 @@ export const DEFAULT_HTML_TEMPLATE = `
         <table class="w-full text-sm">
             <thead class="border-b-2 border-black">
                 <tr>
-                    <th class="text-left font-bold py-2 px-1">Beschreibung</th>
-                    <th class="text-right font-bold py-2 px-1">Betrag</th>
+                    <th class="text-left font-bold py-2 px-1 w-3/5">Beschreibung</th>
+                    <th class="text-right font-bold py-2 px-1">Menge</th>
+                    <th class="text-right font-bold py-2 px-1">Preis</th>
+                    <th class="text-right font-bold py-2 px-1">Total</th>
                 </tr>
             </thead>
             <tbody>
-                <tr class="border-b border-gray-200">
-                    <td class="py-3 px-1">Pauschale gemäss Vereinbarung</td>
-                    <td class="text-right py-3 px-1">{{currency}} {{amount}}</td>
-                </tr>
+                {{invoiceItems}}
             </tbody>
         </table>
     </section>
@@ -112,10 +111,11 @@ export const DEFAULT_INVOICE_DATA: Omit<InvoiceData, 'id'> = {
   debtorCity: 'Bern',
   debtorCountry: 'CH',
   
-  amount: 199.95,
+  amount: 0,
   currency: 'CHF',
   reference: '210000000003139471430009017',
   unstructuredMessage: '2024-001',
+  items: [],
   logoSrc: '',
   htmlTemplate: DEFAULT_HTML_TEMPLATE,
 };

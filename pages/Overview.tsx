@@ -51,9 +51,22 @@ const Overview = () => {
         };
         fetchData();
     }, []);
+    
+    const currentYear = new Date().getFullYear();
 
-    const totalIncome = invoices.reduce((sum, inv) => sum + Number(inv.amount), 0);
-    const totalExpenses = expenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
+    const yearlyInvoices = invoices.filter(inv => {
+        try {
+            const timestamp = parseInt(inv.id.split('_')[1], 10);
+            return new Date(timestamp).getFullYear() === currentYear;
+        } catch {
+            return false;
+        }
+    });
+
+    const yearlyExpenses = expenses.filter(exp => new Date(exp.date).getFullYear() === currentYear);
+
+    const totalIncome = yearlyInvoices.reduce((sum, inv) => sum + Number(inv.amount), 0);
+    const totalExpenses = yearlyExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
     const profit = totalIncome - totalExpenses;
 
     if (loading) {
@@ -62,11 +75,11 @@ const Overview = () => {
 
     return (
         <div>
-            <h2 className="text-3xl font-bold text-white mb-6">Übersicht</h2>
+            <h2 className="text-3xl font-bold text-white mb-6">Übersicht {currentYear}</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <StatCard title="Gesamteinnahmen" value={`CHF ${totalIncome.toFixed(2)}`} colorClass="text-green-400" />
-                <StatCard title="Gesamtausgaben" value={`CHF ${totalExpenses.toFixed(2)}`} colorClass="text-red-400" />
-                <StatCard title="Gewinn" value={`CHF ${profit.toFixed(2)}`} colorClass={profit >= 0 ? 'text-white' : 'text-red-400'} />
+                <StatCard title="Einnahmen (dieses Jahr)" value={`CHF ${totalIncome.toFixed(2)}`} colorClass="text-green-400" />
+                <StatCard title="Ausgaben (dieses Jahr)" value={`CHF ${totalExpenses.toFixed(2)}`} colorClass="text-red-400" />
+                <StatCard title="Gewinn (dieses Jahr)" value={`CHF ${profit.toFixed(2)}`} colorClass={profit >= 0 ? 'text-white' : 'text-red-400'} />
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <RecentList title="Letzte Einnahmen" items={invoices} linkTo="/invoices" type="invoice" />

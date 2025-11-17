@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { InvoiceData, CustomerData } from '../types';
+import { InvoiceData, CustomerData, InvoiceItem } from '../types';
 import { getInvoiceById, saveInvoice, createNewInvoice } from '../services/invoiceService';
 import { getCustomers } from '../services/customerService';
 import { generateQrCode } from '../services/qrBillService';
@@ -36,9 +36,29 @@ const InvoiceEditor = () => {
     };
     loadData();
   }, [id, navigate]);
+  
+  // Recalculate total amount whenever items change
+  useEffect(() => {
+    if (invoiceData) {
+      const total = invoiceData.items.reduce((sum, item) => {
+        const quantity = Number(item.quantity) || 0;
+        const price = Number(item.price) || 0;
+        return sum + (quantity * price);
+      }, 0);
+      
+      if(invoiceData.amount !== total) {
+          handleDataChange('amount', total);
+      }
+    }
+  }, [invoiceData?.items]);
+
 
   const regenerateQrCode = useCallback(async () => {
-    if (!invoiceData || !invoiceData.amount) return;
+    if (!invoiceData || !invoiceData.amount) {
+        setQrCodeDataUrl('');
+        setIsLoadingQr(false);
+        return;
+    };
     setIsLoadingQr(true);
     try {
       const url = await generateQrCode(invoiceData);
@@ -55,7 +75,7 @@ const InvoiceEditor = () => {
     regenerateQrCode();
   }, [regenerateQrCode]);
 
-  const handleDataChange = (field: keyof InvoiceData, value: string | number) => {
+  const handleDataChange = (field: keyof InvoiceData, value: any) => {
     setInvoiceData(prev => prev ? { ...prev, [field]: value } : null);
   };
   
