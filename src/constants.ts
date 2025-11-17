@@ -105,7 +105,7 @@ export const DEFAULT_HTML_TEMPLATE = `
 `;
 
 export const DEFAULT_INVOICE_DATA: Omit<InvoiceData, 'id'> = {
-  creditorIban: 'CH4431999123000889012',
+  creditorIban: 'CH9300762011623852957',
   creditorName: 'Max Muster AG',
   creditorStreet: 'Musterstrasse',
   creditorHouseNr: '123a',

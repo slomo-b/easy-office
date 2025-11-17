@@ -4,7 +4,7 @@ import * as fileSystem from './fileSystem';
 const SETTINGS_FILE = 'settings.json';
 
 export const DEFAULT_SETTINGS_DATA: SettingsData = {
-  creditorIban: 'CH4431999123000889012',
+  creditorIban: 'CH9300762011623852957',
   creditorName: 'Max Muster AG',
   creditorStreet: 'Musterstrasse',
   creditorHouseNr: '123a',

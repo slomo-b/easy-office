@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { InvoiceData, CustomerData, InvoiceItem } from '../types';
 import { Trash2 } from 'lucide-react';
@@ -154,7 +155,12 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, customers, onDataChange
             </select>
         </div>
         <div></div>
-        <InputField label="Referenznummer (QR-R)" id="reference" value={data.reference} onChange={handleChange} className="col-span-2" />
+        <div className="col-span-2">
+          <InputField label="Referenznummer (QR-R)" id="reference" value={data.reference} onChange={handleChange} />
+          <p className="mt-1 text-xs text-gray-500 px-1">
+            Nur ausfüllen, wenn Sie eine QR-IBAN verwenden. Muss eine 27-stellige QR-Referenz sein. Ansonsten leer lassen.
+          </p>
+        </div>
         <InputField label="Zusätzliche Infos (z.B. Rechnungs-Nr)" id="unstructuredMessage" value={data.unstructuredMessage} onChange={handleChange} className="col-span-2" />
       </FormSection>
     </div>
