@@ -1,4 +1,5 @@
 
+
 import { InvoiceData, InvoiceItem, ProjectData, CustomerData, ServiceData, ExpenseData, SettingsData } from '../types';
 import { DEFAULT_INVOICE_DATA, DEFAULT_HTML_TEMPLATE } from '../constants';
 import * as fileSystem from './fileSystem';
@@ -29,7 +30,14 @@ export const getInvoices = async (): Promise<InvoiceData[]> => {
   try {
     const fileNames = await fileSystem.readDirectory(INVOICES_DIR);
     const invoices = await Promise.all(
-      fileNames.map(fileName => fileSystem.readFile<InvoiceData>(`${INVOICES_DIR}/${fileName}`))
+      fileNames.map(async (fileName) => {
+        const invoice = await fileSystem.readFile<InvoiceData>(`${INVOICES_DIR}/${fileName}`);
+        // Ensure backward compatibility for invoices without a template
+        if (!invoice.htmlTemplate) {
+          invoice.htmlTemplate = DEFAULT_HTML_TEMPLATE;
+        }
+        return invoice;
+      })
     );
     // Fallback for sorting older invoices without createdAt
     return invoices.sort((a, b) => (b.createdAt || b.id.split('_')[1] || '').localeCompare(a.createdAt || a.id.split('_')[1] || ''));
@@ -41,7 +49,12 @@ export const getInvoices = async (): Promise<InvoiceData[]> => {
 
 export const getInvoiceById = async (id: string): Promise<InvoiceData | undefined> => {
   try {
-    return await fileSystem.readFile<InvoiceData>(`${INVOICES_DIR}/${id}.json`);
+    const invoice = await fileSystem.readFile<InvoiceData>(`${INVOICES_DIR}/${id}.json`);
+    // Ensure backward compatibility for invoices without a template
+    if (invoice && !invoice.htmlTemplate) {
+        invoice.htmlTemplate = DEFAULT_HTML_TEMPLATE;
+    }
+    return invoice;
   } catch (error) {
     console.error(`Error reading invoice ${id} from file system`, error);
     return undefined;

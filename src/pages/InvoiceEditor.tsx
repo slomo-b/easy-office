@@ -30,9 +30,11 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF', 
         color: '#1f2937', 
         lineHeight: 1.5,
-        paddingHorizontal: 48,
-        paddingTop: 48,
-        paddingBottom: 320,
+        flexDirection: 'column',
+    },
+    mainContent: {
+        flexGrow: 1,
+        padding: 48,
     },
     header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 64 },
     headerLogo: { width: '50%' },
@@ -57,7 +59,7 @@ const styles = StyleSheet.create({
     totalLine: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2, fontSize: 10, color: '#4b5563' },
     totalLineMain: { fontWeight: 'bold', fontSize: 12, marginTop: 6, paddingTop: 6, borderTop: '1px solid #d1d5db', color: '#111827' },
     footer: { textAlign: 'center', fontSize: 8, color: '#6b7280', borderTop: '1px solid #e5e7eb', paddingTop: 16 },
-    qrBillContainer: { position: 'absolute', bottom: 0, left: 0, right: 0, width: '100%', height: '105mm' },
+    qrBillContainer: { width: '100%', height: '105mm' },
 });
 
 const InvoicePDF: React.FC<{ invoiceData: InvoiceData; qrCodePng: string; }> = ({ invoiceData, qrCodePng }) => {
@@ -65,54 +67,56 @@ const InvoicePDF: React.FC<{ invoiceData: InvoiceData; qrCodePng: string; }> = (
     return (
         <Document title={`Rechnung-${invoiceData.unstructuredMessage}`}>
             <Page size="A4" style={styles.page}>
-                <View style={styles.header}>
-                    <View style={styles.headerLogo}>{invoiceData.logoSrc && <Image src={invoiceData.logoSrc} style={styles.logoImage} />}</View>
-                    <View style={styles.headerCreditor}>
-                        <Text style={styles.creditorName}>{invoiceData.creditorName}</Text>
-                        <Text>{invoiceData.creditorStreet} {invoiceData.creditorHouseNr}</Text>
-                        <Text>{invoiceData.creditorZip} {invoiceData.creditorCity}</Text>
-                    </View>
-                </View>
-                <View style={styles.metaSection}>
-                    <View style={styles.metaDebtor}>
-                        <Text style={styles.metaLabel}>Zahlungspflichtig</Text>
-                        <Text style={{ fontWeight: 'bold' }}>{invoiceData.debtorName}</Text>
-                        <Text>{invoiceData.debtorStreet} {invoiceData.debtorHouseNr}</Text>
-                        <Text>{invoiceData.debtorZip} {invoiceData.debtorCity}</Text>
-                    </View>
-                    <View style={styles.metaInfo}>
-                        <Text style={styles.invoiceTitle}>RECHNUNG</Text>
-                        <View style={styles.metaLine}><Text style={styles.metaLineLabel}>Datum:</Text><Text> {new Date(invoiceData.createdAt).toLocaleDateString('de-CH')}</Text></View>
-                        <View style={styles.metaLine}><Text style={styles.metaLineLabel}>Rechnungs-Nr:</Text><Text> {invoiceData.unstructuredMessage}</Text></View>
-                        {invoiceData.projectName && (<View style={styles.metaLine}><Text style={styles.metaLineLabel}>Projekt:</Text><Text> {invoiceData.projectName}</Text></View>)}
-                    </View>
-                </View>
-                <View style={styles.table}>
-                    <View style={styles.tableHeader}>
-                        <Text style={[styles.th, { width: '50%' }]}>Beschreibung</Text>
-                        <Text style={[styles.th, { width: '15%', textAlign: 'right' }]}>Menge</Text>
-                        <Text style={[styles.th, { width: '15%', textAlign: 'right' }]}>Preis</Text>
-                        <Text style={[styles.th, { width: '20%', textAlign: 'right' }]}>Total</Text>
-                    </View>
-                    {invoiceData.items.map((item, index) => (
-                        <View key={index} style={[styles.tableRow, index % 2 !== 0 && styles.tableRowAlt]}>
-                            <Text style={[styles.td, { width: '50%', color: '#374151' }]}>{item.description}</Text>
-                            <Text style={[styles.td, { width: '15%', textAlign: 'right', color: '#4b5563' }]}>{Number(item.quantity).toFixed(2)} {item.unit}</Text>
-                            <Text style={[styles.td, { width: '15%', textAlign: 'right', color: '#4b5563' }]}>{formatAmount(item.price)}</Text>
-                            <Text style={[styles.td, { width: '20%', textAlign: 'right', fontWeight: 'bold', color: '#111827' }]}>{formatAmount(Number(item.quantity) * Number(item.price))}</Text>
+                <View style={styles.mainContent}>
+                    <View style={styles.header}>
+                        <View style={styles.headerLogo}>{invoiceData.logoSrc && <Image src={invoiceData.logoSrc} style={styles.logoImage} />}</View>
+                        <View style={styles.headerCreditor}>
+                            <Text style={styles.creditorName}>{invoiceData.creditorName}</Text>
+                            <Text>{invoiceData.creditorStreet} {invoiceData.creditorHouseNr}</Text>
+                            <Text>{invoiceData.creditorZip} {invoiceData.creditorCity}</Text>
                         </View>
-                    ))}
-                </View>
-                <View style={styles.totalsSection}>
-                    <View style={styles.totalsBox}>
-                        {invoiceData.vatEnabled ? (
-                            <><View style={styles.totalLine}><Text>Zwischentotal</Text><Text>{invoiceData.currency} {formatAmount(invoiceData.subtotal)}</Text></View><View style={styles.totalLine}><Text>MwSt.</Text><Text>{invoiceData.currency} {formatAmount(invoiceData.vatAmount)}</Text></View><View style={[styles.totalLine, styles.totalLineMain]}><Text>Total</Text><Text>{invoiceData.currency} {formatAmount(invoiceData.total)}</Text></View></>
-                        ) : (<View style={[styles.totalLine, styles.totalLineMain]}><Text>Total</Text><Text>{invoiceData.currency} {formatAmount(invoiceData.total)}</Text></View>)}
                     </View>
-                </View>
-                <View style={styles.footer}>
-                    <Text>Vielen Dank für Ihren Auftrag. Bitte begleichen Sie den Betrag innert 30 Tagen.</Text>
-                    <Text>{invoiceData.creditorName} - {invoiceData.creditorIban}</Text>
+                    <View style={styles.metaSection}>
+                        <View style={styles.metaDebtor}>
+                            <Text style={styles.metaLabel}>Zahlungspflichtig</Text>
+                            <Text style={{ fontWeight: 'bold' }}>{invoiceData.debtorName}</Text>
+                            <Text>{invoiceData.debtorStreet} {invoiceData.debtorHouseNr}</Text>
+                            <Text>{invoiceData.debtorZip} {invoiceData.debtorCity}</Text>
+                        </View>
+                        <View style={styles.metaInfo}>
+                            <Text style={styles.invoiceTitle}>RECHNUNG</Text>
+                            <View style={styles.metaLine}><Text style={styles.metaLineLabel}>Datum:</Text><Text> {new Date(invoiceData.createdAt).toLocaleDateString('de-CH')}</Text></View>
+                            <View style={styles.metaLine}><Text style={styles.metaLineLabel}>Rechnungs-Nr:</Text><Text> {invoiceData.unstructuredMessage}</Text></View>
+                            {invoiceData.projectName && (<View style={styles.metaLine}><Text style={styles.metaLineLabel}>Projekt:</Text><Text> {invoiceData.projectName}</Text></View>)}
+                        </View>
+                    </View>
+                    <View style={styles.table}>
+                        <View style={styles.tableHeader}>
+                            <Text style={[styles.th, { width: '50%' }]}>Beschreibung</Text>
+                            <Text style={[styles.th, { width: '15%', textAlign: 'right' }]}>Menge</Text>
+                            <Text style={[styles.th, { width: '15%', textAlign: 'right' }]}>Preis</Text>
+                            <Text style={[styles.th, { width: '20%', textAlign: 'right' }]}>Total</Text>
+                        </View>
+                        {invoiceData.items.map((item, index) => (
+                            <View key={index} style={[styles.tableRow, index % 2 !== 0 && styles.tableRowAlt]}>
+                                <Text style={[styles.td, { width: '50%', color: '#374151' }]}>{item.description}</Text>
+                                <Text style={[styles.td, { width: '15%', textAlign: 'right', color: '#4b5563' }]}>{Number(item.quantity).toFixed(2)} {item.unit}</Text>
+                                <Text style={[styles.td, { width: '15%', textAlign: 'right', color: '#4b5563' }]}>{formatAmount(item.price)}</Text>
+                                <Text style={[styles.td, { width: '20%', textAlign: 'right', fontWeight: 'bold', color: '#111827' }]}>{formatAmount(Number(item.quantity) * Number(item.price))}</Text>
+                            </View>
+                        ))}
+                    </View>
+                    <View style={styles.totalsSection}>
+                        <View style={styles.totalsBox}>
+                            {invoiceData.vatEnabled ? (
+                                <><View style={styles.totalLine}><Text>Zwischentotal</Text><Text>{invoiceData.currency} {formatAmount(invoiceData.subtotal)}</Text></View><View style={styles.totalLine}><Text>MwSt.</Text><Text>{invoiceData.currency} {formatAmount(invoiceData.vatAmount)}</Text></View><View style={[styles.totalLine, styles.totalLineMain]}><Text>Total</Text><Text>{invoiceData.currency} {formatAmount(invoiceData.total)}</Text></View></>
+                            ) : (<View style={[styles.totalLine, styles.totalLineMain]}><Text>Total</Text><Text>{invoiceData.currency} {formatAmount(invoiceData.total)}</Text></View>)}
+                        </View>
+                    </View>
+                    <View style={styles.footer}>
+                        <Text>Vielen Dank für Ihren Auftrag. Bitte begleichen Sie den Betrag innert 30 Tagen.</Text>
+                        <Text>{invoiceData.creditorName} - {invoiceData.creditorIban}</Text>
+                    </View>
                 </View>
                 {qrCodePng && (<Image src={qrCodePng} style={styles.qrBillContainer} />)}
             </Page>
