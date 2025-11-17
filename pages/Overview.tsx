@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { getInvoices } from '../services/invoiceService';
 import { getExpenses } from '../services/expenseService';
 import { InvoiceData, ExpenseData } from '../types';
@@ -40,17 +40,19 @@ const Overview = () => {
     const [invoices, setInvoices] = useState<InvoiceData[]>([]);
     const [expenses, setExpenses] = useState<ExpenseData[]>([]);
     const [loading, setLoading] = useState(true);
+    const location = useLocation();
+
+    const fetchData = useCallback(async () => {
+        setLoading(true);
+        const [inv, exp] = await Promise.all([getInvoices(), getExpenses()]);
+        setInvoices(inv);
+        setExpenses(exp);
+        setLoading(false);
+    }, []);
 
     useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            const [inv, exp] = await Promise.all([getInvoices(), getExpenses()]);
-            setInvoices(inv);
-            setExpenses(exp);
-            setLoading(false);
-        };
         fetchData();
-    }, []);
+    }, [fetchData, location]);
     
     const currentYear = new Date().getFullYear();
 
