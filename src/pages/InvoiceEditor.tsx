@@ -74,9 +74,9 @@ const InvoiceEditor = () => {
     setInvoiceData(prev => prev ? { ...prev, htmlTemplate: template } : null);
   };
   
-  const { mainContentHtml, qrBillHtml, fullHtmlForPdf } = useMemo(() => {
+  const fullHtml = useMemo(() => {
     if (!invoiceData) {
-      return { mainContentHtml: '', qrBillHtml: '', fullHtmlForPdf: '' };
+      return '';
     }
 
     const formatAmount = (amount: number | '') => (amount === '' ? '...' : Number(amount).toFixed(2));
@@ -103,36 +103,26 @@ const InvoiceEditor = () => {
       ? `<div style="height: 105mm; display: flex; align-items: center; justify-content: center;" class="bg-gray-200 animate-pulse text-gray-500">Generiere QR-Rechnung...</div>`
       : qrCodeSvg || `<div style="height: 105mm; display: flex; align-items: center; justify-content: center;" class="bg-gray-100 text-center text-xs text-gray-500 p-2 border border-dashed border-gray-300">QR-Rechnung kann nicht generiert werden.<br/>(Betrag muss grösser als 0 sein)</div>`;
       
-    const replacePlaceholders = (template: string) => {
-        return template
-            .replace(/{{logoImage}}/g, logoHtml)
-            .replace(/{{invoiceItems}}/g, itemsHtml)
-            .replace(/{{projectLine}}/g, projectLineHtml)
-            .replace(/{{totalsBlock}}/g, totalsBlockHtml)
-            .replace(/{{creditorName}}/g, invoiceData.creditorName)
-            .replace(/{{creditorStreet}}/g, invoiceData.creditorStreet)
-            .replace(/{{creditorHouseNr}}/g, invoiceData.creditorHouseNr)
-            .replace(/{{creditorZip}}/g, invoiceData.creditorZip)
-            .replace(/{{creditorCity}}/g, invoiceData.creditorCity)
-            .replace(/{{creditorIban}}/g, invoiceData.creditorIban)
-            .replace(/{{debtorName}}/g, invoiceData.debtorName)
-            .replace(/{{debtorStreet}}/g, invoiceData.debtorStreet)
-            .replace(/{{debtorHouseNr}}/g, invoiceData.debtorHouseNr)
-            .replace(/{{debtorZip}}/g, invoiceData.debtorZip)
-            .replace(/{{debtorCity}}/g, invoiceData.debtorCity)
-            .replace(/{{currency}}/g, invoiceData.currency)
-            .replace(/{{date}}/g, new Date(invoiceData.createdAt).toLocaleDateString('de-CH'))
-            .replace(/{{unstructuredMessage}}/g, invoiceData.unstructuredMessage)
-    };
-    
-    // For the multi-page preview, we render only the main content. The QR part is passed separately.
-    const mainTemplate = invoiceData.htmlTemplate.replace('{{qrBillSvg}}', '');
-    const mainHtmlResult = replacePlaceholders(mainTemplate);
-    
-    // For PDF and Zoom, we render the full template with the QR bill included.
-    const fullHtmlResult = replacePlaceholders(invoiceData.htmlTemplate).replace('{{qrBillSvg}}', qrHtmlResult);
-
-    return { mainContentHtml: mainHtmlResult, qrBillHtml: qrHtmlResult, fullHtmlForPdf: fullHtmlResult };
+    return invoiceData.htmlTemplate
+        .replace(/{{logoImage}}/g, logoHtml)
+        .replace(/{{qrBillSvg}}/g, qrHtmlResult)
+        .replace(/{{invoiceItems}}/g, itemsHtml)
+        .replace(/{{projectLine}}/g, projectLineHtml)
+        .replace(/{{totalsBlock}}/g, totalsBlockHtml)
+        .replace(/{{creditorName}}/g, invoiceData.creditorName)
+        .replace(/{{creditorStreet}}/g, invoiceData.creditorStreet)
+        .replace(/{{creditorHouseNr}}/g, invoiceData.creditorHouseNr)
+        .replace(/{{creditorZip}}/g, invoiceData.creditorZip)
+        .replace(/{{creditorCity}}/g, invoiceData.creditorCity)
+        .replace(/{{creditorIban}}/g, invoiceData.creditorIban)
+        .replace(/{{debtorName}}/g, invoiceData.debtorName)
+        .replace(/{{debtorStreet}}/g, invoiceData.debtorStreet)
+        .replace(/{{debtorHouseNr}}/g, invoiceData.debtorHouseNr)
+        .replace(/{{debtorZip}}/g, invoiceData.debtorZip)
+        .replace(/{{debtorCity}}/g, invoiceData.debtorCity)
+        .replace(/{{currency}}/g, invoiceData.currency)
+        .replace(/{{date}}/g, new Date(invoiceData.createdAt).toLocaleDateString('de-CH'))
+        .replace(/{{unstructuredMessage}}/g, invoiceData.unstructuredMessage);
 
   }, [invoiceData, qrCodeSvg, isLoadingQr]);
 
@@ -153,7 +143,7 @@ const InvoiceEditor = () => {
     printContainer.style.position = 'absolute';
     printContainer.style.left = '-9999px';
     document.body.appendChild(printContainer);
-    printContainer.innerHTML = fullHtmlForPdf;
+    printContainer.innerHTML = fullHtml;
     
     const elementToRender = printContainer.querySelector<HTMLElement>('#print-area');
     if (!elementToRender) {
@@ -213,7 +203,7 @@ const InvoiceEditor = () => {
                     >
                         <X size={24} />
                     </button>
-                    <div dangerouslySetInnerHTML={{ __html: fullHtmlForPdf }} />
+                    <div dangerouslySetInnerHTML={{ __html: fullHtml }} />
                 </div>
             </div>
         )}
@@ -242,8 +232,7 @@ const InvoiceEditor = () => {
             </div>
             <div className="w-full lg:w-[420px] flex-shrink-0">
               <InvoicePreview 
-                  mainContent={mainContentHtml}
-                  qrBill={qrBillHtml}
+                  processedTemplate={fullHtml}
                   onZoomClick={() => setIsZoomModalOpen(true)}
               />
             </div>
