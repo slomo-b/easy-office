@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ExpenseData } from '../types';
 import { ChevronDown } from 'lucide-react';

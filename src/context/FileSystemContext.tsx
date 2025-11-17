@@ -8,7 +8,6 @@ interface FileSystemContextType {
 
 const FileSystemContext = createContext<FileSystemContextType | undefined>(undefined);
 
-// FIX: Use PropsWithChildren for components that accept children.
 export const FileSystemProvider = ({ children }: PropsWithChildren) => {
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);

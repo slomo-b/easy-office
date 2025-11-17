@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { RecurringExpenseData } from '../types';
 import { ChevronDown } from 'lucide-react';

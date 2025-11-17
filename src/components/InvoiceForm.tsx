@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { InvoiceData, CustomerData, InvoiceItem } from '../types';
 import { Trash2, ChevronDown } from 'lucide-react';

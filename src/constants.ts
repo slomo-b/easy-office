@@ -1,4 +1,3 @@
-
 import { InvoiceData, ExpenseData } from './types';
 
 export const DEFAULT_HTML_TEMPLATE = `
