@@ -32,15 +32,13 @@ const Settings = () => {
     setSettings(prev => prev ? { ...prev, [field]: value } : null);
   };
 
-  const handleLogoChange = (file: File) => {
+  const handleLogoChange = (file: File | null) => {
     if (file && file.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onload = (e) => {
          setSettings(prev => prev ? { ...prev, logoSrc: e.target?.result as string } : null);
       };
       reader.readAsDataURL(file);
-    } else {
-       setSettings(prev => prev ? { ...prev, logoSrc: '' } : null);
     }
   };
 

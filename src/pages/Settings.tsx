@@ -27,19 +27,17 @@ const Settings = () => {
       setTimeout(() => setMessage(null), 4000);
   };
 
-  const handleDataChange = (field: keyof SettingsData, value: string | number) => {
+  const handleDataChange = (field: keyof SettingsData, value: string | number | boolean) => {
     setSettings(prev => prev ? { ...prev, [field]: value } : null);
   };
 
-  const handleLogoChange = (file: File) => {
+  const handleLogoChange = (file: File | null) => {
     if (file && file.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onload = (e) => {
          setSettings(prev => prev ? { ...prev, logoSrc: e.target?.result as string } : null);
       };
       reader.readAsDataURL(file);
-    } else {
-       setSettings(prev => prev ? { ...prev, logoSrc: '' } : null);
     }
   };
 
@@ -159,5 +157,4 @@ const Settings = () => {
   );
 };
 
-// FIX: Add default export to be consumed by App.tsx
 export default Settings;

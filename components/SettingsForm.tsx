@@ -5,7 +5,7 @@ import { SettingsData } from '../types';
 interface SettingsFormProps {
   data: SettingsData;
   onDataChange: (field: keyof SettingsData, value: string | number | boolean) => void;
-  onLogoChange: (file: File) => void;
+  onLogoChange: (file: File | null) => void;
 }
 
 const InputField: React.FC<{
@@ -53,9 +53,7 @@ const SettingsForm: React.FC<SettingsFormProps> = ({ data, onDataChange, onLogoC
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      onLogoChange(e.target.files[0]);
-    }
+    onLogoChange(e.target.files?.[0] || null);
   };
 
   return (
@@ -96,6 +94,7 @@ const SettingsForm: React.FC<SettingsFormProps> = ({ data, onDataChange, onLogoC
                 onChange={handleFileChange}
                 className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-emerald-500 file:text-white hover:file:bg-emerald-600"
             />
+            {data.logoSrc && <button type="button" onClick={() => onDataChange('logoSrc', '')} className="text-sm font-semibold text-red-500 hover:text-red-400">Löschen</button>}
           </div>
       </div>
 
