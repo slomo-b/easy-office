@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { InvoiceData, CustomerData, InvoiceItem, SettingsData } from '../types';
@@ -8,8 +7,8 @@ import { getSettings } from '../services/settingsService';
 import { generateQrCode } from '../services/qrBillService';
 import InvoiceForm from '../components/InvoiceForm';
 import InvoicePreview from '../components/InvoicePreview';
-import { Download } from 'lucide-react';
-import { Document, Page, View, Text, StyleSheet, Image, Font } from '@react-pdf/renderer';
+import { Download, X } from 'lucide-react';
+import { Document, Page, View, Text, StyleSheet, Image, Font, PDFViewer } from '@react-pdf/renderer';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 
 // --- PDF Document Component ---
@@ -275,6 +274,7 @@ const InvoiceEditor = () => {
   const [customers, setCustomers] = useState<CustomerData[]>([]);
   const [qrCodeSvg, setQrCodeSvg] = useState<string>('');
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [isZoomModalOpen, setIsZoomModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -367,6 +367,27 @@ const InvoiceEditor = () => {
 
   return (
     <div>
+        {isZoomModalOpen && (
+            <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setIsZoomModalOpen(false)}>
+                <div className="relative bg-gray-900 rounded-md shadow-2xl h-[95vh] w-[95vw] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+                    <div className="flex justify-end p-2">
+                        <button 
+                            onClick={() => setIsZoomModalOpen(false)} 
+                            className="z-10 p-1.5 bg-gray-800 text-white rounded-full hover:bg-gray-700 transition-colors"
+                            aria-label="Vorschau schliessen"
+                        >
+                            <X size={24} />
+                        </button>
+                    </div>
+                    <div className="flex-grow min-h-0">
+                        <PDFViewer width="100%" height="100%" style={{ border: 'none' }}>
+                        {invoicePdfDocument}
+                        </PDFViewer>
+                    </div>
+                </div>
+            </div>
+        )}
+
         <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-bold text-white">{id ? 'Rechnung bearbeiten' : 'Neue Rechnung erstellen'}</h2>
             <div className="flex items-center gap-2">
@@ -409,7 +430,7 @@ const InvoiceEditor = () => {
             
             <div className="lg:w-1/3">
               <div className="sticky top-6">
-                  <InvoicePreview>
+                  <InvoicePreview onZoomClick={() => setIsZoomModalOpen(true)}>
                      {invoicePdfDocument}
                   </InvoicePreview>
               </div>
