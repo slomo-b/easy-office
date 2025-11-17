@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Overview from './pages/Overview';
@@ -18,6 +18,7 @@ import { useFileSystem } from './context/FileSystemContext';
 
 function App() {
   const { isReady, error } = useFileSystem();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   if (error) {
     return (
@@ -42,7 +43,7 @@ function App() {
 
   return (
     <div className="flex h-screen bg-gray-900 text-gray-200 font-sans">
-      <Sidebar />
+      <Sidebar isCollapsed={isSidebarCollapsed} setIsCollapsed={setIsSidebarCollapsed} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-6">
           <Routes>

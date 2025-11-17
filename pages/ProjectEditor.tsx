@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ProjectData, CustomerData, ServiceData, TaskData, ExpenseData, TaskStatus, TaskTimeLog } from '../types';
 import { getProjectById, saveProject, createNewProject, deleteProject } from '../services/projectService';
 import { getCustomers } from '../services/customerService';
 import { getServices } from '../services/serviceService';
-import { getExpenses } from '../services/expenseService';
+import { getExpenses, createNewExpense, saveExpense } from '../services/expenseService';
+import ExpenseForm from '../components/ExpenseForm';
 import { createInvoiceFromProject } from '../services/invoiceService';
-import { Play, Square, PlusCircle, Trash2 } from 'lucide-react';
+import { Play, Square, PlusCircle, Trash2, Clock } from 'lucide-react';
 
 const formatDuration = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -40,6 +41,13 @@ const ProjectEditor = () => {
     const [elapsedTime, setElapsedTime] = useState(0);
     const [showNewTaskFormForStatus, setShowNewTaskFormForStatus] = useState<TaskStatus | null>(null);
     const [newTaskData, setNewTaskData] = useState({ title: '', description: '', serviceId: '' });
+
+    // Modal states
+    const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+    const [newExpenseData, setNewExpenseData] = useState<ExpenseData | null>(null);
+    const [isTimeLogModalOpen, setIsTimeLogModalOpen] = useState(false);
+    const [selectedTaskForTimeLog, setSelectedTaskForTimeLog] = useState<TaskData | null>(null);
+    const [manualLog, setManualLog] = useState({ start: '', end: '' });
 
     const loadData = useCallback(async () => {
         const [fetchedCustomers, fetchedServices, allExpenses] = await Promise.all([getCustomers(), getServices(), getExpenses()]);
@@ -215,6 +223,62 @@ const ProjectEditor = () => {
             setIsSaving(false);
         }
     };
+    
+    // --- Modal Handlers ---
+
+    const openNewExpenseModal = () => {
+        if (!project) return;
+        setNewExpenseData(createNewExpense(project.id));
+        setIsExpenseModalOpen(true);
+    };
+
+    const handleSaveExpense = async () => {
+        if (!newExpenseData) return;
+        await saveExpense(newExpenseData);
+        setIsExpenseModalOpen(false);
+        setNewExpenseData(null);
+        // Reload expenses
+        const allExpenses = await getExpenses();
+        setProjectExpenses(allExpenses.filter(e => e.projectId === id));
+    };
+    
+    const openManualTimeLogModal = (task: TaskData) => {
+        setSelectedTaskForTimeLog(task);
+        const now = new Date();
+        const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+        // Format for datetime-local input: YYYY-MM-DDTHH:mm
+        const formatForInput = (date: Date) => new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        setManualLog({ start: formatForInput(oneHourAgo), end: formatForInput(now) });
+        setIsTimeLogModalOpen(true);
+    };
+
+    const handleSaveManualLog = () => {
+        if (!project || !selectedTaskForTimeLog || !manualLog.start || !manualLog.end) return;
+        
+        const startDate = new Date(manualLog.start);
+        const endDate = new Date(manualLog.end);
+
+        if (endDate <= startDate) {
+            alert("Endzeitpunkt muss nach dem Startzeitpunkt liegen.");
+            return;
+        }
+        
+        const newLog: TaskTimeLog = {
+            startTime: startDate.toISOString(),
+            endTime: endDate.toISOString(),
+        };
+        
+        const updatedTasks = project.tasks.map(task => {
+            if (task.id === selectedTaskForTimeLog.id) {
+                return { ...task, timeLogs: [...task.timeLogs, newLog] };
+            }
+            return task;
+        });
+        
+        setProject({ ...project, tasks: updatedTasks });
+        setIsTimeLogModalOpen(false);
+    };
+
 
     if (!project) return <div className="text-center p-10">Lade Projektdaten...</div>;
     
@@ -241,6 +305,7 @@ const ProjectEditor = () => {
                     <span className="text-xs font-semibold bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full">{service?.name || '...'}</span>
                     <div className="flex items-center gap-2">
                         <span className="text-sm font-mono text-white">{formatDuration(totalDurationMs)}</span>
+                        <button onClick={() => openManualTimeLogModal(task)} className="p-1 text-gray-400 hover:text-white"><Clock size={16} /></button>
                         <button onClick={() => handleTimerToggle(task.id)} className={`p-1 rounded-full ${isRunning ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>
                             {isRunning ? <Square size={16} fill="white" /> : <Play size={16} fill="white" />}
                         </button>
@@ -258,6 +323,45 @@ const ProjectEditor = () => {
 
     return (
         <div>
+            {/* --- Modals --- */}
+            {isExpenseModalOpen && newExpenseData && (
+                <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+                     <div className="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-2xl">
+                         <h3 className="text-xl font-bold mb-4 text-white">Neue Projektausgabe</h3>
+                         <ExpenseForm 
+                             data={newExpenseData}
+                             onDataChange={(field, value) => setNewExpenseData(prev => prev ? { ...prev, [field]: value } : null)}
+                         />
+                         <div className="flex justify-end gap-4 mt-6">
+                            <button onClick={() => setIsExpenseModalOpen(false)} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Abbrechen</button>
+                            <button onClick={handleSaveExpense} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg">Speichern</button>
+                         </div>
+                     </div>
+                </div>
+            )}
+            {isTimeLogModalOpen && selectedTaskForTimeLog && (
+              <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+                <div className="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md">
+                  <h3 className="text-xl font-bold mb-4 text-white">Zeit manuell erfassen für: <span className="text-emerald-400">{selectedTaskForTimeLog.title}</span></h3>
+                  <div className="space-y-4">
+                      <div>
+                          <label className="text-sm text-gray-400 mb-1 block">Startzeitpunkt</label>
+                          <input type="datetime-local" value={manualLog.start} onChange={e => setManualLog(prev => ({...prev, start: e.target.value}))} className="w-full bg-gray-700 border-gray-600 rounded px-3 py-2 text-white"/>
+                      </div>
+                      <div>
+                          <label className="text-sm text-gray-400 mb-1 block">Endzeitpunkt</label>
+                          <input type="datetime-local" value={manualLog.end} onChange={e => setManualLog(prev => ({...prev, end: e.target.value}))} className="w-full bg-gray-700 border-gray-600 rounded px-3 py-2 text-white"/>
+                      </div>
+                  </div>
+                  <div className="flex justify-end gap-4 mt-6">
+                    <button onClick={() => setIsTimeLogModalOpen(false)} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Abbrechen</button>
+                    <button onClick={handleSaveManualLog} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg">Speichern</button>
+                 </div>
+                </div>
+              </div>
+            )}
+
+            {/* --- Page Content --- */}
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-3xl font-bold text-white">{id ? 'Projekt bearbeiten' : 'Neues Projekt erstellen'}</h2>
                 <div className="flex items-center gap-4">
@@ -304,7 +408,7 @@ const ProjectEditor = () => {
                     <div className="bg-gray-800 p-4 rounded-lg shadow-md">
                         <div className="flex justify-between items-center border-b border-gray-700 pb-2 mb-4">
                             <h3 className="text-lg font-semibold text-emerald-400">Projektausgaben</h3>
-                            {id && <Link to={`/expense/new?projectId=${project.id}`} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-1 px-3 rounded-md text-sm">Neue Ausgabe</Link>}
+                            {id && <button onClick={openNewExpenseModal} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-1 px-3 rounded-md text-sm">Neue Ausgabe</button>}
                         </div>
                         <ul className="space-y-2">
                            {projectExpenses.map(expense => (
