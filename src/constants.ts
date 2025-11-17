@@ -1,10 +1,11 @@
+
 import { InvoiceData, ExpenseData } from './types';
 
 export const DEFAULT_HTML_TEMPLATE = `
-<div id="print-area" class="bg-white text-gray-800" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; font-size: 10pt; line-height: 1.6; width: 210mm; position: relative; margin: auto; padding-bottom: 105mm;">
+<div id="print-area" class="bg-white text-gray-800" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; font-size: 10pt; line-height: 1.6; width: 210mm; min-height: 297mm; margin: auto; display: flex; flex-direction: column;">
 
-    <!-- Main invoice content with padding -->
-    <div class="p-12">
+    <!-- Main invoice content with padding, grows to fill available space -->
+    <div class="p-12" style="flex-grow: 1;">
         <!-- Header -->
         <header class="flex justify-between items-start mb-16">
             <div class="w-1/2">
@@ -69,8 +70,8 @@ export const DEFAULT_HTML_TEMPLATE = `
     </div>
 
 
-    <!-- QR Bill Section - Absolutely positioned at the bottom -->
-    <div style="position: absolute; bottom: 0; left: 0; width: 210mm; height: 105mm; page-break-inside: avoid;">
+    <!-- QR Bill Section - Placed at the end of the flex container -->
+    <div style="width: 210mm; height: 105mm; page-break-inside: avoid; flex-shrink: 0;">
         {{qrBillSvg}}
     </div>
 </div>
