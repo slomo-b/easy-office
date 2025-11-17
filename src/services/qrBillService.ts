@@ -1,8 +1,7 @@
 import { InvoiceData } from "../types";
-// Use the standard package import. Vite will resolve this to the correct browser-specific
-// module using the 'browser' field in the package.json, which is the correct and
-// most robust way to handle this. This avoids errors with Vite's dependency scanner.
-import { Generator } from 'swissqrbill';
+// Use the explicit browser entry point provided by the package.
+// This is the correct way to import it, as its package.json is missing the default "." export specifier.
+import { Generator } from 'swissqrbill/browser';
 
 export async function generateQrCode(data: InvoiceData): Promise<string> {
   if (!data || !data.total || Number(data.total) <= 0) {
