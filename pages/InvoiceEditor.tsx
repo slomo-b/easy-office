@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { InvoiceData, CustomerData, InvoiceItem, SettingsData } from '../types';
 import { getInvoiceById, saveInvoice, createNewInvoice, calculateInvoiceTotals } from '../services/invoiceService';
@@ -9,7 +9,7 @@ import { generateQrCode } from '../services/qrBillService';
 import InvoiceForm from '../components/InvoiceForm';
 import InvoicePreview from '../components/InvoicePreview';
 import HtmlEditor from '../components/HtmlEditor';
-import { Download, Printer } from 'lucide-react';
+import { Download, Printer, ZoomIn, X } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 
 const InvoiceEditor = () => {
@@ -22,6 +22,7 @@ const InvoiceEditor = () => {
   const [isLoadingQr, setIsLoadingQr] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState<boolean>(false);
+  const [isZoomModalOpen, setIsZoomModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -105,6 +106,81 @@ const InvoiceEditor = () => {
   const handleTemplateChange = (template: string) => {
     setInvoiceData(prev => prev ? { ...prev, htmlTemplate: template } : null);
   };
+  
+  // FIX: Added logic to process the invoice template with data, which is then passed to the InvoicePreview component.
+  const processedTemplate = useMemo(() => {
+    if (!invoiceData) return '';
+
+    const formatAmount = (amount: number | '') => {
+        if (amount === '') return '...';
+        return Number(amount).toFixed(2);
+    }
+  
+    const logoHtml = invoiceData.logoSrc 
+      ? `<img src="${invoiceData.logoSrc}" alt="Firmenlogo" style="max-height: 80px;"/>`
+      : `<div class="h-20 w-40 flex items-center justify-center text-gray-500 text-sm" style="background-color: #f3f4f6; border: 1px dashed #d1d5db; border-radius: 0.5rem;">Ihr Logo</div>`;
+  
+    let qrBillHtml: string;
+    if (isLoadingQr) {
+      qrBillHtml = `<div style="height: 105mm; display: flex; align-items: center; justify-content: center;" class="bg-gray-200 animate-pulse text-gray-500">Generiere QR-Rechnung...</div>`;
+    } else if (qrCodeSvg) {
+      qrBillHtml = qrCodeSvg;
+    } else {
+      qrBillHtml = `<div style="height: 105mm; display: flex; align-items: center; justify-content: center;" class="bg-gray-100 text-center text-xs text-gray-500 p-2 border border-dashed border-gray-300">QR-Rechnung kann nicht generiert werden.<br/>(Betrag muss grösser als 0 sein)</div>`;
+    }
+    
+    const itemsHtml = invoiceData.items.map((item, index) => {
+      const quantity = Number(item.quantity);
+      const price = Number(item.price);
+      const total = quantity * price;
+      const isEven = index % 2 === 0;
+      const rowClass = isEven ? 'bg-gray-50' : '';
+  
+      return `
+          <tr class="${rowClass}">
+              <td class="py-3 px-4 text-gray-800">${item.description}</td>
+              <td class="text-right py-3 px-4 text-gray-600">${quantity.toFixed(2)} ${item.unit}</td>
+              <td class="text-right py-3 px-4 text-gray-600">${formatAmount(price)}</td>
+              <td class="text-right py-3 px-4 font-semibold text-gray-800">${formatAmount(total)}</td>
+          </tr>
+      `;
+    }).join('');
+    
+    const projectLineHtml = invoiceData.projectName 
+      ? `<p><span class="font-semibold text-gray-600">Projekt:</span> ${invoiceData.projectName}</p>`
+      : '';
+  
+    const totalsBlockHtml = invoiceData.vatEnabled
+      ? `<div class="text-sm">
+          <div class="flex justify-between py-1 text-gray-600"><span>Zwischentotal</span><span>${invoiceData.currency} ${formatAmount(invoiceData.subtotal)}</span></div>
+          <div class="flex justify-between py-1 text-gray-600"><span>MwSt.</span><span>${invoiceData.currency} ${formatAmount(invoiceData.vatAmount)}</span></div>
+          <div class="flex justify-between py-2 font-bold text-lg text-gray-900 border-t border-gray-300 mt-2"><span>Total</span><span>${invoiceData.currency} ${formatAmount(invoiceData.total)}</span></div>
+         </div>`
+      : `<div class="flex justify-between py-2 font-bold text-lg text-gray-900"><span>Total</span><span>${invoiceData.currency} ${formatAmount(invoiceData.total)}</span></div>`;
+  
+    return invoiceData.htmlTemplate
+      .replace(/{{logoImage}}/g, logoHtml)
+      .replace(/{{qrBillSvg}}/g, qrBillHtml)
+      .replace(/{{invoiceItems}}/g, itemsHtml)
+      .replace(/{{projectLine}}/g, projectLineHtml)
+      .replace(/{{totalsBlock}}/g, totalsBlockHtml)
+      .replace(/{{creditorName}}/g, invoiceData.creditorName)
+      .replace(/{{creditorStreet}}/g, invoiceData.creditorStreet)
+      .replace(/{{creditorHouseNr}}/g, invoiceData.creditorHouseNr)
+      .replace(/{{creditorZip}}/g, invoiceData.creditorZip)
+      .replace(/{{creditorCity}}/g, invoiceData.creditorCity)
+      .replace(/{{creditorIban}}/g, invoiceData.creditorIban)
+      .replace(/{{debtorName}}/g, invoiceData.debtorName)
+      .replace(/{{debtorStreet}}/g, invoiceData.debtorStreet)
+      .replace(/{{debtorHouseNr}}/g, invoiceData.debtorHouseNr)
+      .replace(/{{debtorZip}}/g, invoiceData.debtorZip)
+      .replace(/{{debtorCity}}/g, invoiceData.debtorCity)
+      .replace(/{{currency}}/g, invoiceData.currency)
+      .replace(/{{amount}}/g, formatAmount(invoiceData.total))
+      .replace(/{{reference}}/g, invoiceData.reference)
+      .replace(/{{unstructuredMessage}}/g, invoiceData.unstructuredMessage)
+  }, [invoiceData, qrCodeSvg, isLoadingQr]);
+
 
   const handleSave = async () => {
     if (invoiceData) {
@@ -122,7 +198,20 @@ const InvoiceEditor = () => {
   const handleDownloadPdf = () => {
     if (!invoiceData) return;
     setIsDownloadingPdf(true);
-    const element = document.getElementById('print-area');
+    
+    // Create a temporary element to render the template for PDF generation
+    const printElement = document.createElement('div');
+    printElement.innerHTML = processedTemplate;
+    document.body.appendChild(printElement);
+    const elementToPrint = printElement.querySelector('#print-area');
+
+    if (!elementToPrint) {
+      console.error("Could not find #print-area for PDF generation.");
+      setIsDownloadingPdf(false);
+      document.body.removeChild(printElement);
+      return;
+    }
+
     const opt = {
       margin:       0,
       filename:     `Rechnung-${invoiceData.unstructuredMessage || invoiceData.id}.pdf`,
@@ -131,8 +220,9 @@ const InvoiceEditor = () => {
       jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    html2pdf().from(element).set(opt).save().then(() => {
+    html2pdf().from(elementToPrint).set(opt).save().then(() => {
         setIsDownloadingPdf(false);
+        document.body.removeChild(printElement);
     });
   };
 
@@ -143,6 +233,21 @@ const InvoiceEditor = () => {
 
   return (
     <div>
+        {isZoomModalOpen && (
+            <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setIsZoomModalOpen(false)}>
+                <div className="relative bg-white rounded-md shadow-2xl h-full w-auto overflow-y-auto" onClick={e => e.stopPropagation()}>
+                    <button 
+                        onClick={() => setIsZoomModalOpen(false)} 
+                        className="sticky top-2 right-2 ml-auto block z-10 p-1.5 bg-gray-800 text-white rounded-full hover:bg-gray-700 transition-colors"
+                        aria-label="Vorschau schliessen"
+                    >
+                        <X size={24} />
+                    </button>
+                    <div dangerouslySetInnerHTML={{ __html: processedTemplate }} />
+                </div>
+            </div>
+        )}
+
         <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-bold text-white">{id ? 'Rechnung bearbeiten' : 'Neue Rechnung erstellen'}</h2>
             <div className="flex items-center gap-2">
@@ -185,12 +290,19 @@ const InvoiceEditor = () => {
             />
             </div>
             
-            <div className="lg:w-2/3">
-            <InvoicePreview
-                data={invoiceData}
-                qrCodeSvg={qrCodeSvg}
-                isLoadingQr={isLoadingQr}
-            />
+            <div className="lg:w-2/3 relative">
+                 <button
+                    onClick={() => setIsZoomModalOpen(true)}
+                    className="absolute top-6 right-6 z-10 p-2 bg-gray-900/40 text-white rounded-full hover:bg-gray-900/60 transition-all"
+                    title="Vorschau vergrössern"
+                    aria-label="Vorschau vergrössern"
+                >
+                    <ZoomIn size={20} />
+                </button>
+                {/* FIX: Passed the processedTemplate prop to InvoicePreview instead of individual data props. */}
+                <InvoicePreview
+                    processedTemplate={processedTemplate}
+                />
             </div>
         </main>
     </div>
