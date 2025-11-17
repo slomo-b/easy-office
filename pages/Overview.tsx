@@ -72,19 +72,21 @@ const Overview = () => {
         }
     });
     
-    // Total expenses calculation should only include actual, realized expenses.
-    const yearlyExpenses = expenses.filter(exp => new Date(exp.date).getFullYear() === currentYear);
-
     const totalIncome = yearlyInvoices.reduce((sum, inv) => sum + Number(inv.amount), 0);
+    
+    // Calculate total expenses based *only* on the actual, created expense records for the current year.
+    // This reflects what has actually been paid/recorded, not a forecast.
+    const yearlyExpenses = expenses.filter(exp => new Date(exp.date).getFullYear() === currentYear);
     const totalExpenses = yearlyExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
+
     const profit = totalIncome - totalExpenses;
 
-    // Combine one-time and recurring expenses for the "Recent Expenses" list
+    // For the list view, combine one-time expenses with upcoming recurring expenses to give a full overview.
     const combinedExpensesForList: ExpenseData[] = [
         ...expenses,
         ...recurringExpenses.map(r => ({
             id: r.id,
-            date: r.nextDueDate, // Use nextDueDate for sorting and display
+            date: r.nextDueDate, 
             vendor: r.vendor,
             description: `${r.description} (Nächste Fälligkeit)`,
             amount: r.amount,
