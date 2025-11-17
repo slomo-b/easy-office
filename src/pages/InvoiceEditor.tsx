@@ -278,32 +278,35 @@ const InvoiceEditor = () => {
         </div>
         
         <main className="flex flex-col lg:flex-row gap-6">
-            <div className="lg:w-1/3 flex flex-col gap-6">
-            <InvoiceForm 
-                data={invoiceData}
-                customers={customers}
-                onDataChange={handleDataChange}
-                defaultVatRate={settings.vatRate}
-            />
-            <HtmlEditor
-                template={invoiceData.htmlTemplate}
-                onTemplateChange={handleTemplateChange}
-            />
+            <div className="lg:w-2/3 flex flex-col gap-6">
+              <InvoiceForm 
+                  data={invoiceData}
+                  customers={customers}
+                  onDataChange={handleDataChange}
+                  defaultVatRate={settings.vatRate}
+              />
+              <HtmlEditor
+                  template={invoiceData.htmlTemplate}
+                  onTemplateChange={handleTemplateChange}
+              />
             </div>
             
-            <div className="lg:w-2/3 relative">
-                 <button
-                    onClick={() => setIsZoomModalOpen(true)}
-                    className="absolute top-6 right-6 z-10 p-2 bg-gray-900/40 text-white rounded-full hover:bg-gray-900/60 transition-all"
-                    title="Vorschau vergrössern"
-                    aria-label="Vorschau vergrössern"
-                >
-                    <ZoomIn size={20} />
-                </button>
-                {/* FIX: Passed the processedTemplate prop to InvoicePreview instead of individual data props. */}
-                <InvoicePreview
-                    processedTemplate={processedTemplate}
-                />
+            <div className="lg:w-1/3">
+              <div className="sticky top-6">
+                <div className="relative">
+                  <button
+                      onClick={() => setIsZoomModalOpen(true)}
+                      className="absolute top-6 right-6 z-10 p-2 bg-gray-900/40 text-white rounded-full hover:bg-gray-900/60 transition-all"
+                      title="Vorschau vergrössern"
+                      aria-label="Vorschau vergrössern"
+                  >
+                      <ZoomIn size={20} />
+                  </button>
+                  <InvoicePreview
+                      processedTemplate={processedTemplate}
+                  />
+                </div>
+              </div>
             </div>
         </main>
     </div>
