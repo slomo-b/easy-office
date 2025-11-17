@@ -3,7 +3,7 @@ import { SettingsData } from '../types';
 
 interface SettingsFormProps {
   data: SettingsData;
-  onDataChange: (field: keyof SettingsData, value: string | number) => void;
+  onDataChange: (field: keyof SettingsData, value: string | number | boolean) => void;
   onLogoChange: (file: File) => void;
 }
 
@@ -26,6 +26,7 @@ const InputField: React.FC<{
       value={value}
       onChange={onChange}
       className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+      step={type === 'number' ? '0.01' : undefined}
     />
   </div>
 );
@@ -41,8 +42,14 @@ const FormSection: React.FC<{ title: string; children: React.ReactNode }> = ({ t
 
 const SettingsForm: React.FC<SettingsFormProps> = ({ data, onDataChange, onLogoChange }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    onDataChange(name as keyof SettingsData, value);
+    // FIX: Cast target to HTMLInputElement to safely access properties like `type` and `checked`.
+    const target = e.target as HTMLInputElement;
+    const { name, value, type } = target;
+    if (type === 'checkbox') {
+        onDataChange(name as keyof SettingsData, target.checked);
+    } else {
+        onDataChange(name as keyof SettingsData, type === 'number' ? parseFloat(value) || 0 : value);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,6 +69,25 @@ const SettingsForm: React.FC<SettingsFormProps> = ({ data, onDataChange, onLogoC
         <InputField label="Ort" id="creditorCity" value={data.creditorCity} onChange={handleChange} />
         <InputField label="Land" id="creditorCountry" value={data.creditorCountry} onChange={handleChange} className="col-span-2" />
       </FormSection>
+
+      <div className="bg-gray-800 p-6 rounded-lg shadow-md">
+        <h3 className="text-lg font-semibold text-emerald-400 border-b border-gray-700 pb-2 mb-4">Mehrwertsteuer (MwSt.)</h3>
+         <div className="flex items-center justify-between">
+            <div>
+                 <p className="text-gray-300">Standardmässig MwSt. auf Rechnungen aktivieren</p>
+                 <p className="text-sm text-gray-500">Dies kann pro Rechnung überschrieben werden.</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" name="isVatEnabled" checked={data.isVatEnabled} onChange={handleChange} className="sr-only peer" />
+                <div className="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-2 peer-focus:ring-emerald-500 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+            </label>
+        </div>
+        {data.isVatEnabled && (
+            <div className="mt-4 pt-4 border-t border-gray-700">
+                <InputField label="Standard MwSt.-Satz (%)" id="vatRate" value={data.vatRate} onChange={handleChange} type="number" />
+            </div>
+        )}
+      </div>
       
        <div className="bg-gray-800 p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold text-emerald-400 border-b border-gray-700 pb-2 mb-4">Firmenlogo</h3>

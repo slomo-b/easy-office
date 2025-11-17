@@ -1,9 +1,29 @@
-import { InvoiceData, InvoiceItem, ProjectData, CustomerData, ServiceData, ExpenseData } from '../types';
+import { InvoiceData, InvoiceItem, ProjectData, CustomerData, ServiceData, ExpenseData, SettingsData } from '../types';
 import { DEFAULT_INVOICE_DATA, DEFAULT_HTML_TEMPLATE } from '../constants';
 import * as fileSystem from './fileSystem';
 import { getSettings } from './settingsService';
 
 const INVOICES_DIR = 'invoices';
+
+const calculateInvoiceTotals = (items: InvoiceItem[], vatEnabled: boolean): { subtotal: number, vatAmount: number, total: number } => {
+    let subtotal = 0;
+    let vatAmount = 0;
+
+    for (const item of items) {
+        const quantity = Number(item.quantity) || 0;
+        const price = Number(item.price) || 0;
+        const itemTotal = quantity * price;
+        subtotal += itemTotal;
+        
+        if (vatEnabled) {
+            const rate = Number(item.vatRate) || 0;
+            vatAmount += itemTotal * (rate / 100);
+        }
+    }
+    
+    const total = subtotal + vatAmount;
+    return { subtotal, vatAmount, total };
+}
 
 export const getInvoices = async (): Promise<InvoiceData[]> => {
   try {
@@ -11,7 +31,8 @@ export const getInvoices = async (): Promise<InvoiceData[]> => {
     const invoices = await Promise.all(
       fileNames.map(fileName => fileSystem.readFile<InvoiceData>(`${INVOICES_DIR}/${fileName}`))
     );
-    return invoices.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // Fallback for sorting older invoices without createdAt
+    return invoices.sort((a, b) => (b.createdAt || b.id.split('_')[1] || '').localeCompare(a.createdAt || a.id.split('_')[1] || ''));
   } catch (error) {
     console.error('Error reading invoices from file system', error);
     return [];
@@ -28,14 +49,15 @@ export const getInvoiceById = async (id: string): Promise<InvoiceData | undefine
 };
 
 export const saveInvoice = async (invoice: InvoiceData): Promise<InvoiceData> => {
-   // Ensure total amount is correctly calculated before saving
-   const totalAmount = invoice.items.reduce((sum, item) => {
-       const quantity = Number(item.quantity) || 0;
-       const price = Number(item.price) || 0;
-       return sum + (quantity * price);
-   }, 0);
+   // Ensure totals are correctly calculated before saving
+   const { subtotal, vatAmount, total } = calculateInvoiceTotals(invoice.items, invoice.vatEnabled);
    
-   const invoiceToSave = { ...invoice, amount: totalAmount };
+   const invoiceToSave: InvoiceData = { 
+       ...invoice, 
+       subtotal,
+       vatAmount,
+       total 
+    };
 
    try {
     await fileSystem.writeFile(`${INVOICES_DIR}/${invoiceToSave.id}.json`, invoiceToSave);
@@ -46,9 +68,7 @@ export const saveInvoice = async (invoice: InvoiceData): Promise<InvoiceData> =>
   return invoiceToSave;
 };
 
-export const createNewInvoice = async (): Promise<InvoiceData> => {
-  const settings = await getSettings();
-  
+export const createNewInvoice = async (settings: SettingsData): Promise<InvoiceData> => {
   // Generate sequential invoice number
   const allInvoices = await getInvoices();
   const currentYear = new Date().getFullYear();
@@ -77,18 +97,32 @@ export const createNewInvoice = async (): Promise<InvoiceData> => {
     logoSrc: settings.logoSrc,
   };
 
+  // FIX: Explicitly type `newItems` as InvoiceItem[] to prevent TypeScript from inferring `price` as a generic `string`.
+  const newItems: InvoiceItem[] = [{
+      description: '',
+      quantity: 1,
+      unit: 'Stunde',
+      price: '',
+      vatRate: settings.isVatEnabled ? settings.vatRate : ''
+  }];
+
+  const { subtotal, vatAmount, total } = calculateInvoiceTotals(newItems, settings.isVatEnabled);
+
   return {
     id: `inv_${new Date().getTime()}_${Math.random().toString(36).substring(2, 9)}`,
     ...DEFAULT_INVOICE_DATA,
     ...creditorData,
-    unstructuredMessage: newInvoiceNumber,
-    reference: '',
-    items: [],
-    amount: 0,
-    htmlTemplate: DEFAULT_HTML_TEMPLATE,
     createdAt: new Date().toISOString(),
-    paidAt: null,
+    unstructuredMessage: newInvoiceNumber,
+    reference: newInvoiceNumber,
+    items: newItems,
+    vatEnabled: settings.isVatEnabled,
+    subtotal,
+    vatAmount,
+    total,
+    htmlTemplate: DEFAULT_HTML_TEMPLATE,
     status: 'open',
+    paidAt: null,
   };
 };
 
@@ -105,9 +139,10 @@ export const createInvoiceFromProject = async (
     project: ProjectData, 
     customer: CustomerData, 
     services: ServiceData[], 
-    expenses: ExpenseData[]
+    expenses: ExpenseData[],
+    settings: SettingsData
 ): Promise<InvoiceData> => {
-    const newInvoice = await createNewInvoice();
+    const newInvoice = await createNewInvoice(settings);
 
     // Set customer as debtor
     newInvoice.debtorName = customer.name;
@@ -145,14 +180,14 @@ export const createInvoiceFromProject = async (
 
     const timeItems: InvoiceItem[] = Array.from(timeItemsByService.entries()).map(([serviceId, data]) => {
         const service = services.find(s => s.id === serviceId);
-        // Using newline character for separation, relying on CSS white-space property for rendering.
         const description = `${service?.name || 'Unbekannte Leistung'}\n- ${data.taskTitles.join('\n- ')}`;
         
         return {
             description,
-            quantity: Number(data.totalHours.toFixed(4)), // Use more precision for quantity
-            unit: service?.unit || 'Stunden',
+            quantity: Number(data.totalHours.toFixed(4)),
+            unit: service?.unit || 'Stunde',
             price: Number(service?.price) || 0,
+            vatRate: newInvoice.vatEnabled ? (service?.vatRate || settings.vatRate) : '',
         };
     });
 
@@ -163,6 +198,7 @@ export const createInvoiceFromProject = async (
             quantity: 1,
             unit: 'Pauschal',
             price: Number(expense.amount) || 0,
+            vatRate: newInvoice.vatEnabled ? settings.vatRate : '', // Apply default VAT rate to pass-through expenses
         };
     });
 

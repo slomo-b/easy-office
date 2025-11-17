@@ -6,7 +6,10 @@ import { getRecurringExpenses, deleteRecurringExpense, saveRecurringExpense, cal
 import { Repeat, Search } from 'lucide-react';
 import ExpenseList from '../components/ExpenseList';
 
-export type CombinedExpense = (ExpenseData & { type: 'one-time'; sortDate: string }) | (RecurringExpenseData & { type: 'recurring'; sortDate: string; status: 'due' });
+export type CombinedExpense = 
+    (ExpenseData & { type: 'one-time'; sortDate: string }) | 
+    (RecurringExpenseData & { type: 'recurring'; sortDate: string; status: 'due' | 'planned' });
+
 export type SortableExpenseKeys = keyof Pick<CombinedExpense, 'vendor' | 'amount' | 'sortDate' | 'status'>;
 
 const Expenses = () => {
@@ -52,7 +55,6 @@ const Expenses = () => {
       const expense = expenses.find(e => e.id === id);
       if (expense) {
         const isPaid = expense.status === 'paid';
-        // FIX: Add explicit type to help TypeScript infer the correct shape for saveExpense.
         const updatedExpense: ExpenseData = {
           ...expense,
           status: isPaid ? 'due' : 'paid',
@@ -98,18 +100,30 @@ const Expenses = () => {
     const today = new Date();
     today.setHours(23, 59, 59, 999);
     
-    const dueRecurring: CombinedExpense[] = recurringExpenses
-      .filter(r => new Date(r.nextDueDate) <= today)
-      .map(r => ({ ...r, type: 'recurring', sortDate: r.nextDueDate, status: 'due' }));
+    // Include all recurring expenses, marking them as 'due' or 'planned'
+    const allRecurringInstances: CombinedExpense[] = recurringExpenses.map(r => ({
+      ...r,
+      type: 'recurring',
+      sortDate: r.nextDueDate,
+      status: new Date(r.nextDueDate) <= today ? 'due' : 'planned',
+    }));
       
     let combined: CombinedExpense[] = [
       ...expenses.map(e => ({ ...e, type: 'one-time' as const, sortDate: e.date })),
-      ...dueRecurring
+      ...allRecurringInstances
     ];
     
     // Status filtering
     if (statusFilter !== 'all') {
-        combined = combined.filter(item => item.status === statusFilter);
+        combined = combined.filter(item => {
+            if (statusFilter === 'paid') {
+                return item.type === 'one-time' && item.status === 'paid';
+            }
+            if (statusFilter === 'due') {
+                return item.status === 'due';
+            }
+            return false;
+        });
     }
 
     // Search filtering
@@ -125,6 +139,15 @@ const Expenses = () => {
     // Sorting
     if (sortConfig !== null) {
       combined.sort((a, b) => {
+        if (sortConfig.key === 'status') {
+            const statusOrder = { due: 1, planned: 2, paid: 3 };
+            const aOrder = statusOrder[a.status as keyof typeof statusOrder];
+            const bOrder = statusOrder[b.status as keyof typeof statusOrder];
+            if (aOrder < bOrder) return sortConfig.direction === 'ascending' ? -1 : 1;
+            if (aOrder > bOrder) return sortConfig.direction === 'ascending' ? 1 : -1;
+            return new Date(b.sortDate).getTime() - new Date(a.sortDate).getTime();
+        }
+
         const aValue = a[sortConfig.key];
         const bValue = b[sortConfig.key];
 

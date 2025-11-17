@@ -61,20 +61,21 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, onDelete, onStatusT
           {expenses.map(item => {
             const isRecurring = item.type === 'recurring';
             const isPaid = !isRecurring && item.status === 'paid';
+            const isDue = item.status === 'due';
+            const isPlanned = isRecurring && item.status === 'planned';
+
+            let statusBadge;
+            if (isPaid) {
+                statusBadge = <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-300">Bezahlt</span>;
+            } else if (isDue) {
+                statusBadge = <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-300">Fällig</span>;
+            } else { // planned
+                statusBadge = <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-500/20 text-gray-300">Geplant</span>;
+            }
             
             return (
-              <tr key={item.id} className={`transition-opacity ${isPaid ? 'opacity-60 hover:opacity-100' : ''} hover:bg-gray-700/50`}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  {isPaid ? (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-300">
-                      Bezahlt
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-300">
-                      Fällig
-                    </span>
-                  )}
-                </td>
+              <tr key={item.id} className={`transition-opacity ${isPaid ? 'opacity-60' : ''} ${isPlanned ? 'opacity-80' : ''} hover:opacity-100 hover:bg-gray-700/50`}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">{statusBadge}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                     <div className="flex flex-col">
                         <span>{new Date(item.sortDate).toLocaleDateString('de-CH')}</span>
@@ -90,19 +91,21 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, onDelete, onStatusT
                   }
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                  <button 
-                      onClick={() => onStatusToggle(item.id, item.type)} 
-                      className={`p-2 rounded-lg transition-colors ${
-                          isRecurring ? 'text-blue-400 hover:bg-blue-500/20' : 
-                          isPaid ? 'text-yellow-400 hover:bg-yellow-500/20' : 'text-green-400 hover:bg-green-500/20'
-                      }`}
-                      title={
-                          isRecurring ? 'Jetzt bezahlen & verbuchen' : 
-                          isPaid ? 'Als fällig markieren' : 'Als bezahlt markieren'
-                      }
-                  >
-                    {isRecurring ? <CreditCard size={16} /> : isPaid ? <CircleDollarSign size={16} /> : <CheckCircle size={16} />}
-                  </button>
+                  { (isDue || isPaid) && 
+                      <button 
+                          onClick={() => onStatusToggle(item.id, item.type)} 
+                          className={`p-2 rounded-lg transition-colors ${
+                              isRecurring && isDue ? 'text-blue-400 hover:bg-blue-500/20' : 
+                              isPaid ? 'text-yellow-400 hover:bg-yellow-500/20' : 'text-green-400 hover:bg-green-500/20'
+                          }`}
+                          title={
+                              isRecurring && isDue ? 'Jetzt bezahlen & verbuchen' : 
+                              isPaid ? 'Als fällig markieren' : 'Als bezahlt markieren'
+                          }
+                      >
+                        {isRecurring && isDue ? <CreditCard size={16} /> : isPaid ? <CircleDollarSign size={16} /> : <CheckCircle size={16} />}
+                      </button>
+                  }
                   <Link to={isRecurring ? `/recurring-expense/edit/${item.id}` : `/expense/edit/${item.id}`} className="text-emerald-400 hover:text-emerald-300 p-2 rounded-lg hover:bg-emerald-500/20">
                     Bearbeiten
                   </Link>

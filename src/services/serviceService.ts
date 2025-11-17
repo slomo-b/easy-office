@@ -6,8 +6,9 @@ const SERVICES_DIR = 'services';
 export const DEFAULT_SERVICE_DATA: Omit<ServiceData, 'id'> = {
   name: '',
   description: '',
-  unit: 'Stunden',
+  unit: 'Stunde',
   price: '',
+  vatRate: '',
 };
 
 export const getServices = async (): Promise<ServiceData[]> => {

@@ -1,30 +1,53 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { InvoiceData, CustomerData, InvoiceItem } from '../types';
+import { InvoiceData, CustomerData, InvoiceItem, SettingsData } from '../types';
 import { getInvoiceById, saveInvoice, createNewInvoice } from '../services/invoiceService';
 import { getCustomers } from '../services/customerService';
+import { getSettings } from '../services/settingsService';
 import { generateQrCode } from '../services/qrBillService';
 import InvoiceForm from '../components/InvoiceForm';
 import InvoicePreview from '../components/InvoicePreview';
 import HtmlEditor from '../components/HtmlEditor';
-import { Download, CheckCircle, XCircle } from 'lucide-react';
-import html2pdf from 'html2pdf.js';
+import { Download, Printer } from 'lucide-react';
+
+// html2pdf is loaded from a CDN script in index.html
+declare const html2pdf: any;
+
+const calculateTotals = (items: InvoiceItem[], vatEnabled: boolean): { subtotal: number, vatAmount: number, total: number } => {
+    let subtotal = 0;
+    let vatAmount = 0;
+
+    for (const item of items) {
+        const quantity = Number(item.quantity) || 0;
+        const price = Number(item.price) || 0;
+        const itemTotal = quantity * price;
+        subtotal += itemTotal;
+        
+        if (vatEnabled) {
+            const rate = Number(item.vatRate) || 0;
+            vatAmount += itemTotal * (rate / 100);
+        }
+    }
+    
+    return { subtotal, vatAmount, total: subtotal + vatAmount };
+};
 
 const InvoiceEditor = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
   const [customers, setCustomers] = useState<CustomerData[]>([]);
+  const [settings, setSettings] = useState<SettingsData | null>(null);
   const [qrCodeSvg, setQrCodeSvg] = useState<string>('');
-  const [qrError, setQrError] = useState<string | null>(null);
   const [isLoadingQr, setIsLoadingQr] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState<boolean>(false);
 
   useEffect(() => {
     const loadData = async () => {
-        const fetchedCustomers = await getCustomers();
+        const [fetchedCustomers, fetchedSettings] = await Promise.all([getCustomers(), getSettings()]);
         setCustomers(fetchedCustomers);
+        setSettings(fetchedSettings);
 
         if (id) {
           const existingInvoice = await getInvoiceById(id);
@@ -34,7 +57,7 @@ const InvoiceEditor = () => {
             navigate('/invoices'); // Invoice not found, redirect
           }
         } else {
-          const newInvoice = await createNewInvoice();
+          const newInvoice = await createNewInvoice(fetchedSettings);
           setInvoiceData(newInvoice);
         }
     };
@@ -43,7 +66,7 @@ const InvoiceEditor = () => {
   
 
   const regenerateQrCode = useCallback(async () => {
-    if (!invoiceData || !invoiceData.amount || Number(invoiceData.amount) <= 0) {
+    if (!invoiceData || !invoiceData.total || Number(invoiceData.total) <= 0) {
         setQrCodeSvg('');
         setIsLoadingQr(false);
         return;
@@ -52,15 +75,9 @@ const InvoiceEditor = () => {
     try {
       const svg = await generateQrCode(invoiceData);
       setQrCodeSvg(svg);
-      setQrError(null);
     } catch (error) {
       console.error('Failed to generate QR code:', error);
       setQrCodeSvg('');
-      if (error instanceof Error) {
-        setQrError(error.message);
-      } else {
-        setQrError("Unbekannter Fehler bei der QR-Code-Generierung.");
-      }
     } finally {
       setIsLoadingQr(false);
     }
@@ -68,35 +85,37 @@ const InvoiceEditor = () => {
 
   useEffect(() => {
     regenerateQrCode();
-  }, [regenerateQrCode]);
+  }, [invoiceData?.total, regenerateQrCode]);
 
   const handleDataChange = (field: keyof InvoiceData, value: any) => {
     setInvoiceData(prev => {
-        if (!prev) return null;
+        if (!prev || !settings) return null;
 
-        if (field === 'items') {
-            const newItems = value as InvoiceItem[];
-            const total = newItems.reduce((sum, item) => {
-                const quantity = Number(item.quantity) || 0;
-                const price = Number(item.price) || 0;
-                return sum + (quantity * price);
-            }, 0);
-            return { ...prev, items: newItems, amount: total };
+        let newInvoice = { ...prev, [field]: value };
+
+        if (field === 'vatEnabled') {
+            const isEnabled = value as boolean;
+            // When toggling VAT, update all item rates
+            newInvoice.items = newInvoice.items.map(item => ({
+                ...item,
+                vatRate: isEnabled ? (item.vatRate || settings.vatRate) : ''
+            }));
         }
         
-        return { ...prev, [field]: value };
-    });
-  };
-
-  const handleStatusToggle = () => {
-    setInvoiceData(prev => {
-        if (!prev) return null;
-        const isPaid = prev.status === 'paid';
-        return {
-            ...prev,
-            status: isPaid ? 'open' : 'paid',
-            paidAt: isPaid ? null : new Date().toISOString(),
-        };
+        // Always recalculate totals if items or VAT status changes
+        if (field === 'items' || field === 'vatEnabled') {
+            const { subtotal, vatAmount, total } = calculateTotals(newInvoice.items, newInvoice.vatEnabled);
+            newInvoice.subtotal = subtotal;
+            newInvoice.vatAmount = vatAmount;
+            newInvoice.total = total;
+        }
+        
+        // When invoice number changes, also update the reference number if it was based on the old one
+        if (field === 'unstructuredMessage' && prev.reference === prev.unstructuredMessage) {
+            newInvoice.reference = value;
+        }
+        
+        return newInvoice;
     });
   };
   
@@ -111,6 +130,10 @@ const InvoiceEditor = () => {
       setIsSaving(false);
       navigate('/invoices');
     }
+  };
+  
+  const handlePrint = () => {
+    window.print();
   };
   
   const handleDownloadPdf = () => {
@@ -131,25 +154,14 @@ const InvoiceEditor = () => {
   };
 
 
-  if (!invoiceData) {
+  if (!invoiceData || !settings) {
     return <div className="text-center p-10">Lade Rechnungsdaten...</div>;
   }
 
   return (
     <div>
         <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center gap-4">
-              <h2 className="text-3xl font-bold text-white">{id ? 'Rechnung bearbeiten' : 'Neue Rechnung erstellen'}</h2>
-              {invoiceData.status === 'paid' ? (
-                  <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-green-500/20 text-green-300">
-                    <CheckCircle size={16} /> Bezahlt am {invoiceData.paidAt ? new Date(invoiceData.paidAt).toLocaleDateString('de-CH') : ''}
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-yellow-500/20 text-yellow-300">
-                    Offen
-                  </span>
-                )}
-            </div>
+            <h2 className="text-3xl font-bold text-white">{id ? 'Rechnung bearbeiten' : 'Neue Rechnung erstellen'}</h2>
             <div className="flex items-center gap-2">
                  <button
                     onClick={handleDownloadPdf}
@@ -157,17 +169,15 @@ const InvoiceEditor = () => {
                     className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 flex items-center gap-2 disabled:bg-gray-500"
                 >
                     <Download size={16} />
-                    {isDownloadingPdf ? 'Generiere...' : 'PDF'}
+                    {isDownloadingPdf ? 'Generiere...' : 'PDF herunterladen'}
                 </button>
-                 {invoiceData.status === 'open' ? (
-                    <button onClick={handleStatusToggle} className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2">
-                        <CheckCircle size={16} /> Als bezahlt markieren
-                    </button>
-                 ) : (
-                    <button onClick={handleStatusToggle} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2">
-                        <XCircle size={16} /> Zahlung zurücksetzen
-                    </button>
-                 )}
+                 <button
+                    onClick={handlePrint}
+                    className="bg-gray-600 hover:bg-gray-700 text-white font-bold p-2 rounded-lg transition-colors duration-300"
+                    title="Drucken"
+                >
+                    <Printer size={20} />
+                </button>
                 <button
                     onClick={handleSave}
                     disabled={isSaving}
@@ -184,6 +194,7 @@ const InvoiceEditor = () => {
                 data={invoiceData}
                 customers={customers}
                 onDataChange={handleDataChange}
+                defaultVatRate={settings.vatRate}
             />
             <HtmlEditor
                 template={invoiceData.htmlTemplate}
@@ -195,7 +206,6 @@ const InvoiceEditor = () => {
             <InvoicePreview
                 data={invoiceData}
                 qrCodeSvg={qrCodeSvg}
-                qrError={qrError}
                 isLoadingQr={isLoadingQr}
             />
             </div>

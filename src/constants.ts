@@ -50,12 +50,7 @@ export const DEFAULT_HTML_TEMPLATE = `
     <!-- Totals -->
     <section class="flex justify-end mb-16">
         <div class="w-2/5">
-            <div class="bg-gray-100 p-4 rounded-lg">
-                 <div class="flex justify-between py-2 font-bold text-lg text-gray-900">
-                    <span>Total</span>
-                    <span>{{currency}} {{amount}}</span>
-                </div>
-            </div>
+            {{totalsBlock}}
         </div>
     </section>
     
@@ -96,7 +91,7 @@ export const DEFAULT_HTML_TEMPLATE = `
                     <p class="font-bold">Währung</p>
                     <p>{{currency}}</p>
                     <p class="font-bold mt-2">Betrag</p>
-                    <p>{{amount}}</p>
+                    <p>{{total}}</p>
                 </div>
             </div>
         </div>
@@ -104,8 +99,8 @@ export const DEFAULT_HTML_TEMPLATE = `
 </div>
 `;
 
-export const DEFAULT_INVOICE_DATA: Omit<InvoiceData, 'id'> = {
-  creditorIban: 'CH9300762011623852957',
+export const DEFAULT_INVOICE_DATA: Omit<InvoiceData, 'id' | 'createdAt'> = {
+  creditorIban: 'CH4431999123000889012',
   creditorName: 'Max Muster AG',
   creditorStreet: 'Musterstrasse',
   creditorHouseNr: '123a',
@@ -120,7 +115,10 @@ export const DEFAULT_INVOICE_DATA: Omit<InvoiceData, 'id'> = {
   debtorCity: 'Bern',
   debtorCountry: 'CH',
   
-  amount: 0,
+  total: 0,
+  subtotal: 0,
+  vatAmount: 0,
+  vatEnabled: false,
   currency: 'CHF',
   reference: '',
   unstructuredMessage: '',
@@ -128,9 +126,8 @@ export const DEFAULT_INVOICE_DATA: Omit<InvoiceData, 'id'> = {
   items: [],
   logoSrc: '',
   htmlTemplate: DEFAULT_HTML_TEMPLATE,
-  createdAt: new Date().toISOString(),
-  paidAt: null,
   status: 'open',
+  paidAt: null,
 };
 
 export const DEFAULT_EXPENSE_DATA: Omit<ExpenseData, 'id'> = {

@@ -6,7 +6,8 @@ import InvoiceList from '../components/InvoiceList';
 import { Search } from 'lucide-react';
 
 // Define a type for sortable keys to ensure type safety
-type SortableInvoiceKeys = keyof Pick<InvoiceData, 'debtorName' | 'projectName' | 'unstructuredMessage' | 'amount' | 'createdAt' | 'status'>;
+// FIX: Changed 'amount' to 'total' and added 'createdAt' and 'status' to align with the updated InvoiceData type.
+export type SortableInvoiceKeys = keyof Pick<InvoiceData, 'debtorName' | 'projectName' | 'unstructuredMessage' | 'total' | 'createdAt' | 'status'>;
 
 const Invoices = () => {
   const [invoices, setInvoices] = useState<InvoiceData[]>([]);
@@ -40,7 +41,6 @@ const Invoices = () => {
     const invoice = invoices.find(inv => inv.id === invoiceId);
     if (invoice) {
       const isPaid = invoice.status === 'paid';
-      // FIX: Add explicit type to help TypeScript infer the correct shape for saveInvoice.
       const updatedInvoice: InvoiceData = {
         ...invoice,
         status: isPaid ? 'open' : 'paid',

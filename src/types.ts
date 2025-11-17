@@ -3,10 +3,12 @@ export interface InvoiceItem {
   quantity: number | '';
   unit: string;
   price: number | '';
+  vatRate: number | '';
 }
 
 export interface InvoiceData {
   id: string;
+  createdAt: string;
   // Creditor
   creditorIban: string;
   creditorName: string;
@@ -25,17 +27,18 @@ export interface InvoiceData {
   debtorCountry: string;
 
   // Payment
-  amount: number | ''; // Will be the calculated total
+  total: number | ''; // Renamed from amount
+  subtotal: number | '';
+  vatAmount: number | '';
+  vatEnabled: boolean;
   currency: 'CHF' | 'EUR';
   reference: string;
   unstructuredMessage: string;
   projectName?: string; // Optional project name
   items: InvoiceItem[];
-  
-  // Status Tracking
-  createdAt: string; // ISO String
-  paidAt: string | null;
+  // FIX: Added status and paidAt fields to track invoice payment status.
   status: 'open' | 'paid';
+  paidAt: string | null;
 
   // Customization
   htmlTemplate: string;
@@ -44,13 +47,14 @@ export interface InvoiceData {
 
 export interface ExpenseData {
   id: string;
-  date: string; // YYYY-MM-DD -> Due Date
+  date: string; // YYYY-MM-DD
   vendor: string;
   description: string;
   amount: number | '';
   currency: 'CHF' | 'EUR';
   category: string;
   projectId?: string; // Optional link to a Project
+  // FIX: Added status and paidAt fields to track expense payment status.
   status: 'due' | 'paid';
   paidAt: string | null;
 }
@@ -79,6 +83,8 @@ export interface SettingsData {
 
   // Customization
   logoSrc: string;
+  isVatEnabled: boolean;
+  vatRate: number;
 }
 
 export interface CustomerData {
@@ -96,8 +102,9 @@ export interface ServiceData {
   id: string;
   name: string;
   description: string;
-  unit: 'Stunden' | 'Tag' | 'Pauschal';
+  unit: 'Stunde' | 'Tag' | 'Pauschal';
   price: number | '';
+  vatRate: number | '';
 }
 
 // New Types for Task Management

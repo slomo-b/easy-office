@@ -6,6 +6,7 @@ interface InvoiceFormProps {
   data: InvoiceData;
   customers: CustomerData[];
   onDataChange: (field: keyof InvoiceData, value: any) => void;
+  defaultVatRate: number;
 }
 
 const InputField: React.FC<{
@@ -41,7 +42,7 @@ const FormSection: React.FC<{ title: string; children: React.ReactNode }> = ({ t
     </div>
 );
 
-const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, customers, onDataChange }) => {
+const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, customers, onDataChange, defaultVatRate }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target as HTMLInputElement;
     onDataChange(name as keyof InvoiceData, type === 'number' ? parseFloat(value) || '' : value);
@@ -64,7 +65,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, customers, onDataChange
     const newItems = [...data.items];
     const item = { ...newItems[index], [field]: value };
     // Ensure numeric fields are numbers
-    if (field === 'quantity' || field === 'price') {
+    if (field === 'quantity' || field === 'price' || field === 'vatRate') {
         item[field] = value === '' ? '' : Number(value);
     }
     newItems[index] = item;
@@ -72,7 +73,13 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, customers, onDataChange
   };
 
   const handleAddItem = () => {
-    const newItem: InvoiceItem = { description: '', quantity: 1, unit: 'Stunden', price: '' };
+    const newItem: InvoiceItem = { 
+        description: '', 
+        quantity: 1, 
+        unit: 'Stunde', 
+        price: '',
+        vatRate: data.vatEnabled ? defaultVatRate : ''
+    };
     onDataChange('items', [...data.items, newItem]);
   };
 
@@ -84,21 +91,44 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, customers, onDataChange
   return (
     <div className="space-y-6">
        <FormSection title="Rechnungspositionen">
+            <div className="col-span-2">
+                 <label className="flex items-center space-x-3 cursor-pointer">
+                    <input type="checkbox" checked={data.vatEnabled} onChange={(e) => onDataChange('vatEnabled', e.target.checked)} className="form-checkbox h-5 w-5 text-emerald-600 bg-gray-700 border-gray-600 rounded focus:ring-emerald-500" />
+                    <span className="text-gray-300">Mehrwertsteuer (MwSt.) aktivieren</span>
+                </label>
+            </div>
             <div className="col-span-2 space-y-2">
                 {data.items.map((item, index) => (
-                    <div key={index} className="grid grid-cols-12 gap-2 items-center bg-gray-900/50 p-2 rounded-md">
-                        <input type="text" placeholder="Beschreibung" value={item.description} onChange={e => handleItemChange(index, 'description', e.target.value)} className="col-span-12 md:col-span-5 bg-gray-700 border-gray-600 rounded px-2 py-1 text-sm"/>
+                    <div key={index} className={`grid ${data.vatEnabled ? 'grid-cols-12' : 'grid-cols-11'} gap-2 items-center bg-gray-900/50 p-2 rounded-md`}>
+                        <input type="text" placeholder="Beschreibung" value={item.description} onChange={e => handleItemChange(index, 'description', e.target.value)} className={`bg-gray-700 border-gray-600 rounded px-2 py-1 text-sm ${data.vatEnabled ? 'col-span-12 md:col-span-4' : 'col-span-12 md:col-span-5'}`}/>
                         <input type="number" placeholder="Menge" value={item.quantity} onChange={e => handleItemChange(index, 'quantity', e.target.value)} className="col-span-4 md:col-span-2 bg-gray-700 border-gray-600 rounded px-2 py-1 text-sm"/>
                         <input type="text" placeholder="Einheit" value={item.unit} onChange={e => handleItemChange(index, 'unit', e.target.value)} className="col-span-4 md:col-span-2 bg-gray-700 border-gray-600 rounded px-2 py-1 text-sm"/>
                         <input type="number" placeholder="Preis" value={item.price} onChange={e => handleItemChange(index, 'price', e.target.value)} className="col-span-4 md:col-span-2 bg-gray-700 border-gray-600 rounded px-2 py-1 text-sm"/>
+                        {data.vatEnabled && (
+                            <input type="number" placeholder="MwSt. %" value={item.vatRate} onChange={e => handleItemChange(index, 'vatRate', e.target.value)} className="col-span-4 md:col-span-1 bg-gray-700 border-gray-600 rounded px-2 py-1 text-sm"/>
+                        )}
                         <button onClick={() => handleRemoveItem(index)} className="col-span-12 md:col-span-1 text-red-500 hover:text-red-400 flex justify-center items-center"><Trash2 size={16}/></button>
                     </div>
                 ))}
                 <button onClick={handleAddItem} className="text-emerald-400 hover:text-emerald-300 text-sm font-semibold py-1">+ Position hinzufügen</button>
             </div>
-            <div className="col-span-2 text-right mt-4 border-t border-gray-700 pt-2">
-                <span className="text-gray-400 font-medium">Total:</span>
-                <span className="text-white font-bold text-lg ml-2">{data.currency} {Number(data.amount).toFixed(2)}</span>
+            <div className="col-span-2 text-right mt-4 border-t border-gray-700 pt-4 space-y-2 text-sm">
+                {data.vatEnabled && (
+                  <>
+                    <div className="flex justify-between">
+                        <span className="text-gray-400">Zwischentotal (Netto):</span>
+                        <span className="text-white font-medium ml-2">{data.currency} {Number(data.subtotal).toFixed(2)}</span>
+                    </div>
+                     <div className="flex justify-between">
+                        <span className="text-gray-400">MwSt.:</span>
+                        <span className="text-white font-medium ml-2">{data.currency} {Number(data.vatAmount).toFixed(2)}</span>
+                    </div>
+                  </>
+                )}
+                <div className="flex justify-between font-bold text-lg">
+                    <span className="text-gray-300">Total:</span>
+                    <span className="text-white ml-2">{data.currency} {Number(data.total).toFixed(2)}</span>
+                </div>
             </div>
       </FormSection>
 

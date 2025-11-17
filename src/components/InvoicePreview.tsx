@@ -1,18 +1,15 @@
-
-
 import React from 'react';
 import { InvoiceData } from '../types';
 
 interface InvoicePreviewProps {
   data: InvoiceData;
   qrCodeSvg: string;
-  qrError: string | null;
   isLoadingQr: boolean;
 }
 
-const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, qrCodeSvg, qrError, isLoadingQr }) => {
+const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, qrCodeSvg, isLoadingQr }) => {
   const formatAmount = (amount: number | '') => {
-      if (amount === '') return '...';
+      if (amount === '' || amount === null || amount === undefined) return '...';
       return Number(amount).toFixed(2);
   }
 
@@ -26,8 +23,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, qrCodeSvg, qrErro
   } else if (qrCodeSvg) {
     qrCodeHtml = qrCodeSvg;
   } else {
-    const errorMessage = qrError ? qrError.replace(/\n/g, '<br/>') : 'QR-Code kann nicht generiert werden.<br/>(Betrag muss grösser als 0 sein)';
-    qrCodeHtml = `<div style="width: 200px; height: 200px;" class="bg-gray-100 flex items-center justify-center text-center text-xs text-red-500 p-2 border border-dashed border-gray-300">${errorMessage}</div>`;
+    qrCodeHtml = `<div style="width: 200px; height: 200px;" class="bg-gray-100 flex items-center justify-center text-center text-xs text-gray-500 p-2 border border-dashed border-gray-300">QR-Code kann nicht generiert werden.<br/>(Betrag muss grösser als 0 sein)</div>`;
   }
   
   const itemsHtml = data.items.map((item, index) => {
@@ -51,11 +47,41 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, qrCodeSvg, qrErro
     ? `<p><span class="font-semibold text-gray-600">Projekt:</span> ${data.projectName}</p>`
     : '';
 
+  let totalsBlockHtml: string;
+  if (data.vatEnabled) {
+      totalsBlockHtml = `
+        <div class="bg-gray-100 p-4 rounded-lg space-y-2 text-sm">
+            <div class="flex justify-between text-gray-600">
+                <span>Zwischentotal (Netto)</span>
+                <span>${data.currency} ${formatAmount(data.subtotal)}</span>
+            </div>
+            <div class="flex justify-between text-gray-600">
+                <span>MwSt.</span>
+                <span>${data.currency} ${formatAmount(data.vatAmount)}</span>
+            </div>
+            <div class="flex justify-between py-2 font-bold text-lg text-gray-900 border-t border-gray-300 mt-2">
+                <span>Total</span>
+                <span>${data.currency} ${formatAmount(data.total)}</span>
+            </div>
+        </div>
+      `;
+  } else {
+      totalsBlockHtml = `
+        <div class="bg-gray-100 p-4 rounded-lg">
+             <div class="flex justify-between py-2 font-bold text-lg text-gray-900">
+                <span>Total</span>
+                <span>${data.currency} ${formatAmount(data.total)}</span>
+            </div>
+        </div>
+      `;
+  }
+
   const processedTemplate = data.htmlTemplate
     .replace(/{{logoImage}}/g, logoHtml)
     .replace(/{{qrCodeImage}}/g, qrCodeHtml)
     .replace(/{{invoiceItems}}/g, itemsHtml)
     .replace(/{{projectLine}}/g, projectLineHtml)
+    .replace(/{{totalsBlock}}/g, totalsBlockHtml)
     .replace(/{{creditorName}}/g, data.creditorName)
     .replace(/{{creditorStreet}}/g, data.creditorStreet)
     .replace(/{{creditorHouseNr}}/g, data.creditorHouseNr)
@@ -68,7 +94,8 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, qrCodeSvg, qrErro
     .replace(/{{debtorZip}}/g, data.debtorZip)
     .replace(/{{debtorCity}}/g, data.debtorCity)
     .replace(/{{currency}}/g, data.currency)
-    .replace(/{{amount}}/g, formatAmount(data.amount))
+    .replace(/{{total}}/g, formatAmount(data.total))
+    .replace(/{{amount}}/g, formatAmount(data.total)) // Backwards compatibility for old templates
     .replace(/{{reference}}/g, data.reference)
     .replace(/{{unstructuredMessage}}/g, data.unstructuredMessage)
 
