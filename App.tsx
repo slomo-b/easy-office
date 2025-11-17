@@ -1,7 +1,9 @@
+
 import React, { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Overview from './pages/Overview';
+// FIX: Corrected import path for Invoices component
 import Invoices from './pages/Dashboard';
 import InvoiceEditor from './pages/InvoiceEditor';
 import Expenses from './pages/Expenses';

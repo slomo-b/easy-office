@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { SettingsData } from '../types';
 
 interface SettingsFormProps {
   data: SettingsData;
-  onDataChange: (field: keyof SettingsData, value: string | number) => void;
+  onDataChange: (field: keyof SettingsData, value: string | number | boolean) => void;
   onLogoChange: (file: File) => void;
 }
 
@@ -26,6 +27,7 @@ const InputField: React.FC<{
       value={value}
       onChange={onChange}
       className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+      step={type === 'number' ? '0.01' : undefined}
     />
   </div>
 );
@@ -41,8 +43,13 @@ const FormSection: React.FC<{ title: string; children: React.ReactNode }> = ({ t
 
 const SettingsForm: React.FC<SettingsFormProps> = ({ data, onDataChange, onLogoChange }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    onDataChange(name as keyof SettingsData, value);
+    const target = e.target as HTMLInputElement;
+    const { name, value, type } = target;
+    if (type === 'checkbox') {
+        onDataChange(name as keyof SettingsData, target.checked);
+    } else {
+        onDataChange(name as keyof SettingsData, type === 'number' ? parseFloat(value) || 0 : value);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,6 +68,20 @@ const SettingsForm: React.FC<SettingsFormProps> = ({ data, onDataChange, onLogoC
         <InputField label="PLZ" id="creditorZip" value={data.creditorZip} onChange={handleChange} />
         <InputField label="Ort" id="creditorCity" value={data.creditorCity} onChange={handleChange} />
         <InputField label="Land" id="creditorCountry" value={data.creditorCountry} onChange={handleChange} className="col-span-2" />
+      </FormSection>
+
+      <FormSection title="Rechnungs-Einstellungen">
+            <div className="col-span-2 flex flex-col space-y-4">
+                <label className="flex items-center space-x-3 cursor-pointer">
+                    <input type="checkbox" id="isVatEnabled" name="isVatEnabled" checked={data.isVatEnabled} onChange={handleChange} className="form-checkbox h-5 w-5 text-emerald-600 bg-gray-700 border-gray-600 rounded focus:ring-emerald-500" />
+                    <span className="text-gray-300">Mehrwertsteuer (MwSt.) standardmässig auf neuen Rechnungen aktivieren</span>
+                </label>
+                {data.isVatEnabled && (
+                    <div className="max-w-xs">
+                         <InputField label="Standard MwSt.-Satz (%)" id="vatRate" value={data.vatRate} onChange={handleChange} type="number" />
+                    </div>
+                )}
+            </div>
       </FormSection>
       
        <div className="bg-gray-800 p-6 rounded-lg shadow-md">

@@ -6,7 +6,6 @@ import InvoiceList from '../components/InvoiceList';
 import { Search } from 'lucide-react';
 
 // Define a type for sortable keys to ensure type safety
-// FIX: Changed 'amount' to 'total' and added 'createdAt' and 'status' to align with the updated InvoiceData type.
 export type SortableInvoiceKeys = keyof Pick<InvoiceData, 'debtorName' | 'projectName' | 'unstructuredMessage' | 'total' | 'createdAt' | 'status'>;
 
 const Invoices = () => {

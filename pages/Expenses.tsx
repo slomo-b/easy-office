@@ -1,14 +1,27 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ExpenseData, RecurringExpenseData } from '../types';
-import { getExpenses, deleteExpense } from '../services/expenseService';
-import { getRecurringExpenses, deleteRecurringExpense } from '../services/recurringExpenseService';
-import { Repeat } from 'lucide-react';
+import { getExpenses, deleteExpense, saveExpense, createNewExpense } from '../services/expenseService';
+import { getRecurringExpenses, deleteRecurringExpense, saveRecurringExpense, calculateNextDueDate } from '../services/recurringExpenseService';
+import { Repeat, Search } from 'lucide-react';
+import ExpenseList from '../components/ExpenseList';
+
+export type CombinedExpense = 
+    (ExpenseData & { type: 'one-time'; sortDate: string }) | 
+    (RecurringExpenseData & { type: 'recurring'; sortDate: string; status: 'due' | 'planned' });
+
+export type SortableExpenseKeys = keyof Pick<CombinedExpense, 'vendor' | 'amount' | 'sortDate' | 'status'>;
 
 const Expenses = () => {
   const [expenses, setExpenses] = useState<ExpenseData[]>([]);
   const [recurringExpenses, setRecurringExpenses] = useState<RecurringExpenseData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'due' | 'paid'>('all');
+  const [sortConfig, setSortConfig] = useState<{ key: SortableExpenseKeys; direction: 'ascending' | 'descending' } | null>({
+      key: 'sortDate',
+      direction: 'descending'
+  });
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -36,19 +49,147 @@ const Expenses = () => {
       await loadData();
     }
   };
+  
+  const handleStatusToggle = async (id: string, type: 'one-time' | 'recurring') => {
+    if (type === 'one-time') {
+      const expense = expenses.find(e => e.id === id);
+      if (expense) {
+        const isPaid = expense.status === 'paid';
+        const updatedExpense: ExpenseData = {
+          ...expense,
+          status: isPaid ? 'due' : 'paid',
+          paidAt: isPaid ? null : new Date().toISOString(),
+        };
+        await saveExpense(updatedExpense);
+      }
+    } else { // type is 'recurring'
+      const recurringExpense = recurringExpenses.find(r => r.id === id);
+      if (recurringExpense) {
+        // 1. Create and save new one-time expense, mark as paid
+        const newPaidExpense = createNewExpense();
+        newPaidExpense.date = recurringExpense.nextDueDate;
+        newPaidExpense.vendor = recurringExpense.vendor;
+        newPaidExpense.description = recurringExpense.description;
+        newPaidExpense.amount = recurringExpense.amount;
+        newPaidExpense.currency = recurringExpense.currency;
+        newPaidExpense.category = recurringExpense.category;
+        newPaidExpense.status = 'paid';
+        newPaidExpense.paidAt = new Date().toISOString();
+        await saveExpense(newPaidExpense);
+
+        // 2. Update recurring expense to next due date
+        const updatedRecurring = {
+          ...recurringExpense,
+          nextDueDate: calculateNextDueDate(recurringExpense.nextDueDate, recurringExpense.interval),
+        };
+        await saveRecurringExpense(updatedRecurring);
+      }
+    }
+    await loadData(); // Reload all data
+  };
+  
+  const requestSort = (key: SortableExpenseKeys) => {
+      let direction: 'ascending' | 'descending' = 'ascending';
+      if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+          direction = 'descending';
+      }
+      setSortConfig({ key, direction });
+  };
+  
+  const filteredAndSortedExpenses = useMemo(() => {
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    
+    // Include all recurring expenses, marking them as 'due' or 'planned'
+    const allRecurringInstances: CombinedExpense[] = recurringExpenses.map(r => ({
+      ...r,
+      type: 'recurring',
+      sortDate: r.nextDueDate,
+      status: new Date(r.nextDueDate) <= today ? 'due' : 'planned',
+    }));
+      
+    let combined: CombinedExpense[] = [
+      ...expenses.map(e => ({ ...e, type: 'one-time' as const, sortDate: e.date })),
+      ...allRecurringInstances
+    ];
+    
+    // Status filtering
+    if (statusFilter !== 'all') {
+        combined = combined.filter(item => {
+            if (statusFilter === 'paid') {
+                return item.type === 'one-time' && item.status === 'paid';
+            }
+            if (statusFilter === 'due') {
+                return item.status === 'due';
+            }
+            return false;
+        });
+    }
+
+    // Search filtering
+    if (searchQuery) {
+        const lowercasedQuery = searchQuery.toLowerCase();
+        combined = combined.filter(item => 
+            item.vendor.toLowerCase().includes(lowercasedQuery) ||
+            item.description.toLowerCase().includes(lowercasedQuery) ||
+            item.category.toLowerCase().includes(lowercasedQuery)
+        );
+    }
+    
+    // Sorting
+    if (sortConfig !== null) {
+      combined.sort((a, b) => {
+        if (sortConfig.key === 'status') {
+            const statusOrder = { due: 1, planned: 2, paid: 3 };
+            const aOrder = statusOrder[a.status as keyof typeof statusOrder];
+            const bOrder = statusOrder[b.status as keyof typeof statusOrder];
+            if (aOrder < bOrder) return sortConfig.direction === 'ascending' ? -1 : 1;
+            if (aOrder > bOrder) return sortConfig.direction === 'ascending' ? 1 : -1;
+            return new Date(b.sortDate).getTime() - new Date(a.sortDate).getTime();
+        }
+
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+
+        if (aValue === null || aValue === undefined) return 1;
+        if (bValue === null || bValue === undefined) return -1;
+        
+        if (sortConfig.key === 'sortDate') {
+          return sortConfig.direction === 'ascending'
+            ? new Date(aValue as string).getTime() - new Date(bValue as string).getTime()
+            : new Date(bValue as string).getTime() - new Date(aValue as string).getTime();
+        }
+
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+            if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
+            if (aValue > bValue) return sortConfig.direction === 'ascending' ? 1 : -1;
+        } else {
+            const stringA = String(aValue).toLowerCase();
+            const stringB = String(bValue).toLowerCase();
+            if (stringA < stringB) return sortConfig.direction === 'ascending' ? -1 : 1;
+            if (stringA > stringB) return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
+    return combined;
+
+  }, [expenses, recurringExpenses, statusFilter, searchQuery, sortConfig]);
+
 
   if (loading) {
     return <div className="text-center p-10">Lade Ausgaben...</div>;
   }
   
-  type CombinedExpense = (ExpenseData & { type: 'one-time'; sortDate: string }) | (RecurringExpenseData & { type: 'recurring'; sortDate: string });
-        
-  const combinedExpenses: CombinedExpense[] = [
-    ...expenses.map(e => ({ ...e, type: 'one-time' as const, sortDate: e.date })),
-    ...recurringExpenses.map(r => ({ ...r, type: 'recurring' as const, sortDate: r.nextDueDate }))
-  ];
-        
-  combinedExpenses.sort((a, b) => b.sortDate.localeCompare(a.sortDate));
+  const StatusButton: React.FC<{ filterValue: typeof statusFilter, text: string }> = ({ filterValue, text }) => (
+    <button
+      onClick={() => setStatusFilter(filterValue)}
+      className={`px-3 py-1 text-sm rounded-md transition ${statusFilter === filterValue ? 'bg-emerald-500 text-white' : 'bg-gray-700 hover:bg-gray-600'}`}
+    >
+      {text}
+    </button>
+  );
 
   return (
     <div>
@@ -66,55 +207,33 @@ const Expenses = () => {
         </div>
       </div>
       
-      <div className="bg-gray-800 shadow-md rounded-lg overflow-hidden">
-        <table className="min-w-full">
-          <thead className="bg-gray-700">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Datum / Nächste Fälligkeit</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Anbieter</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Beschreibung</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Betrag</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Typ</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">Aktionen</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-700">
-            {combinedExpenses.length > 0 ? combinedExpenses.map(item => {
-              const isRecurring = item.type === 'recurring';
+      <div className="mb-4 flex flex-col md:flex-row gap-4">
+            <div className="relative flex-grow">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+                    <Search className="h-5 w-5 text-gray-400" />
+                </span>
+                <input
+                    type="text"
+                    placeholder="Ausgaben durchsuchen..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-md pl-10 pr-4 py-2 text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 transition"
+                />
+            </div>
+            <div className="flex items-center gap-2 bg-gray-800 p-1 rounded-lg">
+                <StatusButton filterValue="all" text="Alle" />
+                <StatusButton filterValue="due" text="Fällig" />
+                <StatusButton filterValue="paid" text="Bezahlt" />
+            </div>
+       </div>
 
-              return (
-              <tr key={item.id} className="hover:bg-gray-700/50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                    {new Date(item.sortDate).toLocaleDateString('de-CH')}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{item.vendor}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{item.description}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-white font-mono">{item.currency} {Number(item.amount).toFixed(2)}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                    {isRecurring 
-                        ? <span className="capitalize">{item.interval === 'monthly' ? 'Monatlich' : item.interval === 'quarterly' ? 'Quartalsweise' : 'Jährlich'}</span>
-                        : 'Einmalig'
-                    }
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-4">
-                  <Link to={isRecurring ? `/recurring-expense/edit/${item.id}` : `/expense/edit/${item.id}`} className="text-emerald-400 hover:text-emerald-300">
-                    Bearbeiten
-                  </Link>
-                  <button onClick={() => handleDelete(item.id, item.type)} className="text-red-500 hover:text-red-400">
-                    Löschen
-                  </button>
-                </td>
-              </tr>
-            )}) : (
-                <tr>
-                    <td colSpan={6} className="text-center py-10 text-gray-400">
-                        Keine Ausgaben gefunden.
-                    </td>
-                </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <ExpenseList 
+        expenses={filteredAndSortedExpenses}
+        onDelete={handleDelete}
+        onStatusToggle={handleStatusToggle}
+        requestSort={requestSort}
+        sortConfig={sortConfig}
+      />
     </div>
   );
 };

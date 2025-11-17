@@ -58,6 +58,9 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ data, onDataChange }) => {
                     <option value="Pauschal">Pauschal</option>
                 </select>
             </div>
+             <div className="flex flex-col col-span-2">
+                <InputField label="Standard MwSt.-Satz (%)" id="vatRate" value={data.vatRate} onChange={handleChange} type="number" />
+            </div>
             <div className="flex flex-col col-span-2">
                  <label htmlFor="description" className="mb-1 text-sm font-medium text-gray-400">
                     Beschreibung (optional)

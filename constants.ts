@@ -1,3 +1,4 @@
+
 import { InvoiceData, ExpenseData } from './types';
 
 export const DEFAULT_HTML_TEMPLATE = `
@@ -51,10 +52,7 @@ export const DEFAULT_HTML_TEMPLATE = `
     <section class="flex justify-end mb-16">
         <div class="w-2/5">
             <div class="bg-gray-100 p-4 rounded-lg">
-                 <div class="flex justify-between py-2 font-bold text-lg text-gray-900">
-                    <span>Total</span>
-                    <span>{{currency}} {{amount}}</span>
-                </div>
+                 {{totalsBlock}}
             </div>
         </div>
     </section>
@@ -68,43 +66,12 @@ export const DEFAULT_HTML_TEMPLATE = `
     <!-- QR Bill Section -->
     <div class="border-t-2 border-dashed border-gray-400 my-8 -ml-12 -mr-12"></div>
     
-    <div class="grid grid-cols-3 gap-4">
-        <div class="col-span-1">
-            <h2 class="font-bold mb-2">Zahlteil</h2>
-            {{qrCodeImage}}
-        </div>
-        <div class="col-span-2 text-sm pl-4">
-            <div class="grid grid-cols-2 gap-x-4 gap-y-2">
-                <div>
-                    <p class="font-bold">Konto / Zahlbar an</p>
-                    <p>{{creditorIban}}</p>
-                    <p>{{creditorName}}</p>
-                    <p>{{creditorStreet}} {{creditorHouseNr}}</p>
-                    <p>{{creditorZip}} {{creditorCity}}</p>
-                </div>
-                <div>
-                    <p class="font-bold">Referenz</p>
-                    <p>{{reference}}</p>
-                </div>
-                <div>
-                    <p class="font-bold">Zahlbar durch</p>
-                    <p>{{debtorName}}</p>
-                    <p>{{debtorStreet}} {{debtorHouseNr}}</p>
-                    <p>{{debtorZip}} {{debtorCity}}</p>
-                </div>
-                <div>
-                    <p class="font-bold">Währung</p>
-                    <p>{{currency}}</p>
-                    <p class="font-bold mt-2">Betrag</p>
-                    <p>{{amount}}</p>
-                </div>
-            </div>
-        </div>
-    </div>
+    {{qrBillSvg}}
 </div>
 `;
 
 export const DEFAULT_INVOICE_DATA: Omit<InvoiceData, 'id'> = {
+  createdAt: new Date().toISOString(),
   creditorIban: 'CH4431999123000889012',
   creditorName: 'Max Muster AG',
   creditorStreet: 'Musterstrasse',
@@ -120,12 +87,17 @@ export const DEFAULT_INVOICE_DATA: Omit<InvoiceData, 'id'> = {
   debtorCity: 'Bern',
   debtorCountry: 'CH',
   
-  amount: 0,
+  total: 0,
+  subtotal: 0,
+  vatAmount: 0,
+  vatEnabled: false,
   currency: 'CHF',
   reference: '',
   unstructuredMessage: '',
   projectName: '',
   items: [],
+  status: 'open',
+  paidAt: null,
   logoSrc: '',
   htmlTemplate: DEFAULT_HTML_TEMPLATE,
 };
@@ -136,5 +108,7 @@ export const DEFAULT_EXPENSE_DATA: Omit<ExpenseData, 'id'> = {
     description: '',
     amount: '',
     currency: 'CHF',
-    category: 'Software'
+    category: 'Software',
+    status: 'due',
+    paidAt: null,
 };

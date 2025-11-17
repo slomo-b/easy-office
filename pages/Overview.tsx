@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { getInvoices } from '../services/invoiceService';
@@ -29,7 +30,7 @@ const RecentList = ({ title, items, linkTo, type }: { title: string; items: (Inv
                            {type === 'invoice' ? (item as InvoiceData).unstructuredMessage : (item as ExpenseData).description}
                         </p>
                     </div>
-                    <span className="font-mono text-sm">{item.currency} {Number(item.amount).toFixed(2)}</span>
+                    <span className="font-mono text-sm">{item.currency} {Number(type === 'invoice' ? (item as InvoiceData).total : (item as ExpenseData).amount).toFixed(2)}</span>
                 </li>
             )) : <p className="text-gray-500 text-sm py-2">Keine Einträge vorhanden.</p>}
         </ul>
@@ -98,22 +99,27 @@ const Overview = () => {
 
     const yearlyInvoices = invoices.filter(inv => {
         try {
-            const timestamp = parseInt(inv.id.split('_')[1], 10);
-            return new Date(timestamp).getFullYear() === currentYear;
+             // Prioritize createdAt, fallback to parsing ID for old invoices
+            const date = inv.createdAt ? new Date(inv.createdAt) : new Date(parseInt(inv.id.split('_')[1], 10));
+            return date.getFullYear() === currentYear;
         } catch {
             return false;
         }
     });
     
-    const totalIncome = yearlyInvoices.reduce((sum, inv) => sum + Number(inv.amount), 0);
+    const paidInvoices = yearlyInvoices.filter(inv => inv.status === 'paid');
+    const totalIncome = paidInvoices.reduce((sum, inv) => sum + Number(inv.total), 0);
     
-    const totalOneTimeExpenses = expenses
-        .filter(exp => new Date(exp.date).getFullYear() === currentYear)
+    const openInvoices = yearlyInvoices.filter(inv => inv.status === 'open');
+    const totalOpenAmount = openInvoices.reduce((sum, inv) => sum + Number(inv.total), 0);
+    
+    const totalOneTimeExpensesPaid = expenses
+        .filter(exp => exp.status === 'paid' && exp.paidAt && new Date(exp.paidAt).getFullYear() === currentYear)
         .reduce((sum, exp) => sum + Number(exp.amount), 0);
 
     const totalRecurringExpensesForYear = calculateRecurringTotalForYear(recurringExpenses, currentYear);
 
-    const totalExpenses = totalOneTimeExpenses + totalRecurringExpensesForYear;
+    const totalExpenses = totalOneTimeExpensesPaid + totalRecurringExpensesForYear;
 
     const profit = totalIncome - totalExpenses;
 
@@ -132,6 +138,8 @@ const Overview = () => {
                 amount: r.amount,
                 currency: r.currency,
                 category: r.category,
+                status: 'due',
+                paidAt: null,
             });
 
             switch (r.interval) {
@@ -159,10 +167,11 @@ const Overview = () => {
     return (
         <div>
             <h2 className="text-3xl font-bold text-white mb-6">Übersicht {currentYear}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <StatCard title="Einnahmen (dieses Jahr)" value={`CHF ${totalIncome.toFixed(2)}`} colorClass="text-green-400" />
-                <StatCard title="Ausgaben (dieses Jahr)" value={`CHF ${totalExpenses.toFixed(2)}`} colorClass="text-red-400" />
-                <StatCard title="Gewinn (dieses Jahr)" value={`CHF ${profit.toFixed(2)}`} colorClass={profit >= 0 ? 'text-white' : 'text-red-400'} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <StatCard title="Einnahmen (bezahlt)" value={`CHF ${totalIncome.toFixed(2)}`} colorClass="text-green-400" />
+                <StatCard title="Offene Rechnungen" value={`CHF ${totalOpenAmount.toFixed(2)}`} colorClass="text-yellow-400" />
+                <StatCard title="Ausgaben (bezahlt)" value={`CHF ${totalExpenses.toFixed(2)}`} colorClass="text-red-400" />
+                <StatCard title="Gewinn (Cashflow)" value={`CHF ${profit.toFixed(2)}`} colorClass={profit >= 0 ? 'text-white' : 'text-red-400'} />
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <RecentList title="Letzte Einnahmen" items={invoices} linkTo="/invoices" type="invoice" />

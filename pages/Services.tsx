@@ -1,11 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ServiceData } from '../types';
 import { getServices, deleteService } from '../services/serviceService';
+import ServiceList from '../components/ServiceList';
+import { Search } from 'lucide-react';
+
+export type SortableServiceKeys = keyof Pick<ServiceData, 'name' | 'price' | 'unit'>;
 
 const Services = () => {
   const [services, setServices] = useState<ServiceData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortConfig, setSortConfig] = useState<{ key: SortableServiceKeys; direction: 'ascending' | 'descending' } | null>({
+    key: 'name',
+    direction: 'ascending',
+  });
 
   const loadServices = useCallback(async () => {
     setLoading(true);
@@ -19,11 +28,52 @@ const Services = () => {
   }, [loadServices]);
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Sind Sie sicher, dass Sie diese Leistung löschen möchten? Sie wird aus allen Zeiteinträgen entfernt.')) {
+    if (window.confirm('Sind Sie sicher, dass Sie diese Leistung löschen möchten? Bestehende Zeiteinträge verlieren ihre Verknüpfung.')) {
       await deleteService(id);
       await loadServices();
     }
   };
+
+  const requestSort = (key: SortableServiceKeys) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const filteredAndSortedServices = useMemo(() => {
+    let processableServices = [...services];
+
+    if (searchQuery) {
+      const lowercasedQuery = searchQuery.toLowerCase();
+      processableServices = processableServices.filter(service =>
+        Object.values(service).some(value =>
+          String(value).toLowerCase().includes(lowercasedQuery)
+        )
+      );
+    }
+
+    if (sortConfig !== null) {
+      processableServices.sort((a, b) => {
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+        
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+            if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
+            if (aValue > bValue) return sortConfig.direction === 'ascending' ? 1 : -1;
+        } else {
+            const stringA = String(aValue).toLowerCase();
+            const stringB = String(bValue).toLowerCase();
+            if (stringA < stringB) return sortConfig.direction === 'ascending' ? -1 : 1;
+            if (stringA > stringB) return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
+    return processableServices;
+  }, [services, searchQuery, sortConfig]);
 
   if (loading) {
     return <div className="text-center p-10">Lade Leistungen...</div>;
@@ -39,42 +89,27 @@ const Services = () => {
         </Link>
       </div>
       
-      <div className="bg-gray-800 shadow-md rounded-lg overflow-hidden">
-        <table className="min-w-full">
-          <thead className="bg-gray-700">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Preis</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Einheit</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">Aktionen</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-700">
-            {services.length > 0 ? services.map(service => (
-              <tr key={service.id} className="hover:bg-gray-700/50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{service.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 font-mono">CHF {Number(service.price).toFixed(2)}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{service.unit}</td>
-
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <Link to={`/service/edit/${service.id}`} className="text-emerald-400 hover:text-emerald-300 mr-4">
-                    Bearbeiten
-                  </Link>
-                  <button onClick={() => handleDelete(service.id)} className="text-red-500 hover:text-red-400">
-                    Löschen
-                  </button>
-                </td>
-              </tr>
-            )) : (
-                <tr>
-                    <td colSpan={4} className="text-center py-10 text-gray-400">
-                        Keine Leistungen gefunden.
-                    </td>
-                </tr>
-            )}
-          </tbody>
-        </table>
+      <div className="mb-4">
+        <div className="relative">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+            <Search className="h-5 w-5 text-gray-400" />
+          </span>
+          <input
+            type="text"
+            placeholder="Leistungen durchsuchen..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full max-w-sm bg-gray-700 border border-gray-600 rounded-md pl-10 pr-4 py-2 text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 transition"
+          />
+        </div>
       </div>
+
+      <ServiceList
+        services={filteredAndSortedServices}
+        onDelete={handleDelete}
+        requestSort={requestSort}
+        sortConfig={sortConfig}
+      />
     </div>
   );
 };

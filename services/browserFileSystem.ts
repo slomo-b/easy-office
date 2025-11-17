@@ -1,6 +1,5 @@
 import { IFileSystemService } from "../types";
-
-declare const JSZip: any;
+import JSZip from 'jszip';
 
 let rootHandle: FileSystemDirectoryHandle | null = null;
 const ROOT_DIR_NAME = 'easy-office-data';
@@ -76,20 +75,16 @@ const deleteFile = async (path: string): Promise<void> => {
 
 // --- Import/Export ---
 
-async function recursiveZip(handle: FileSystemDirectoryHandle, zipFolder: any) {
+async function recursiveZip(handle: FileSystemDirectoryHandle, zipFolder: JSZip) {
     for await (const entry of handle.values()) {
         if (entry.kind === 'file') {
-            // FIX: Property 'getFile' does not exist on type 'FileSystemHandle'.
-            // TypeScript's type narrowing doesn't work correctly inside a for-await-of loop with FileSystemHandle.
-            // We explicitly cast `entry` to `FileSystemFileHandle`.
             const file = await (entry as FileSystemFileHandle).getFile();
             zipFolder.file(entry.name, await file.arrayBuffer());
         } else if (entry.kind === 'directory') {
             const subFolder = zipFolder.folder(entry.name);
-            // FIX: Argument of type 'FileSystemHandle' is not assignable to parameter of type 'FileSystemDirectoryHandle'.
-            // TypeScript's type narrowing doesn't work correctly inside a for-await-of loop with FileSystemHandle.
-            // We explicitly cast `entry` to `FileSystemDirectoryHandle`.
-            await recursiveZip(entry as FileSystemDirectoryHandle, subFolder);
+            if(subFolder) {
+                await recursiveZip(entry as FileSystemDirectoryHandle, subFolder);
+            }
         }
     }
 }

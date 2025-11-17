@@ -8,6 +8,7 @@ export const DEFAULT_SERVICE_DATA: Omit<ServiceData, 'id'> = {
   description: '',
   unit: 'Stunde',
   price: '',
+  vatRate: '',
 };
 
 export const getServices = async (): Promise<ServiceData[]> => {

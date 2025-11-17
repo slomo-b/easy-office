@@ -1,21 +1,22 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { InvoiceData, CustomerData, InvoiceItem } from '../types';
-import { getInvoiceById, saveInvoice, createNewInvoice } from '../services/invoiceService';
+import { InvoiceData, CustomerData, InvoiceItem, SettingsData } from '../types';
+import { getInvoiceById, saveInvoice, createNewInvoice, calculateInvoiceTotals } from '../services/invoiceService';
 import { getCustomers } from '../services/customerService';
+import { getSettings } from '../services/settingsService';
 import { generateQrCode } from '../services/qrBillService';
 import InvoiceForm from '../components/InvoiceForm';
 import InvoicePreview from '../components/InvoicePreview';
 import HtmlEditor from '../components/HtmlEditor';
 import { Download, Printer } from 'lucide-react';
-
-// html2pdf is loaded from a CDN script in index.html
-declare const html2pdf: any;
+import html2pdf from 'html2pdf.js';
 
 const InvoiceEditor = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
+  const [settings, setSettings] = useState<SettingsData | null>(null);
   const [customers, setCustomers] = useState<CustomerData[]>([]);
   const [qrCodeSvg, setQrCodeSvg] = useState<string>('');
   const [isLoadingQr, setIsLoadingQr] = useState<boolean>(true);
@@ -24,8 +25,12 @@ const InvoiceEditor = () => {
 
   useEffect(() => {
     const loadData = async () => {
-        const fetchedCustomers = await getCustomers();
+        const [fetchedCustomers, fetchedSettings] = await Promise.all([
+            getCustomers(),
+            getSettings(),
+        ]);
         setCustomers(fetchedCustomers);
+        setSettings(fetchedSettings);
 
         if (id) {
           const existingInvoice = await getInvoiceById(id);
@@ -35,7 +40,7 @@ const InvoiceEditor = () => {
             navigate('/invoices'); // Invoice not found, redirect
           }
         } else {
-          const newInvoice = await createNewInvoice();
+          const newInvoice = await createNewInvoice(fetchedSettings);
           setInvoiceData(newInvoice);
         }
     };
@@ -44,7 +49,7 @@ const InvoiceEditor = () => {
   
 
   const regenerateQrCode = useCallback(async () => {
-    if (!invoiceData || !invoiceData.amount || Number(invoiceData.amount) <= 0) {
+    if (!invoiceData || !invoiceData.total || Number(invoiceData.total) <= 0) {
         setQrCodeSvg('');
         setIsLoadingQr(false);
         return;
@@ -69,22 +74,31 @@ const InvoiceEditor = () => {
     setInvoiceData(prev => {
         if (!prev) return null;
 
-        if (field === 'items') {
-            const newItems = value as InvoiceItem[];
-            const total = newItems.reduce((sum, item) => {
-                const quantity = Number(item.quantity) || 0;
-                const price = Number(item.price) || 0;
-                return sum + (quantity * price);
-            }, 0);
-            return { ...prev, items: newItems, amount: total };
+        let updatedData: InvoiceData = { ...prev, [field]: value };
+
+        if (field === 'items' || field === 'vatEnabled') {
+            const items = field === 'items' ? value : updatedData.items;
+            const vatEnabled = field === 'vatEnabled' ? value : updatedData.vatEnabled;
+
+            // When toggling vatEnabled, update vatRate on items
+            if (field === 'vatEnabled' && settings) {
+                const updatedItems = items.map((item: InvoiceItem) => ({
+                    ...item,
+                    vatRate: vatEnabled ? (item.vatRate || settings.vatRate) : ''
+                }));
+                updatedData.items = updatedItems;
+            }
+            
+            const { subtotal, vatAmount, total } = calculateInvoiceTotals(updatedData.items, vatEnabled);
+            updatedData = { ...updatedData, subtotal, vatAmount, total };
         }
         
         // When invoice number changes, also update the reference number
         if (field === 'unstructuredMessage') {
-            return { ...prev, unstructuredMessage: value, reference: value };
+            updatedData.reference = value;
         }
         
-        return { ...prev, [field]: value };
+        return updatedData;
     });
   };
   
@@ -123,7 +137,7 @@ const InvoiceEditor = () => {
   };
 
 
-  if (!invoiceData) {
+  if (!invoiceData || !settings) {
     return <div className="text-center p-10">Lade Rechnungsdaten...</div>;
   }
 
@@ -163,6 +177,7 @@ const InvoiceEditor = () => {
                 data={invoiceData}
                 customers={customers}
                 onDataChange={handleDataChange}
+                defaultVatRate={settings.vatRate}
             />
             <HtmlEditor
                 template={invoiceData.htmlTemplate}

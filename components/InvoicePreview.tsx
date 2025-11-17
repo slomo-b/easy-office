@@ -18,13 +18,13 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, qrCodeSvg, isLoad
     ? `<img src="${data.logoSrc}" alt="Firmenlogo" style="max-height: 80px;"/>`
     : `<div class="h-20 w-40 flex items-center justify-center text-gray-500 text-sm" style="background-color: #f3f4f6; border: 1px dashed #d1d5db; border-radius: 0.5rem;">Ihr Logo</div>`;
 
-  let qrCodeHtml: string;
+  let qrBillHtml: string;
   if (isLoadingQr) {
-    qrCodeHtml = `<div style="width: 200px; height: 200px;" class="bg-gray-200 animate-pulse flex items-center justify-center text-gray-500">Generiere QR...</div>`;
+    qrBillHtml = `<div style="height: 105mm; display: flex; align-items: center; justify-content: center;" class="bg-gray-200 animate-pulse text-gray-500">Generiere QR-Rechnung...</div>`;
   } else if (qrCodeSvg) {
-    qrCodeHtml = qrCodeSvg;
+    qrBillHtml = qrCodeSvg;
   } else {
-    qrCodeHtml = `<div style="width: 200px; height: 200px;" class="bg-gray-100 flex items-center justify-center text-center text-xs text-gray-500 p-2 border border-dashed border-gray-300">QR-Code kann nicht generiert werden.<br/>(Betrag muss grösser als 0 sein)</div>`;
+    qrBillHtml = `<div style="height: 105mm; display: flex; align-items: center; justify-content: center;" class="bg-gray-100 text-center text-xs text-gray-500 p-2 border border-dashed border-gray-300">QR-Rechnung kann nicht generiert werden.<br/>(Betrag muss grösser als 0 sein)</div>`;
   }
   
   const itemsHtml = data.items.map((item, index) => {
@@ -48,11 +48,21 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, qrCodeSvg, isLoad
     ? `<p><span class="font-semibold text-gray-600">Projekt:</span> ${data.projectName}</p>`
     : '';
 
+  const totalsBlockHtml = data.vatEnabled
+    ? `<div class="text-sm">
+        <div class="flex justify-between py-1 text-gray-600"><span>Zwischentotal</span><span>${data.currency} ${formatAmount(data.subtotal)}</span></div>
+        <div class="flex justify-between py-1 text-gray-600"><span>MwSt.</span><span>${data.currency} ${formatAmount(data.vatAmount)}</span></div>
+        <div class="flex justify-between py-2 font-bold text-lg text-gray-900 border-t border-gray-300 mt-2"><span>Total</span><span>${data.currency} ${formatAmount(data.total)}</span></div>
+       </div>`
+    : `<div class="flex justify-between py-2 font-bold text-lg text-gray-900"><span>Total</span><span>${data.currency} ${formatAmount(data.total)}</span></div>`;
+
   const processedTemplate = data.htmlTemplate
     .replace(/{{logoImage}}/g, logoHtml)
-    .replace(/{{qrCodeImage}}/g, qrCodeHtml)
+    .replace(/{{qrBillSvg}}/g, qrBillHtml)
+    .replace(/{{qrCodeImage}}/g, qrBillHtml) // Backward compatibility for old template
     .replace(/{{invoiceItems}}/g, itemsHtml)
     .replace(/{{projectLine}}/g, projectLineHtml)
+    .replace(/{{totalsBlock}}/g, totalsBlockHtml)
     .replace(/{{creditorName}}/g, data.creditorName)
     .replace(/{{creditorStreet}}/g, data.creditorStreet)
     .replace(/{{creditorHouseNr}}/g, data.creditorHouseNr)
@@ -65,7 +75,8 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, qrCodeSvg, isLoad
     .replace(/{{debtorZip}}/g, data.debtorZip)
     .replace(/{{debtorCity}}/g, data.debtorCity)
     .replace(/{{currency}}/g, data.currency)
-    .replace(/{{amount}}/g, formatAmount(data.amount))
+    // Keep for backward compatibility with user templates.
+    .replace(/{{amount}}/g, formatAmount(data.total))
     .replace(/{{reference}}/g, data.reference)
     .replace(/{{unstructuredMessage}}/g, data.unstructuredMessage)
 

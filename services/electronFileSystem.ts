@@ -1,8 +1,8 @@
 import { IFileSystemService } from "../types";
+import JSZip from 'jszip';
 
 // These will be available in the Electron renderer process
 declare const window: any;
-declare const JSZip: any;
 const fs = window.require ? window.require('fs') : null;
 const path = window.require ? window.require('path') : null;
 
@@ -73,13 +73,15 @@ const deleteFile = async (filePath: string): Promise<void> => {
 
 // --- Import/Export ---
 
-function addDirectoryToZip(localPath: string, zip: any) {
+function addDirectoryToZip(localPath: string, zip: JSZip) {
     const entries = fs.readdirSync(localPath, { withFileTypes: true });
     for (const entry of entries) {
         const fullPath = path.join(localPath, entry.name);
         if (entry.isDirectory()) {
             const dirZip = zip.folder(entry.name);
-            addDirectoryToZip(fullPath, dirZip);
+            if(dirZip) {
+                addDirectoryToZip(fullPath, dirZip);
+            }
         } else if (entry.isFile()) {
             const content = fs.readFileSync(fullPath);
             zip.file(entry.name, content);

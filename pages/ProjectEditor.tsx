@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ProjectData, CustomerData, ServiceData, TaskData, ExpenseData, TaskStatus, TaskTimeLog } from '../types';
+import { ProjectData, CustomerData, ServiceData, TaskData, ExpenseData, TaskStatus, TaskTimeLog, SettingsData } from '../types';
 import { getProjectById, saveProject, createNewProject, deleteProject } from '../services/projectService';
 import { getCustomers } from '../services/customerService';
 import { getServices } from '../services/serviceService';
+import { getSettings } from '../services/settingsService';
 import { getExpenses, createNewExpense, saveExpense } from '../services/expenseService';
 import ExpenseForm from '../components/ExpenseForm';
 import { createInvoiceFromProject } from '../services/invoiceService';
@@ -34,6 +36,7 @@ const ProjectEditor = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [customers, setCustomers] = useState<CustomerData[]>([]);
     const [services, setServices] = useState<ServiceData[]>([]);
+    const [settings, setSettings] = useState<SettingsData | null>(null);
     const [projectExpenses, setProjectExpenses] = useState<ExpenseData[]>([]);
     
     // Task management state
@@ -50,9 +53,10 @@ const ProjectEditor = () => {
     const [manualLog, setManualLog] = useState({ start: '', end: '' });
 
     const loadData = useCallback(async () => {
-        const [fetchedCustomers, fetchedServices, allExpenses] = await Promise.all([getCustomers(), getServices(), getExpenses()]);
+        const [fetchedCustomers, fetchedServices, allExpenses, fetchedSettings] = await Promise.all([getCustomers(), getServices(), getExpenses(), getSettings()]);
         setCustomers(fetchedCustomers);
         setServices(fetchedServices);
+        setSettings(fetchedSettings);
 
         if (id) {
             const existingProject = await getProjectById(id);
@@ -205,7 +209,7 @@ const ProjectEditor = () => {
     };
 
     const handleCreateInvoice = async () => {
-        if (!project) return;
+        if (!project || !settings) return;
         const customer = customers.find(c => c.id === project.customerId);
         if (!customer) {
             alert("Kunde nicht gefunden. Rechnung kann nicht erstellt werden.");
@@ -214,7 +218,8 @@ const ProjectEditor = () => {
 
         setIsSaving(true);
         try {
-            const newInvoice = await createInvoiceFromProject(project, customer, services, projectExpenses);
+            // FIX: Pass the required 'settings' object to the service function.
+            const newInvoice = await createInvoiceFromProject(project, customer, services, projectExpenses, settings);
             navigate(`/invoice/edit/${newInvoice.id}`);
         } catch (error) {
             console.error("Failed to create invoice from project", error);
@@ -280,7 +285,7 @@ const ProjectEditor = () => {
     };
 
 
-    if (!project) return <div className="text-center p-10">Lade Projektdaten...</div>;
+    if (!project || !settings) return <div className="text-center p-10">Lade Projektdaten...</div>;
     
     const totalProjectHours = project.tasks.reduce((sum, task) => sum + calculateTaskDuration(task), 0) / (1000 * 60 * 60);
 

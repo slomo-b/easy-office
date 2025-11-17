@@ -129,7 +129,6 @@ const Overview = () => {
         cursorDate.setHours(12, 0, 0, 0);
 
         while (cursorDate <= today) {
-            // FIX: Added missing status and paidAt properties to conform to the ExpenseData type.
             virtualRecurringInstances.push({
                 id: `${r.id}_${cursorDate.toISOString()}`,
                 date: cursorDate.toISOString().split('T')[0],

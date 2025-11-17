@@ -1,3 +1,4 @@
+
 import { SettingsData } from '../types';
 import * as fileSystem from './fileSystem';
 
@@ -12,11 +13,18 @@ export const DEFAULT_SETTINGS_DATA: SettingsData = {
   creditorCity: 'Zürich',
   creditorCountry: 'CH',
   logoSrc: '',
+  isVatEnabled: false,
+  vatRate: 8.1,
 };
 
 export const getSettings = async (): Promise<SettingsData> => {
   try {
-    return await fileSystem.readFile<SettingsData>(SETTINGS_FILE);
+    const settings = await fileSystem.readFile<SettingsData>(SETTINGS_FILE);
+    // Backward compatibility: Add new fields if they don't exist
+    return {
+      ...DEFAULT_SETTINGS_DATA,
+      ...settings,
+    };
   } catch (error) {
     // If settings file doesn't exist, return default settings
     console.info('Settings file not found, using default settings.');

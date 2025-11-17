@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { SettingsData } from '../types';
 import { getSettings, saveSettings } from '../services/settingsService';
@@ -27,7 +28,7 @@ const Settings = () => {
       setTimeout(() => setMessage(null), 4000);
   };
 
-  const handleDataChange = (field: keyof SettingsData, value: string | number) => {
+  const handleDataChange = (field: keyof SettingsData, value: string | number | boolean) => {
     setSettings(prev => prev ? { ...prev, [field]: value } : null);
   };
 
@@ -159,5 +160,4 @@ const Settings = () => {
   );
 };
 
-// FIX: Add default export to be consumed by App.tsx
 export default Settings;
