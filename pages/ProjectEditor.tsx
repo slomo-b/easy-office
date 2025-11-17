@@ -380,8 +380,8 @@ const ProjectEditor = () => {
                 </div>
             </div>
 
-            <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 space-y-6">
+            <main className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <div className="xl:col-span-2 space-y-6">
                     <div className="bg-gray-800 p-4 rounded-lg shadow-md">
                         <h3 className="text-lg font-semibold text-emerald-400 border-b border-gray-700 pb-2 mb-4">Aufgaben ({totalProjectHours.toFixed(2)}h)</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
