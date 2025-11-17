@@ -32,29 +32,32 @@ const styles = StyleSheet.create({
         lineHeight: 1.5,
         flexDirection: 'column',
     },
+    // The main content no longer needs to grow; a dedicated spacer will handle it.
     mainContent: {
-        flexGrow: 1,
         padding: 48,
     },
-    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 64 },
+    spacer: {
+        flexGrow: 1,
+    },
+    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 48 }, // Reduced margin
     headerLogo: { width: '50%' },
     logoImage: { maxHeight: 60, maxWidth: 180 },
     headerCreditor: { width: '50%', textAlign: 'right', fontSize: 9, color: '#374151' },
     creditorName: { fontWeight: 'bold', fontSize: 11, color: '#111827' },
-    metaSection: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 48 },
+    metaSection: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 36 }, // Reduced margin
     metaDebtor: { width: '60%' },
     metaInfo: { width: '40%', textAlign: 'right' },
     metaLabel: { fontSize: 8, color: '#6b7280', marginBottom: 2 },
     invoiceTitle: { fontSize: 24, fontWeight: 'bold', color: '#059669', marginBottom: 4 },
     metaLine: { flexDirection: 'row', justifyContent: 'flex-end', fontSize: 10 },
     metaLineLabel: { fontWeight: 'bold', color: '#4b5563' },
-    table: { display: 'table', width: 'auto', marginBottom: 48 },
+    table: { display: 'table', width: 'auto', marginBottom: 36 }, // Reduced margin
     tableHeader: { flexDirection: 'row', backgroundColor: '#1f2937', color: 'white', borderTopLeftRadius: 4, borderTopRightRadius: 4 },
     tableRow: { flexDirection: 'row' },
     tableRowAlt: { backgroundColor: '#f9fafb' },
     th: { padding: '8px 12px', fontWeight: 'bold', fontSize: 9 },
     td: { padding: '10px 12px', fontSize: 9, borderBottom: '1px solid #f3f4f6' },
-    totalsSection: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 64 },
+    totalsSection: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 48 }, // Reduced margin
     totalsBox: { width: '45%', backgroundColor: '#f3f4f6', padding: 12, borderRadius: 6 },
     totalLine: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2, fontSize: 10, color: '#4b5563' },
     totalLineMain: { fontWeight: 'bold', fontSize: 12, marginTop: 6, paddingTop: 6, borderTop: '1px solid #d1d5db', color: '#111827' },
@@ -67,7 +70,7 @@ const InvoicePDF: React.FC<{ invoiceData: InvoiceData; qrCodePng: string; }> = (
     return (
         <Document title={`Rechnung-${invoiceData.unstructuredMessage}`}>
             <Page size="A4" style={styles.page}>
-                <View style={styles.mainContent}>
+                <View style={styles.mainContent} wrap>
                     <View style={styles.header}>
                         <View style={styles.headerLogo}>{invoiceData.logoSrc && <Image src={invoiceData.logoSrc} style={styles.logoImage} />}</View>
                         <View style={styles.headerCreditor}>
@@ -118,6 +121,8 @@ const InvoicePDF: React.FC<{ invoiceData: InvoiceData; qrCodePng: string; }> = (
                         <Text>{invoiceData.creditorName} - {invoiceData.creditorIban}</Text>
                     </View>
                 </View>
+                 {/* This spacer pushes the QR bill to the bottom of the last page */}
+                <View style={styles.spacer} />
                 {qrCodePng && (<Image src={qrCodePng} style={styles.qrBillContainer} />)}
             </Page>
         </Document>
