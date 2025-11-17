@@ -41,7 +41,6 @@ export interface InvoiceData {
   paidAt: string | null;
 
   // Customization
-  htmlTemplate: string;
   logoSrc: string;
 }
 

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { InvoiceData, CustomerData, InvoiceItem, SettingsData } from '../types';
 import { getInvoiceById, saveInvoice, createNewInvoice, calculateInvoiceTotals } from '../services/invoiceService';
@@ -7,10 +8,138 @@ import { getSettings } from '../services/settingsService';
 import { generateQrCode } from '../services/qrBillService';
 import InvoiceForm from '../components/InvoiceForm';
 import InvoicePreview from '../components/InvoicePreview';
-import HtmlEditor from '../components/HtmlEditor';
-import { Download, ZoomIn, X } from 'lucide-react';
-import html2pdf from 'html2pdf.js';
+import { Download } from 'lucide-react';
+import { Document, Page, View, Text, StyleSheet, Image } from '@react-pdf/renderer';
+import { PDFDownloadLink } from '@react-pdf/renderer';
 
+// --- PDF Document Component ---
+const styles = StyleSheet.create({
+    page: { fontFamily: 'Helvetica', fontSize: 10, backgroundColor: '#FFFFFF', color: '#1f2937', lineHeight: 1.5 },
+    pageContent: { display: 'flex', flexDirection: 'column', flexGrow: 1, padding: 48 },
+    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 40 },
+    headerLogo: { width: '50%' },
+    logoImage: { maxHeight: 60, maxWidth: 180 },
+    headerCreditor: { width: '50%', textAlign: 'right', fontSize: 9 },
+    creditorName: { fontWeight: 'bold', fontSize: 11 },
+    metaSection: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 30 },
+    metaDebtor: { width: '60%' },
+    metaInfo: { width: '40%', textAlign: 'right' },
+    metaLabel: { fontSize: 8, color: '#6b7280' },
+    invoiceTitle: { fontSize: 24, fontWeight: 'bold', color: '#059669', marginBottom: 4 },
+    metaLine: { flexDirection: 'row', justifyContent: 'flex-end', fontSize: 10 },
+    metaLineLabel: { fontWeight: 'bold', color: '#4b5563' },
+    table: { display: 'table', width: 'auto', marginBottom: 30 },
+    tableHeader: { flexDirection: 'row', backgroundColor: '#1f2937', color: 'white', borderRadius: 4, borderBottomRightRadius: 0, borderBottomLeftRadius: 0 },
+    tableRow: { flexDirection: 'row', borderBottom: '1px solid #e5e7eb' },
+    tableRowAlt: { backgroundColor: '#f9fafb' },
+    th: { padding: '6px 12px', fontWeight: 'bold', fontSize: 9 },
+    td: { padding: '8px 12px', fontSize: 9 },
+    totalsSection: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 40 },
+    totalsBox: { width: '45%', backgroundColor: '#f3f4f6', padding: 12, borderRadius: 6 },
+    totalLine: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2, fontSize: 9 },
+    totalLineMain: { fontWeight: 'bold', fontSize: 12, marginTop: 4, paddingTop: 4, borderTop: '1px solid #d1d5db' },
+    footer: { textAlign: 'center', fontSize: 8, color: '#6b7280', borderTop: '1px solid #e5e7eb', paddingTop: 10 },
+    qrBillContainer: { width: '210mm', height: '105mm' },
+});
+
+const InvoicePDF: React.FC<{ invoiceData: InvoiceData; qrCodeSvg: string; }> = ({ invoiceData, qrCodeSvg }) => {
+    const qrCodeDataUrl = qrCodeSvg ? `data:image/svg+xml;base64,${btoa(qrCodeSvg)}` : null;
+    const formatAmount = (amount: number | '') => Number(amount).toFixed(2);
+
+    return (
+        <Document title={`Rechnung-${invoiceData.unstructuredMessage}`}>
+            <Page size="A4" style={styles.page}>
+                <View style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                    <View style={styles.pageContent}>
+                        {/* Header */}
+                        <View style={styles.header}>
+                            <View style={styles.headerLogo}>
+                                {invoiceData.logoSrc && <Image src={invoiceData.logoSrc} style={styles.logoImage} />}
+                            </View>
+                            <View style={styles.headerCreditor}>
+                                <Text style={styles.creditorName}>{invoiceData.creditorName}</Text>
+                                <Text>{invoiceData.creditorStreet} {invoiceData.creditorHouseNr}</Text>
+                                <Text>{invoiceData.creditorZip} {invoiceData.creditorCity}</Text>
+                            </View>
+                        </View>
+                        {/* Recipient & Meta */}
+                        <View style={styles.metaSection}>
+                            <View style={styles.metaDebtor}>
+                                <Text style={styles.metaLabel}>Zahlungspflichtig</Text>
+                                <Text style={{ fontWeight: 'bold' }}>{invoiceData.debtorName}</Text>
+                                <Text>{invoiceData.debtorStreet} {invoiceData.debtorHouseNr}</Text>
+                                <Text>{invoiceData.debtorZip} {invoiceData.debtorCity}</Text>
+                            </View>
+                            <View style={styles.metaInfo}>
+                                <Text style={styles.invoiceTitle}>RECHNUNG</Text>
+                                <View style={styles.metaLine}>
+                                    <Text style={styles.metaLineLabel}>Datum: </Text>
+                                    <Text>{new Date(invoiceData.createdAt).toLocaleDateString('de-CH')}</Text>
+                                </View>
+                                <View style={styles.metaLine}>
+                                    <Text style={styles.metaLineLabel}>Rechnungs-Nr: </Text>
+                                    <Text>{invoiceData.unstructuredMessage}</Text>
+                                </View>
+                                {invoiceData.projectName && (
+                                    <View style={styles.metaLine}>
+                                        <Text style={styles.metaLineLabel}>Projekt: </Text>
+                                        <Text>{invoiceData.projectName}</Text>
+                                    </View>
+                                )}
+                            </View>
+                        </View>
+                        {/* Items Table */}
+                        <View style={styles.table}>
+                            <View style={styles.tableHeader}>
+                                <Text style={[styles.th, { width: '50%' }]}>Beschreibung</Text>
+                                <Text style={[styles.th, { width: '15%', textAlign: 'right' }]}>Menge</Text>
+                                <Text style={[styles.th, { width: '15%', textAlign: 'right' }]}>Preis</Text>
+                                <Text style={[styles.th, { width: '20%', textAlign: 'right' }]}>Total</Text>
+                            </View>
+                            {invoiceData.items.map((item, index) => (
+                                <View key={index} style={[styles.tableRow, index % 2 !== 0 && styles.tableRowAlt]}>
+                                    <Text style={[styles.td, { width: '50%' }]}>{item.description}</Text>
+                                    <Text style={[styles.td, { width: '15%', textAlign: 'right' }]}>{Number(item.quantity).toFixed(2)} {item.unit}</Text>
+                                    <Text style={[styles.td, { width: '15%', textAlign: 'right' }]}>{formatAmount(item.price)}</Text>
+                                    <Text style={[styles.td, { width: '20%', textAlign: 'right', fontWeight: 'bold' }]}>{formatAmount(Number(item.quantity) * Number(item.price))}</Text>
+                                </View>
+                            ))}
+                        </View>
+                        {/* Totals */}
+                        <View style={styles.totalsSection}>
+                            <View style={styles.totalsBox}>
+                                {invoiceData.vatEnabled ? (
+                                    <>
+                                        <View style={styles.totalLine}><Text>Zwischentotal</Text><Text>{invoiceData.currency} {formatAmount(invoiceData.subtotal)}</Text></View>
+                                        <View style={styles.totalLine}><Text>MwSt.</Text><Text>{invoiceData.currency} {formatAmount(invoiceData.vatAmount)}</Text></View>
+                                        <View style={[styles.totalLine, styles.totalLineMain]}><Text>Total</Text><Text>{invoiceData.currency} {formatAmount(invoiceData.total)}</Text></View>
+                                    </>
+                                ) : (
+                                    <View style={[styles.totalLine, styles.totalLineMain]}><Text>Total</Text><Text>{invoiceData.currency} {formatAmount(invoiceData.total)}</Text></View>
+                                )}
+                            </View>
+                        </View>
+                        {/* Footer */}
+                        <View style={styles.footer}>
+                            <Text>Vielen Dank für Ihren Auftrag. Bitte begleichen Sie den Betrag innert 30 Tagen.</Text>
+                            <Text>{invoiceData.creditorName} - {invoiceData.creditorIban}</Text>
+                        </View>
+                    </View>
+
+                    {/* QR Bill Section */}
+                    {qrCodeDataUrl && (
+                        <View style={styles.qrBillContainer}>
+                            <Image src={qrCodeDataUrl} style={{ width: '100%', height: '100%' }} />
+                        </View>
+                    )}
+                </View>
+            </Page>
+        </Document>
+    );
+};
+
+
+// --- Main Editor Component ---
 const InvoiceEditor = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -18,11 +147,7 @@ const InvoiceEditor = () => {
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [customers, setCustomers] = useState<CustomerData[]>([]);
   const [qrCodeSvg, setQrCodeSvg] = useState<string>('');
-  const [isLoadingQr, setIsLoadingQr] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [isDownloadingPdf, setIsDownloadingPdf] = useState<boolean>(false);
-  const [isZoomModalOpen, setIsZoomModalOpen] = useState<boolean>(false);
-  const printContainerRef = useRef<HTMLDivElement>(null); // Ref for the hidden print container
 
   useEffect(() => {
     const loadData = async () => {
@@ -52,36 +177,32 @@ const InvoiceEditor = () => {
   const regenerateQrCode = useCallback(async () => {
     if (!invoiceData || !invoiceData.total || Number(invoiceData.total) <= 0) {
         setQrCodeSvg('');
-        setIsLoadingQr(false);
         return;
     };
-    setIsLoadingQr(true);
     try {
       const svg = await generateQrCode(invoiceData);
       setQrCodeSvg(svg);
     } catch (error) {
       console.error('Failed to generate QR code:', error);
       setQrCodeSvg('');
-    } finally {
-      setIsLoadingQr(false);
     }
   }, [invoiceData]);
 
   useEffect(() => {
-    regenerateQrCode();
-  }, [regenerateQrCode]);
+    if (invoiceData) {
+        regenerateQrCode();
+    }
+  }, [invoiceData, regenerateQrCode]);
 
   const handleDataChange = (field: keyof InvoiceData, value: any) => {
     setInvoiceData(prev => {
         if (!prev) return null;
-
         let updatedData: InvoiceData = { ...prev, [field]: value };
 
         if (field === 'items' || field === 'vatEnabled') {
             const items = field === 'items' ? value : updatedData.items;
             const vatEnabled = field === 'vatEnabled' ? value : updatedData.vatEnabled;
 
-            // When toggling vatEnabled, update vatRate on items
             if (field === 'vatEnabled' && settings) {
                 const updatedItems = items.map((item: InvoiceItem) => ({
                     ...item,
@@ -94,7 +215,6 @@ const InvoiceEditor = () => {
             updatedData = { ...updatedData, subtotal, vatAmount, total };
         }
         
-        // When invoice number changes, also update the reference number
         if (field === 'unstructuredMessage') {
             updatedData.reference = value;
         }
@@ -103,84 +223,6 @@ const InvoiceEditor = () => {
     });
   };
   
-  const handleTemplateChange = (template: string) => {
-    setInvoiceData(prev => prev ? { ...prev, htmlTemplate: template } : null);
-  };
-  
-  const processedTemplate = useMemo(() => {
-    if (!invoiceData) return '';
-
-    const formatAmount = (amount: number | '') => {
-        if (amount === '') return '...';
-        return Number(amount).toFixed(2);
-    }
-  
-    const logoHtml = invoiceData.logoSrc 
-      ? `<img src="${invoiceData.logoSrc}" alt="Firmenlogo" style="max-height: 80px;"/>`
-      : `<div class="h-20 w-40 flex items-center justify-center text-gray-500 text-sm" style="background-color: #f3f4f6; border: 1px dashed #d1d5db; border-radius: 0.5rem;">Ihr Logo</div>`;
-  
-    let qrBillHtml: string;
-    if (isLoadingQr) {
-      qrBillHtml = `<div style="height: 105mm; display: flex; align-items: center; justify-content: center;" class="bg-gray-200 animate-pulse text-gray-500">Generiere QR-Rechnung...</div>`;
-    } else if (qrCodeSvg) {
-      qrBillHtml = qrCodeSvg;
-    } else {
-      qrBillHtml = `<div style="height: 105mm; display: flex; align-items: center; justify-content: center;" class="bg-gray-100 text-center text-xs text-gray-500 p-2 border border-dashed border-gray-300">QR-Rechnung kann nicht generiert werden.<br/>(Betrag muss grösser als 0 sein)</div>`;
-    }
-    
-    const itemsHtml = invoiceData.items.map((item, index) => {
-      const quantity = Number(item.quantity);
-      const price = Number(item.price);
-      const total = quantity * price;
-      const isEven = index % 2 === 0;
-      const rowClass = isEven ? 'bg-gray-50' : '';
-  
-      return `
-          <tr class="${rowClass}">
-              <td class="py-3 px-4 text-gray-800">${item.description}</td>
-              <td class="text-right py-3 px-4 text-gray-600">${quantity.toFixed(2)} ${item.unit}</td>
-              <td class="text-right py-3 px-4 text-gray-600">${formatAmount(price)}</td>
-              <td class="text-right py-3 px-4 font-semibold text-gray-800">${formatAmount(total)}</td>
-          </tr>
-      `;
-    }).join('');
-    
-    const projectLineHtml = invoiceData.projectName 
-      ? `<p><span class="font-semibold text-gray-600">Projekt:</span> ${invoiceData.projectName}</p>`
-      : '';
-  
-    const totalsBlockHtml = invoiceData.vatEnabled
-      ? `<div class="text-sm">
-          <div class="flex justify-between py-1 text-gray-600"><span>Zwischentotal</span><span>${invoiceData.currency} ${formatAmount(invoiceData.subtotal)}</span></div>
-          <div class="flex justify-between py-1 text-gray-600"><span>MwSt.</span><span>${invoiceData.currency} ${formatAmount(invoiceData.vatAmount)}</span></div>
-          <div class="flex justify-between py-2 font-bold text-lg text-gray-900 border-t border-gray-300 mt-2"><span>Total</span><span>${invoiceData.currency} ${formatAmount(invoiceData.total)}</span></div>
-         </div>`
-      : `<div class="flex justify-between py-2 font-bold text-lg text-gray-900"><span>Total</span><span>${invoiceData.currency} ${formatAmount(invoiceData.total)}</span></div>`;
-  
-    return invoiceData.htmlTemplate
-      .replace(/{{logoImage}}/g, logoHtml)
-      .replace(/{{qrBillSvg}}/g, qrBillHtml)
-      .replace(/{{invoiceItems}}/g, itemsHtml)
-      .replace(/{{projectLine}}/g, projectLineHtml)
-      .replace(/{{totalsBlock}}/g, totalsBlockHtml)
-      .replace(/{{creditorName}}/g, invoiceData.creditorName)
-      .replace(/{{creditorStreet}}/g, invoiceData.creditorStreet)
-      .replace(/{{creditorHouseNr}}/g, invoiceData.creditorHouseNr)
-      .replace(/{{creditorZip}}/g, invoiceData.creditorZip)
-      .replace(/{{creditorCity}}/g, invoiceData.creditorCity)
-      .replace(/{{creditorIban}}/g, invoiceData.creditorIban)
-      .replace(/{{debtorName}}/g, invoiceData.debtorName)
-      .replace(/{{debtorStreet}}/g, invoiceData.debtorStreet)
-      .replace(/{{debtorHouseNr}}/g, invoiceData.debtorHouseNr)
-      .replace(/{{debtorZip}}/g, invoiceData.debtorZip)
-      .replace(/{{debtorCity}}/g, invoiceData.debtorCity)
-      .replace(/{{currency}}/g, invoiceData.currency)
-      .replace(/{{amount}}/g, formatAmount(invoiceData.total))
-      .replace(/{{reference}}/g, invoiceData.reference)
-      .replace(/{{unstructuredMessage}}/g, invoiceData.unstructuredMessage)
-  }, [invoiceData, qrCodeSvg, isLoadingQr]);
-
-
   const handleSave = async () => {
     if (invoiceData) {
       setIsSaving(true);
@@ -190,76 +232,34 @@ const InvoiceEditor = () => {
     }
   };
   
-  const handleDownloadPdf = () => {
-    if (!invoiceData || !printContainerRef.current) return;
-    setIsDownloadingPdf(true);
-    
-    // The element to print is now referenced from our hidden, pre-rendered container
-    const elementToPrint = printContainerRef.current.querySelector('#print-area');
-
-    if (!elementToPrint) {
-      console.error("Could not find #print-area for PDF generation.");
-      setIsDownloadingPdf(false);
-      return;
-    }
-
-    const opt = {
-      margin:       0,
-      filename:     `Rechnung-${invoiceData.unstructuredMessage || invoiceData.id}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    // Use a promise-based approach for better flow control and cleanup
-    html2pdf().from(elementToPrint).set(opt).save().then(() => {
-        setIsDownloadingPdf(false);
-    }).catch((error) => {
-        console.error("PDF generation failed:", error);
-        setIsDownloadingPdf(false);
-    });
-  };
-
-
   if (!invoiceData || !settings) {
     return <div className="text-center p-10">Lade Rechnungsdaten...</div>;
   }
+  
+  const invoicePdfDocument = <InvoicePDF invoiceData={invoiceData} qrCodeSvg={qrCodeSvg} />;
 
   return (
     <div>
-        {/* Hidden container for perfect PDF rendering */}
-        <div
-            ref={printContainerRef}
-            className="absolute left-[-9999px] top-0"
-            dangerouslySetInnerHTML={{ __html: processedTemplate }}
-        />
-
-        {isZoomModalOpen && (
-            <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setIsZoomModalOpen(false)}>
-                <div className="relative bg-white rounded-md shadow-2xl h-full w-auto overflow-y-auto" onClick={e => e.stopPropagation()}>
-                    <button 
-                        onClick={() => setIsZoomModalOpen(false)} 
-                        className="sticky top-2 right-2 ml-auto block z-10 p-1.5 bg-gray-800 text-white rounded-full hover:bg-gray-700 transition-colors"
-                        aria-label="Vorschau schliessen"
-                    >
-                        <X size={24} />
-                    </button>
-                    <div dangerouslySetInnerHTML={{ __html: processedTemplate }} />
-                </div>
-            </div>
-        )}
-
         <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-bold text-white">{id ? 'Rechnung bearbeiten' : 'Neue Rechnung erstellen'}</h2>
             <div className="flex items-center gap-2">
-                 <button
-                    onClick={handleDownloadPdf}
-                    disabled={isDownloadingPdf}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 flex items-center gap-2 disabled:bg-gray-500"
+                 <PDFDownloadLink
+                    document={invoicePdfDocument}
+                    fileName={`Rechnung-${invoiceData.unstructuredMessage || invoiceData.id}.pdf`}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 flex items-center gap-2"
                 >
-                    <Download size={16} />
-                    {isDownloadingPdf ? 'Generiere...' : 'PDF herunterladen'}
-                </button>
+                    {({ loading }) => (
+                        loading ? (
+                            'Generiere...'
+                        ) : (
+                            <>
+                               <Download size={16} />
+                               PDF herunterladen
+                            </>
+                        )
+                    )}
+                </PDFDownloadLink>
+
                 <button
                     onClick={handleSave}
                     disabled={isSaving}
@@ -278,18 +278,13 @@ const InvoiceEditor = () => {
                   onDataChange={handleDataChange}
                   defaultVatRate={settings.vatRate}
               />
-              <HtmlEditor
-                  template={invoiceData.htmlTemplate}
-                  onTemplateChange={handleTemplateChange}
-              />
             </div>
             
             <div className="lg:w-1/3">
               <div className="sticky top-6">
-                  <InvoicePreview
-                      processedTemplate={processedTemplate}
-                      onZoomClick={() => setIsZoomModalOpen(true)}
-                  />
+                  <InvoicePreview>
+                     {invoicePdfDocument}
+                  </InvoicePreview>
               </div>
             </div>
         </main>
