@@ -29,6 +29,7 @@ export interface InvoiceData {
   currency: 'CHF' | 'EUR';
   reference: string;
   unstructuredMessage: string;
+  projectName?: string; // Optional project name
   items: InvoiceItem[];
 
   // Customization
@@ -92,22 +93,30 @@ export interface ServiceData {
   price: number | '';
 }
 
-// New Type for individual Time Entries
-export interface TimeEntryData {
-    id: string;
-    serviceId: string; // Links to a ServiceData
-    description: string;
-    date: string; // YYYY-MM-DD
-    duration: number | ''; // in hours, e.g., 1.5 for 1h 30m
+// New Types for Task Management
+export type TaskStatus = 'todo' | 'in-progress' | 'done';
+
+export interface TaskTimeLog {
+  startTime: string; // ISO String
+  endTime: string | null; // ISO String or null if timer is running
 }
 
-// New Type for Projects
+export interface TaskData {
+  id: string;
+  title: string;
+  description: string;
+  status: TaskStatus;
+  serviceId: string; // Links to a ServiceData
+  timeLogs: TaskTimeLog[];
+}
+
+// Updated Type for Projects
 export interface ProjectData {
   id: string;
   name: string;
   description: string;
   customerId: string; 
   status: 'open' | 'in-progress' | 'done';
-  timeEntries: TimeEntryData[];
+  tasks: TaskData[];
   createdAt: string; // ISO String
 }

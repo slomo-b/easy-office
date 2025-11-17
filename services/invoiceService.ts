@@ -95,14 +95,40 @@ export const createInvoiceFromProject = async (
     newInvoice.debtorCity = customer.city;
     newInvoice.debtorCountry = customer.country;
     
-    newInvoice.unstructuredMessage = `Rechnung für Projekt: ${project.name}`;
+    // Set project name for display on invoice
+    newInvoice.projectName = project.name;
 
-    // Create items from time entries
-    const timeItems: InvoiceItem[] = project.timeEntries.map(entry => {
-        const service = services.find(s => s.id === entry.serviceId);
+    // Group task durations by service
+    const timeItemsByService = new Map<string, { totalHours: number; taskTitles: string[] }>();
+
+    project.tasks.forEach(task => {
+        if (task.serviceId) {
+            const taskTotalMilliseconds = task.timeLogs.reduce((sum, log) => {
+                if (log.endTime) {
+                    return sum + (new Date(log.endTime).getTime() - new Date(log.startTime).getTime());
+                }
+                return sum;
+            }, 0);
+            
+            if (taskTotalMilliseconds > 0) {
+                const taskTotalHours = taskTotalMilliseconds / (1000 * 60 * 60);
+                const existing = timeItemsByService.get(task.serviceId) || { totalHours: 0, taskTitles: [] };
+                
+                existing.totalHours += taskTotalHours;
+                existing.taskTitles.push(task.title);
+                timeItemsByService.set(task.serviceId, existing);
+            }
+        }
+    });
+
+    const timeItems: InvoiceItem[] = Array.from(timeItemsByService.entries()).map(([serviceId, data]) => {
+        const service = services.find(s => s.id === serviceId);
+        // Using newline character for separation, relying on CSS white-space property for rendering.
+        const description = `${service?.name || 'Unbekannte Leistung'}\n- ${data.taskTitles.join('\n- ')}`;
+        
         return {
-            description: `${service?.name || 'Unbekannte Leistung'}${entry.description ? `: ${entry.description}` : ''}`,
-            quantity: Number(entry.duration) || 0,
+            description,
+            quantity: Number(data.totalHours.toFixed(4)), // Use more precision for quantity
             unit: service?.unit || 'Stunde',
             price: Number(service?.price) || 0,
         };

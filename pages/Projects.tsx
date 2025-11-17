@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ProjectData, CustomerData } from '../types';
+import { ProjectData, CustomerData, TaskData } from '../types';
 import { getProjects, saveProject } from '../services/projectService';
 import { getCustomers } from '../services/customerService';
 
@@ -16,6 +16,18 @@ const statusColors: Record<ProjectData['status'], string> = {
   done: 'border-l-green-500',
 };
 
+const calculateTotalHours = (tasks: TaskData[]): number => {
+    let totalMilliseconds = 0;
+    tasks.forEach(task => {
+        task.timeLogs.forEach(log => {
+            if (log.endTime) {
+                totalMilliseconds += new Date(log.endTime).getTime() - new Date(log.startTime).getTime();
+            }
+        });
+    });
+    return totalMilliseconds / (1000 * 60 * 60);
+};
+
 const ProjectCard = ({ project, customerName }: { project: ProjectData; customerName: string }) => {
     const navigate = useNavigate();
     
@@ -23,7 +35,7 @@ const ProjectCard = ({ project, customerName }: { project: ProjectData; customer
         e.dataTransfer.setData('projectId', project.id);
     };
 
-    const totalHours = project.timeEntries.reduce((sum, entry) => sum + Number(entry.duration), 0);
+    const totalHours = calculateTotalHours(project.tasks);
 
     return (
         <div 

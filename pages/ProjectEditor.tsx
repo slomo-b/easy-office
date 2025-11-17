@@ -1,32 +1,45 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ProjectData, CustomerData, ServiceData, TimeEntryData, ExpenseData } from '../types';
+import { ProjectData, CustomerData, ServiceData, TaskData, ExpenseData, TaskStatus, TaskTimeLog } from '../types';
 import { getProjectById, saveProject, createNewProject, deleteProject } from '../services/projectService';
 import { getCustomers } from '../services/customerService';
 import { getServices } from '../services/serviceService';
 import { getExpenses } from '../services/expenseService';
 import { createInvoiceFromProject } from '../services/invoiceService';
+import { Play, Square, PlusCircle, Trash2 } from 'lucide-react';
+
+const formatDuration = (ms: number) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+};
+
+const calculateTaskDuration = (task: TaskData): number => {
+    return task.timeLogs.reduce((sum, log) => {
+        if (log.endTime) {
+            return sum + (new Date(log.endTime).getTime() - new Date(log.startTime).getTime());
+        }
+        return sum;
+    }, 0);
+};
 
 const ProjectEditor = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     
-    // Main project data
     const [project, setProject] = useState<ProjectData | null>(null);
     const [isSaving, setIsSaving] = useState(false);
-
-    // Related data
     const [customers, setCustomers] = useState<CustomerData[]>([]);
     const [services, setServices] = useState<ServiceData[]>([]);
     const [projectExpenses, setProjectExpenses] = useState<ExpenseData[]>([]);
     
-    // Time entry form state
-    const [newTimeEntry, setNewTimeEntry] = useState<Omit<TimeEntryData, 'id'>>({
-        date: new Date().toISOString().split('T')[0],
-        duration: '',
-        serviceId: '',
-        description: '',
-    });
+    // Task management state
+    const [activeTimerTaskId, setActiveTimerTaskId] = useState<string | null>(null);
+    const [elapsedTime, setElapsedTime] = useState(0);
+    const [showNewTaskFormForStatus, setShowNewTaskFormForStatus] = useState<TaskStatus | null>(null);
+    const [newTaskData, setNewTaskData] = useState({ title: '', description: '', serviceId: '' });
 
     const loadData = useCallback(async () => {
         const [fetchedCustomers, fetchedServices, allExpenses] = await Promise.all([getCustomers(), getServices(), getExpenses()]);
@@ -38,6 +51,13 @@ const ProjectEditor = () => {
             if (existingProject) {
                 setProject(existingProject);
                 setProjectExpenses(allExpenses.filter(e => e.projectId === id));
+                // Check for a running timer on load
+                for (const task of existingProject.tasks) {
+                    if (task.timeLogs.some(log => log.endTime === null)) {
+                        setActiveTimerTaskId(task.id);
+                        break;
+                    }
+                }
             } else {
                 navigate('/projects');
             }
@@ -49,47 +69,102 @@ const ProjectEditor = () => {
     useEffect(() => {
         loadData();
     }, [loadData]);
+
+    useEffect(() => {
+        let interval: number | undefined;
+        if (activeTimerTaskId && project) {
+            const activeTask = project.tasks.find(t => t.id === activeTimerTaskId);
+            const runningLog = activeTask?.timeLogs.find(l => l.endTime === null);
+            if (runningLog) {
+                const alreadyTrackedMs = calculateTaskDuration(activeTask);
+                interval = window.setInterval(() => {
+                    const elapsed = new Date().getTime() - new Date(runningLog.startTime).getTime();
+                    setElapsedTime(alreadyTrackedMs + elapsed);
+                }, 1000);
+            }
+        }
+        return () => clearInterval(interval);
+    }, [activeTimerTaskId, project]);
     
-    const handleProjectDataChange = (field: keyof Omit<ProjectData, 'timeEntries'>, value: string) => {
+    const handleProjectDataChange = (field: keyof Omit<ProjectData, 'tasks'>, value: string) => {
         setProject(prev => prev ? { ...prev, [field]: value } : null);
     };
 
-    const handleTimeEntryFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setNewTimeEntry(prev => ({ ...prev, [name]: name === 'duration' ? parseFloat(value) || '' : value }));
-    };
+    const handleTimerToggle = (taskId: string) => {
+        if (!project) return;
+        
+        const now = new Date().toISOString();
+        let updatedTasks = [...project.tasks];
+        let newActiveTimerTaskId = activeTimerTaskId;
 
-    const handleAddTimeEntry = () => {
-        if (!project || !newTimeEntry.serviceId || !newTimeEntry.duration) {
-            alert("Bitte Leistung und Dauer angeben.");
-            return;
+        // Stop currently running timer if there is one
+        if (activeTimerTaskId) {
+            const previouslyActiveTaskIndex = updatedTasks.findIndex(t => t.id === activeTimerTaskId);
+            if (previouslyActiveTaskIndex !== -1) {
+                const logs = updatedTasks[previouslyActiveTaskIndex].timeLogs;
+                const runningLogIndex = logs.findIndex(l => l.endTime === null);
+                if (runningLogIndex !== -1) {
+                    logs[runningLogIndex].endTime = now;
+                }
+            }
+            newActiveTimerTaskId = null;
         }
 
-        const newEntry: TimeEntryData = {
-            id: `time_${new Date().getTime()}`,
-            ...newTimeEntry,
-            duration: Number(newTimeEntry.duration)
-        };
-        
-        const updatedProject = {
-            ...project,
-            timeEntries: [...project.timeEntries, newEntry]
-        };
-        setProject(updatedProject);
-        
-        // Reset form
-        setNewTimeEntry({
-            date: new Date().toISOString().split('T')[0],
-            duration: '',
-            serviceId: '',
-            description: '',
-        });
+        // If the clicked timer wasn't the active one, start it
+        if (activeTimerTaskId !== taskId) {
+            const currentTaskIndex = updatedTasks.findIndex(t => t.id === taskId);
+            if (currentTaskIndex !== -1) {
+                updatedTasks[currentTaskIndex].timeLogs.push({ startTime: now, endTime: null });
+                newActiveTimerTaskId = taskId;
+            }
+        }
+
+        setProject({ ...project, tasks: updatedTasks });
+        setActiveTimerTaskId(newActiveTimerTaskId);
+        if (newActiveTimerTaskId === null) {
+            setElapsedTime(0);
+        }
     };
     
-    const handleDeleteTimeEntry = (entryId: string) => {
+    const handleTaskDrop = (e: React.DragEvent<HTMLDivElement>, newStatus: TaskStatus) => {
+        e.preventDefault();
         if(!project) return;
-        const updatedEntries = project.timeEntries.filter(entry => entry.id !== entryId);
-        setProject({...project, timeEntries: updatedEntries});
+        
+        const taskId = e.dataTransfer.getData('taskId');
+        const taskIndex = project.tasks.findIndex(t => t.id === taskId);
+
+        if(taskIndex > -1 && project.tasks[taskIndex].status !== newStatus) {
+            const updatedTasks = [...project.tasks];
+            updatedTasks[taskIndex].status = newStatus;
+            setProject({...project, tasks: updatedTasks});
+        }
+    };
+
+    const handleCreateTask = () => {
+        if (!project || !showNewTaskFormForStatus || !newTaskData.title || !newTaskData.serviceId) {
+            alert("Bitte Titel und Leistung angeben.");
+            return;
+        }
+        const newTask: TaskData = {
+            id: `task_${new Date().getTime()}`,
+            status: showNewTaskFormForStatus,
+            timeLogs: [],
+            ...newTaskData
+        };
+        setProject({ ...project, tasks: [...project.tasks, newTask] });
+        setShowNewTaskFormForStatus(null);
+        setNewTaskData({ title: '', description: '', serviceId: '' });
+    };
+
+    const handleDeleteTask = (taskId: string) => {
+        if (project && window.confirm("Aufgabe endgültig löschen?")) {
+            if (activeTimerTaskId === taskId) {
+                setActiveTimerTaskId(null);
+                setElapsedTime(0);
+            }
+            const updatedTasks = project.tasks.filter(t => t.id !== taskId);
+            setProject({ ...project, tasks: updatedTasks });
+        }
     };
 
     const handleSave = async () => {
@@ -99,15 +174,23 @@ const ProjectEditor = () => {
                 return;
             }
             setIsSaving(true);
-            await saveProject(project);
+            // Ensure no timers are left running when saving and closing
+            let projectToSave = project;
+            if (activeTimerTaskId) {
+                const activeTask = projectToSave.tasks.find(t => t.id === activeTimerTaskId);
+                const runningLog = activeTask?.timeLogs.find(l => l.endTime === null);
+                if (runningLog) {
+                    runningLog.endTime = new Date().toISOString();
+                }
+            }
+            await saveProject(projectToSave);
             setIsSaving(false);
             navigate('/projects');
         }
     };
     
-    const handleDelete = async () => {
-        if (project && id && window.confirm("Sind Sie sicher, dass Sie dieses Projekt und alle zugehörigen Zeiteinträge löschen möchten? Zugeordnete Ausgaben bleiben erhalten, verlieren aber ihre Zuordnung.")) {
-            // Note: We are not deleting associated expenses, just the project.
+    const handleDeleteProject = async () => {
+        if (project && id && window.confirm("Sind Sie sicher, dass Sie dieses Projekt und alle zugehörigen Aufgaben löschen möchten?")) {
             await deleteProject(id);
             navigate('/projects');
         }
@@ -128,20 +211,57 @@ const ProjectEditor = () => {
         } catch (error) {
             console.error("Failed to create invoice from project", error);
             alert("Rechnung konnte nicht erstellt werden.");
+        } finally {
             setIsSaving(false);
         }
     };
 
     if (!project) return <div className="text-center p-10">Lade Projektdaten...</div>;
+    
+    const totalProjectHours = project.tasks.reduce((sum, task) => sum + calculateTaskDuration(task), 0) / (1000 * 60 * 60);
 
-    const totalHours = project.timeEntries.reduce((sum, entry) => sum + Number(entry.duration), 0);
+    const TaskCard = ({ task }: { task: TaskData }) => {
+        const service = services.find(s => s.id === task.serviceId);
+        const isRunning = activeTimerTaskId === task.id;
+        const totalDurationMs = isRunning ? elapsedTime : calculateTaskDuration(task);
+
+        return (
+            <div 
+                draggable 
+                onDragStart={(e) => e.dataTransfer.setData('taskId', task.id)}
+                className={`bg-gray-700 p-3 rounded-md shadow-lg space-y-2 relative ${isRunning ? 'ring-2 ring-emerald-500' : ''}`}
+            >
+                <div className="flex justify-between items-start">
+                    <p className="font-bold text-white text-sm pr-10">{task.title}</p>
+                    <button onClick={() => handleDeleteTask(task.id)} className="absolute top-2 right-2 text-gray-500 hover:text-red-400"><Trash2 size={14}/></button>
+                </div>
+                
+                <p className="text-xs text-gray-400">{task.description}</p>
+                <div className="flex justify-between items-center pt-2">
+                    <span className="text-xs font-semibold bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full">{service?.name || '...'}</span>
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm font-mono text-white">{formatDuration(totalDurationMs)}</span>
+                        <button onClick={() => handleTimerToggle(task.id)} className={`p-1 rounded-full ${isRunning ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>
+                            {isRunning ? <Square size={16} fill="white" /> : <Play size={16} fill="white" />}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const taskColumns: { status: TaskStatus, title: string }[] = [
+        { status: 'todo', title: 'To Do' },
+        { status: 'in-progress', title: 'In Arbeit' },
+        { status: 'done', title: 'Erledigt' }
+    ];
 
     return (
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-3xl font-bold text-white">{id ? 'Projekt bearbeiten' : 'Neues Projekt erstellen'}</h2>
                 <div className="flex items-center gap-4">
-                    {id && <button onClick={handleDelete} className="text-red-500 hover:text-red-400 font-bold py-2 px-4 rounded-lg">Löschen</button>}
+                    {id && <button onClick={handleDeleteProject} className="text-red-500 hover:text-red-400 font-bold py-2 px-4 rounded-lg">Löschen</button>}
                     <button onClick={handleSave} disabled={isSaving} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 disabled:bg-gray-500">
                         {isSaving ? 'Speichern...' : 'Speichern & Schliessen'}
                     </button>
@@ -150,48 +270,41 @@ const ProjectEditor = () => {
 
             <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
-                    {/* Time Tracking */}
                     <div className="bg-gray-800 p-4 rounded-lg shadow-md">
-                        <h3 className="text-lg font-semibold text-emerald-400 border-b border-gray-700 pb-2 mb-4">Zeiterfassung ({totalHours.toFixed(2)}h)</h3>
-                        {/* New Entry Form */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4 p-3 bg-gray-900/50 rounded-md">
-                             <select name="serviceId" value={newTimeEntry.serviceId} onChange={handleTimeEntryFormChange} className="md:col-span-2 bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white text-sm">
-                                <option value="">-- Leistung auswählen --</option>
-                                {services.map(s => <option key={s.id} value={s.id}>{s.name} ({s.price} / {s.unit})</option>)}
-                            </select>
-                             <input type="number" name="duration" placeholder="Stunden (z.B. 1.5)" value={newTimeEntry.duration} onChange={handleTimeEntryFormChange} className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white text-sm" />
-                             <input type="date" name="date" value={newTimeEntry.date} onChange={handleTimeEntryFormChange} className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white text-sm" />
-                             <input type="text" name="description" placeholder="Optionale Beschreibung" value={newTimeEntry.description} onChange={handleTimeEntryFormChange} className="md:col-span-4 bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white text-sm" />
-                             <div className="md:col-span-4 text-right">
-                                <button onClick={handleAddTimeEntry} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-1 px-3 rounded-md text-sm">Hinzufügen</button>
-                             </div>
+                        <h3 className="text-lg font-semibold text-emerald-400 border-b border-gray-700 pb-2 mb-4">Aufgaben ({totalProjectHours.toFixed(2)}h)</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                           {taskColumns.map(({ status, title }) => (
+                               <div key={status} onDragOver={(e) => e.preventDefault()} onDrop={(e) => handleTaskDrop(e, status)} className="bg-gray-900/50 p-3 rounded-lg flex flex-col gap-3">
+                                   <h4 className="text-center font-semibold text-gray-300 mb-2">{title}</h4>
+                                   {project.tasks.filter(t => t.status === status).map(task => <TaskCard key={task.id} task={task} />)}
+                                   
+                                   {showNewTaskFormForStatus === status ? (
+                                       <div className="bg-gray-700 p-3 rounded-md space-y-2">
+                                           <input type="text" placeholder="Aufgabentitel" value={newTaskData.title} onChange={e => setNewTaskData({...newTaskData, title: e.target.value})} className="w-full bg-gray-600 border-gray-500 rounded px-2 py-1 text-sm"/>
+                                           <textarea placeholder="Beschreibung (optional)" value={newTaskData.description} onChange={e => setNewTaskData({...newTaskData, description: e.target.value})} className="w-full bg-gray-600 border-gray-500 rounded px-2 py-1 text-sm" rows={2}></textarea>
+                                           <select value={newTaskData.serviceId} onChange={e => setNewTaskData({...newTaskData, serviceId: e.target.value})} className="w-full bg-gray-600 border-gray-500 rounded px-2 py-1 text-sm">
+                                               <option value="">-- Leistung --</option>
+                                               {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                           </select>
+                                           <div className="flex justify-end gap-2">
+                                               <button onClick={() => setShowNewTaskFormForStatus(null)} className="text-gray-400 text-xs">Abbrechen</button>
+                                               <button onClick={handleCreateTask} className="bg-emerald-500 text-white px-2 py-1 text-xs rounded">Speichern</button>
+                                           </div>
+                                       </div>
+                                   ) : (
+                                       <button onClick={() => setShowNewTaskFormForStatus(status)} className="flex items-center justify-center gap-2 text-sm text-gray-400 hover:text-emerald-400 p-2 rounded-lg border-2 border-dashed border-gray-600 hover:border-emerald-500 transition-colors">
+                                           <PlusCircle size={16}/> Neue Aufgabe
+                                       </button>
+                                   )}
+                               </div>
+                           ))}
                         </div>
-                        {/* Entries List */}
-                        <ul className="space-y-2">
-                           {project.timeEntries.slice().reverse().map(entry => {
-                               const service = services.find(s => s.id === entry.serviceId);
-                               return (
-                                   <li key={entry.id} className="flex justify-between items-center bg-gray-700/50 p-2 rounded-md text-sm">
-                                       <div>
-                                           <p className="font-semibold text-white">{service?.name || 'Unbekannte Leistung'}</p>
-                                           <p className="text-gray-400 text-xs">{entry.description}</p>
-                                       </div>
-                                       <div className="text-right">
-                                            <p className="font-mono text-white">{Number(entry.duration).toFixed(2)} h</p>
-                                            <p className="text-gray-400 text-xs">{new Date(entry.date).toLocaleDateString('de-CH')}</p>
-                                       </div>
-                                       <button onClick={() => handleDeleteTimeEntry(entry.id)} className="text-red-500 hover:text-red-400 ml-4 text-xs">X</button>
-                                   </li>
-                               )
-                           })}
-                        </ul>
                     </div>
 
-                    {/* Expenses */}
-                     <div className="bg-gray-800 p-4 rounded-lg shadow-md">
+                    <div className="bg-gray-800 p-4 rounded-lg shadow-md">
                         <div className="flex justify-between items-center border-b border-gray-700 pb-2 mb-4">
                             <h3 className="text-lg font-semibold text-emerald-400">Projektausgaben</h3>
-                            <Link to={`/expense/new?projectId=${project.id}`} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-1 px-3 rounded-md text-sm">Neue Ausgabe</Link>
+                            {id && <Link to={`/expense/new?projectId=${project.id}`} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-1 px-3 rounded-md text-sm">Neue Ausgabe</Link>}
                         </div>
                         <ul className="space-y-2">
                            {projectExpenses.map(expense => (
@@ -209,9 +322,8 @@ const ProjectEditor = () => {
                            {projectExpenses.length === 0 && <p className="text-gray-500 text-sm text-center py-4">Keine Ausgaben für dieses Projekt erfasst.</p>}
                         </ul>
                     </div>
-
                 </div>
-                {/* Project Details Form */}
+
                 <div className="bg-gray-800 p-4 rounded-lg shadow-md h-fit">
                     <h3 className="text-lg font-semibold text-emerald-400 border-b border-gray-700 pb-2 mb-4">Projektdetails</h3>
                     <div className="space-y-4">
@@ -228,7 +340,7 @@ const ProjectEditor = () => {
                         </div>
                          <div>
                             <label className="mb-1 text-sm font-medium text-gray-400 block">Status</label>
-                            <select value={project.status} onChange={e => handleProjectDataChange('status', e.target.value)} className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white">
+                            <select value={project.status} onChange={e => handleProjectDataChange('status', e.target.value as ProjectData['status'])} className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white">
                                 <option value="open">Offen</option>
                                 <option value="in-progress">In Arbeit</option>
                                 <option value="done">Erledigt</option>
@@ -240,7 +352,7 @@ const ProjectEditor = () => {
                         </div>
                          {id && (
                             <div className="border-t border-gray-700 pt-4">
-                                <button onClick={handleCreateInvoice} disabled={isSaving} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 disabled:bg-gray-500">
+                                <button onClick={handleCreateInvoice} disabled={isSaving || project.tasks.length === 0} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 disabled:bg-gray-500 disabled:cursor-not-allowed">
                                     Rechnung erstellen
                                 </button>
                             </div>

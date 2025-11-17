@@ -1,43 +1,44 @@
 import { InvoiceData, ExpenseData } from './types';
 
 export const DEFAULT_HTML_TEMPLATE = `
-<div id="print-area" class="bg-white text-black p-10" style="font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.5;">
-    <!-- Header: Logo and Sender Address -->
+<div id="print-area" class="bg-white text-gray-800 p-12" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; font-size: 10pt; line-height: 1.6;">
+    <!-- Header -->
     <header class="flex justify-between items-start mb-16">
         <div class="w-1/2">
             {{logoImage}}
         </div>
-        <div class="w-1/2 text-right text-xs">
-            <p class="font-bold text-base">{{creditorName}}</p>
+        <div class="w-1/2 text-right text-sm">
+            <p class="font-bold text-base text-gray-900">{{creditorName}}</p>
             <p>{{creditorStreet}} {{creditorHouseNr}}</p>
             <p>{{creditorZip}} {{creditorCity}}</p>
         </div>
     </header>
 
-    <!-- Recipient Address and Invoice Meta -->
+    <!-- Recipient & Meta -->
     <section class="flex justify-between mb-12">
         <div class="w-2/3">
-             <p class="text-xs text-gray-500">Zahlungspflichtig:</p>
-            <p class="font-bold">{{debtorName}}</p>
+             <p class="text-xs text-gray-500 mb-1">Zahlungspflichtig</p>
+            <p class="font-bold text-gray-900">{{debtorName}}</p>
             <p>{{debtorStreet}} {{debtorHouseNr}}</p>
             <p>{{debtorZip}} {{debtorCity}}</p>
         </div>
         <div class="w-1/3 text-right">
-            <h1 class="text-3xl font-bold mb-2">RECHNUNG</h1>
-            <p class="text-sm"><span class="font-semibold">Datum:</span> ${new Date().toLocaleDateString('de-CH')}</p>
-            <p class="text-sm"><span class="font-semibold">Rechnungs-Nr:</span> {{unstructuredMessage}}</p>
+            <h1 class="text-3xl font-bold text-emerald-600 mb-2 tracking-tight">RECHNUNG</h1>
+            <p><span class="font-semibold text-gray-600">Datum:</span> ${new Date().toLocaleDateString('de-CH')}</p>
+            <p><span class="font-semibold text-gray-600">Rechnungs-Nr:</span> {{unstructuredMessage}}</p>
+            {{projectLine}}
         </div>
     </section>
 
-    <!-- Invoice Items Table -->
+    <!-- Items Table -->
     <section class="mb-12">
         <table class="w-full text-sm">
-            <thead class="border-b-2 border-black">
+            <thead class="bg-gray-800 text-white">
                 <tr>
-                    <th class="text-left font-bold py-2 px-1 w-3/5">Beschreibung</th>
-                    <th class="text-right font-bold py-2 px-1">Menge</th>
-                    <th class="text-right font-bold py-2 px-1">Preis</th>
-                    <th class="text-right font-bold py-2 px-1">Total</th>
+                    <th class="text-left font-semibold py-2 px-4 w-3/5 rounded-l-md">Beschreibung</th>
+                    <th class="text-right font-semibold py-2 px-4">Menge</th>
+                    <th class="text-right font-semibold py-2 px-4">Preis</th>
+                    <th class="text-right font-semibold py-2 px-4 rounded-r-md">Total</th>
                 </tr>
             </thead>
             <tbody>
@@ -48,17 +49,25 @@ export const DEFAULT_HTML_TEMPLATE = `
     
     <!-- Totals -->
     <section class="flex justify-end mb-16">
-        <div class="w-1/3">
-            <div class="flex justify-between py-2 border-t-2 border-black">
-                <span class="font-bold">Total</span>
-                <span class="font-bold">{{currency}} {{amount}}</span>
+        <div class="w-2/5">
+            <div class="bg-gray-100 p-4 rounded-lg">
+                 <div class="flex justify-between py-2 font-bold text-lg text-gray-900">
+                    <span>Total</span>
+                    <span>{{currency}} {{amount}}</span>
+                </div>
             </div>
         </div>
     </section>
+    
+    <!-- Footer -->
+    <footer class="text-center text-xs text-gray-500 border-t pt-4">
+        <p>Vielen Dank für Ihren Auftrag. Bitte begleichen Sie den Betrag innert 30 Tagen.</p>
+        <p>{{creditorName}} - {{creditorIban}}</p>
+    </footer>
 
-    <hr class="border-dashed border-gray-400 my-8 -ml-10 -mr-10"/>
-
-    <!-- Swiss QR Bill Section -->
+    <!-- QR Bill Section -->
+    <div class="border-t-2 border-dashed border-gray-400 my-8 -ml-12 -mr-12"></div>
+    
     <div class="grid grid-cols-3 gap-4">
         <div class="col-span-1">
             <h2 class="font-bold mb-2">Zahlteil</h2>
@@ -115,6 +124,7 @@ export const DEFAULT_INVOICE_DATA: Omit<InvoiceData, 'id'> = {
   currency: 'CHF',
   reference: '210000000003139471430009017',
   unstructuredMessage: '2024-001',
+  projectName: '',
   items: [],
   logoSrc: '',
   htmlTemplate: DEFAULT_HTML_TEMPLATE,

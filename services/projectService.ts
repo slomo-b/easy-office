@@ -8,7 +8,7 @@ export const DEFAULT_PROJECT_DATA: Omit<ProjectData, 'id'> = {
   description: '',
   customerId: '',
   status: 'open',
-  timeEntries: [],
+  tasks: [],
   createdAt: new Date().toISOString(),
 };
 

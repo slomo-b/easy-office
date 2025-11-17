@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { InvoiceData } from '../types';
 
@@ -15,30 +16,43 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, qrCodeSrc, isLoad
 
   const logoHtml = data.logoSrc 
     ? `<img src="${data.logoSrc}" alt="Firmenlogo" style="max-height: 80px;"/>`
-    : `<div class="h-20 w-40 bg-gray-200 flex items-center justify-center text-gray-500 text-sm">Ihr Logo</div>`;
+    : `<div class="h-20 w-40 flex items-center justify-center text-gray-500 text-sm" style="background-color: #f3f4f6; border: 1px dashed #d1d5db; border-radius: 0.5rem;">Ihr Logo</div>`;
 
-  const qrCodeHtml = isLoadingQr
-    ? `<div class="w-[200px] h-[200px] bg-gray-200 animate-pulse flex items-center justify-center text-gray-500">Generiere QR...</div>`
-    : `<img src="${qrCodeSrc}" alt="Swiss QR Code" style="width: 200px; height: 200px;" />`;
+  let qrCodeHtml: string;
+  if (isLoadingQr) {
+    qrCodeHtml = `<div class="w-[200px] h-[200px] bg-gray-200 animate-pulse flex items-center justify-center text-gray-500">Generiere QR...</div>`;
+  } else if (qrCodeSrc) {
+    qrCodeHtml = `<img src="${qrCodeSrc}" alt="Swiss QR Code" style="width: 200px; height: 200px;" />`;
+  } else {
+    qrCodeHtml = `<div class="w-[200px] h-[200px] bg-gray-100 flex items-center justify-center text-center text-xs text-gray-500 p-2" style="border: 1px dashed #d1d5db;">QR-Code kann nicht generiert werden.<br/>(Betrag muss grösser als 0 sein)</div>`;
+  }
   
-  const itemsHtml = data.items.map(item => {
+  const itemsHtml = data.items.map((item, index) => {
     const quantity = Number(item.quantity);
     const price = Number(item.price);
     const total = quantity * price;
+    const isEven = index % 2 === 0;
+    const rowClass = isEven ? 'bg-gray-50' : '';
+
     return `
-        <tr class="border-b border-gray-200">
-            <td class="py-3 px-1">${item.description}</td>
-            <td class="text-right py-3 px-1">${quantity.toFixed(2)} ${item.unit}</td>
-            <td class="text-right py-3 px-1">${formatAmount(price)}</td>
-            <td class="text-right py-3 px-1">${formatAmount(total)}</td>
+        <tr class="${rowClass}">
+            <td class="py-3 px-4 text-gray-800">${item.description}</td>
+            <td class="text-right py-3 px-4 text-gray-600">${quantity.toFixed(2)} ${item.unit}</td>
+            <td class="text-right py-3 px-4 text-gray-600">${formatAmount(price)}</td>
+            <td class="text-right py-3 px-4 font-semibold text-gray-800">${formatAmount(total)}</td>
         </tr>
     `;
   }).join('');
+  
+  const projectLineHtml = data.projectName 
+    ? `<p><span class="font-semibold text-gray-600">Projekt:</span> ${data.projectName}</p>`
+    : '';
 
   const processedTemplate = data.htmlTemplate
     .replace(/{{logoImage}}/g, logoHtml)
     .replace(/{{qrCodeImage}}/g, qrCodeHtml)
     .replace(/{{invoiceItems}}/g, itemsHtml)
+    .replace(/{{projectLine}}/g, projectLineHtml)
     .replace(/{{creditorName}}/g, data.creditorName)
     .replace(/{{creditorStreet}}/g, data.creditorStreet)
     .replace(/{{creditorHouseNr}}/g, data.creditorHouseNr)
