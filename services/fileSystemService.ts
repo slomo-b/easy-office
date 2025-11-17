@@ -10,11 +10,11 @@ export const initializeFileSystem = async () => {
   // 1. Get the root of the sandboxed Origin Private File System.
   const opfsRoot = await navigator.storage.getDirectory();
 
-  // 2. Create a '/data' subdirectory and set it as the root for all app operations.
-  rootHandle = await opfsRoot.getDirectoryHandle('data', { create: true });
+  // 2. Create a '/easy-office-data' subdirectory and set it as the root for all app operations.
+  rootHandle = await opfsRoot.getDirectoryHandle('easy-office-data', { create: true });
 
 
-  // 3. Ensure functional subdirectories exist within the '/data' folder.
+  // 3. Ensure functional subdirectories exist within the main data folder.
   await getDirectoryHandle('invoices', true);
   await getDirectoryHandle('expenses', true);
   await getDirectoryHandle('customers', true);
