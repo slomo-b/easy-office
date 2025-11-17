@@ -104,16 +104,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, customers, onDataChange
             </div>
       </FormSection>
 
-      <FormSection title="Zahlungsempfänger (Kreditor)">
-        <InputField label="IBAN" id="creditorIban" value={data.creditorIban} onChange={handleChange} className="col-span-2" />
-        <InputField label="Name" id="creditorName" value={data.creditorName} onChange={handleChange} className="col-span-2" />
-        <InputField label="Strasse" id="creditorStreet" value={data.creditorStreet} onChange={handleChange} />
-        <InputField label="Nr." id="creditorHouseNr" value={data.creditorHouseNr} onChange={handleChange} />
-        <InputField label="PLZ" id="creditorZip" value={data.creditorZip} onChange={handleChange} />
-        <InputField label="Ort" id="creditorCity" value={data.creditorCity} onChange={handleChange} />
-        <InputField label="Land" id="creditorCountry" value={data.creditorCountry} onChange={handleChange} className="col-span-2" />
-      </FormSection>
-
       <FormSection title="Zahler (Debitor)">
          <div className="flex flex-col col-span-2">
             <label htmlFor="customer-select" className="mb-1 text-sm font-medium text-gray-400">
