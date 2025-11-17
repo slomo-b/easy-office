@@ -58,13 +58,10 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ processedTemplate, onZo
       <div 
         ref={viewportRef}
         className="bg-white rounded-sm overflow-hidden" 
-        style={{ aspectRatio: '210 / 297' }}
       >
         <div style={{
           transform: `scale(${scale})`,
           transformOrigin: 'top left',
-          width: `calc(100% / ${scale})`,
-          height: `calc(100% / ${scale})`,
         }}>
           <div dangerouslySetInnerHTML={{ __html: processedTemplate }} />
         </div>
