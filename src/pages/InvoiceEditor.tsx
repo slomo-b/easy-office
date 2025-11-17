@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { InvoiceData, CustomerData, InvoiceItem, SettingsData } from '../types';
 import { getInvoiceById, saveInvoice, createNewInvoice, calculateInvoiceTotals } from '../services/invoiceService';
@@ -9,37 +9,164 @@ import { generateQrCode } from '../services/qrBillService';
 import InvoiceForm from '../components/InvoiceForm';
 import InvoicePreview from '../components/InvoicePreview';
 import { Download } from 'lucide-react';
-import { Document, Page, View, Text, StyleSheet, Image } from '@react-pdf/renderer';
+import { Document, Page, View, Text, StyleSheet, Image, Font } from '@react-pdf/renderer';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 
 // --- PDF Document Component ---
+
+// Register fonts - it's good practice for consistency, though Helvetica is standard
+Font.register({
+  family: 'Helvetica',
+  fonts: [
+    { src: 'https://cdn.jsdelivr.net/npm/helveticaneue@2.2.0/fonts/Regular/HelveticaNeue-Regular.otf' },
+    { src: 'https://cdn.jsdelivr.net/npm/helveticaneue@2.2.0/fonts/Bold/HelveticaNeue-Bold.otf', fontWeight: 'bold' },
+  ],
+});
+
+
 const styles = StyleSheet.create({
-    page: { fontFamily: 'Helvetica', fontSize: 10, backgroundColor: '#FFFFFF', color: '#1f2937', lineHeight: 1.5 },
-    pageContent: { display: 'flex', flexDirection: 'column', flexGrow: 1, padding: 48 },
-    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 40 },
-    headerLogo: { width: '50%' },
-    logoImage: { maxHeight: 60, maxWidth: 180 },
-    headerCreditor: { width: '50%', textAlign: 'right', fontSize: 9 },
-    creditorName: { fontWeight: 'bold', fontSize: 11 },
-    metaSection: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 30 },
-    metaDebtor: { width: '60%' },
-    metaInfo: { width: '40%', textAlign: 'right' },
-    metaLabel: { fontSize: 8, color: '#6b7280' },
-    invoiceTitle: { fontSize: 24, fontWeight: 'bold', color: '#059669', marginBottom: 4 },
-    metaLine: { flexDirection: 'row', justifyContent: 'flex-end', fontSize: 10 },
-    metaLineLabel: { fontWeight: 'bold', color: '#4b5563' },
-    table: { display: 'table', width: 'auto', marginBottom: 30 },
-    tableHeader: { flexDirection: 'row', backgroundColor: '#1f2937', color: 'white', borderRadius: 4, borderBottomRightRadius: 0, borderBottomLeftRadius: 0 },
-    tableRow: { flexDirection: 'row', borderBottom: '1px solid #e5e7eb' },
-    tableRowAlt: { backgroundColor: '#f9fafb' },
-    th: { padding: '6px 12px', fontWeight: 'bold', fontSize: 9 },
-    td: { padding: '8px 12px', fontSize: 9 },
-    totalsSection: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 40 },
-    totalsBox: { width: '45%', backgroundColor: '#f3f4f6', padding: 12, borderRadius: 6 },
-    totalLine: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2, fontSize: 9 },
-    totalLineMain: { fontWeight: 'bold', fontSize: 12, marginTop: 4, paddingTop: 4, borderTop: '1px solid #d1d5db' },
-    footer: { textAlign: 'center', fontSize: 8, color: '#6b7280', borderTop: '1px solid #e5e7eb', paddingTop: 10 },
-    qrBillContainer: { width: '210mm', height: '105mm' },
+    page: { 
+        fontFamily: 'Helvetica', 
+        fontSize: 10, 
+        backgroundColor: '#FFFFFF', 
+        color: '#1f2937', 
+        lineHeight: 1.5 
+    },
+    pageWrapper: {
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%'
+    },
+    pageContent: { 
+        flexGrow: 1, 
+        paddingHorizontal: 48,
+        paddingTop: 48,
+        paddingBottom: 24, // Reduced bottom padding to make space for footer text inside this box
+    },
+    header: { 
+        flexDirection: 'row', 
+        justifyContent: 'space-between', 
+        alignItems: 'flex-start', 
+        marginBottom: 64
+    },
+    headerLogo: { 
+        width: '50%' 
+    },
+    logoImage: { 
+        maxHeight: 60, 
+        maxWidth: 180 
+    },
+    headerCreditor: { 
+        width: '50%', 
+        textAlign: 'right', 
+        fontSize: 9,
+        color: '#374151'
+    },
+    creditorName: { 
+        fontWeight: 'bold', 
+        fontSize: 11,
+        color: '#111827'
+    },
+    metaSection: { 
+        flexDirection: 'row', 
+        justifyContent: 'space-between', 
+        marginBottom: 48
+    },
+    metaDebtor: { 
+        width: '60%' 
+    },
+    metaInfo: { 
+        width: '40%', 
+        textAlign: 'right' 
+    },
+    metaLabel: { 
+        fontSize: 8, 
+        color: '#6b7280', 
+        marginBottom: 2 
+    },
+    invoiceTitle: { 
+        fontSize: 24, 
+        fontWeight: 'bold', 
+        color: '#059669', 
+        marginBottom: 4 
+    },
+    metaLine: { 
+        flexDirection: 'row', 
+        justifyContent: 'flex-end', 
+        fontSize: 10 
+    },
+    metaLineLabel: { 
+        fontWeight: 'bold', 
+        color: '#4b5563' 
+    },
+    table: { 
+        display: 'table', 
+        width: 'auto', 
+        marginBottom: 48 
+    },
+    tableHeader: { 
+        flexDirection: 'row', 
+        backgroundColor: '#1f2937', 
+        color: 'white', 
+        borderRadius: 4,
+        borderBottomLeftRadius: 0,
+        borderBottomRightRadius: 0,
+    },
+    tableRow: { 
+        flexDirection: 'row' 
+    },
+    tableRowAlt: { 
+        backgroundColor: '#f9fafb' 
+    },
+    th: { 
+        padding: '8px 12px', 
+        fontWeight: 'bold', 
+        fontSize: 9
+    },
+    td: { 
+        padding: '10px 12px', 
+        fontSize: 9,
+        borderBottom: '1px solid #f3f4f6'
+    },
+    totalsSection: { 
+        flexDirection: 'row', 
+        justifyContent: 'flex-end', 
+        marginBottom: 64
+    },
+    totalsBox: { 
+        width: '45%', 
+        backgroundColor: '#f3f4f6', 
+        padding: 12, 
+        borderRadius: 6 
+    },
+    totalLine: { 
+        flexDirection: 'row', 
+        justifyContent: 'space-between', 
+        paddingVertical: 2, 
+        fontSize: 10,
+        color: '#4b5563'
+    },
+    totalLineMain: { 
+        fontWeight: 'bold', 
+        fontSize: 12, 
+        marginTop: 6, 
+        paddingTop: 6, 
+        borderTop: '1px solid #d1d5db',
+        color: '#111827'
+    },
+    footer: { 
+        textAlign: 'center', 
+        fontSize: 8, 
+        color: '#6b7280', 
+        borderTop: '1px solid #e5e7eb', 
+        paddingTop: 16
+    },
+    qrBillContainer: { 
+        width: '210mm', 
+        height: '105mm',
+        alignSelf: 'center',
+        backgroundColor: 'white' // Ensure background is white if it overlays anything
+    },
 });
 
 const InvoicePDF: React.FC<{ invoiceData: InvoiceData; qrCodeSvg: string; }> = ({ invoiceData, qrCodeSvg }) => {
@@ -49,7 +176,7 @@ const InvoicePDF: React.FC<{ invoiceData: InvoiceData; qrCodeSvg: string; }> = (
     return (
         <Document title={`Rechnung-${invoiceData.unstructuredMessage}`}>
             <Page size="A4" style={styles.page}>
-                <View style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <View style={styles.pageWrapper}>
                     <View style={styles.pageContent}>
                         {/* Header */}
                         <View style={styles.header}>
@@ -98,10 +225,10 @@ const InvoicePDF: React.FC<{ invoiceData: InvoiceData; qrCodeSvg: string; }> = (
                             </View>
                             {invoiceData.items.map((item, index) => (
                                 <View key={index} style={[styles.tableRow, index % 2 !== 0 && styles.tableRowAlt]}>
-                                    <Text style={[styles.td, { width: '50%' }]}>{item.description}</Text>
-                                    <Text style={[styles.td, { width: '15%', textAlign: 'right' }]}>{Number(item.quantity).toFixed(2)} {item.unit}</Text>
-                                    <Text style={[styles.td, { width: '15%', textAlign: 'right' }]}>{formatAmount(item.price)}</Text>
-                                    <Text style={[styles.td, { width: '20%', textAlign: 'right', fontWeight: 'bold' }]}>{formatAmount(Number(item.quantity) * Number(item.price))}</Text>
+                                    <Text style={[styles.td, { width: '50%', color: '#374151' }]}>{item.description}</Text>
+                                    <Text style={[styles.td, { width: '15%', textAlign: 'right', color: '#4b5563' }]}>{Number(item.quantity).toFixed(2)} {item.unit}</Text>
+                                    <Text style={[styles.td, { width: '15%', textAlign: 'right', color: '#4b5563' }]}>{formatAmount(item.price)}</Text>
+                                    <Text style={[styles.td, { width: '20%', textAlign: 'right', fontWeight: 'bold', color: '#111827' }]}>{formatAmount(Number(item.quantity) * Number(item.price))}</Text>
                                 </View>
                             ))}
                         </View>
