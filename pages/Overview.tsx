@@ -2,7 +2,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { getInvoices } from '../services/invoiceService';
 import { getExpenses } from '../services/expenseService';
-import { InvoiceData, ExpenseData } from '../types';
+import { getRecurringExpenses } from '../services/recurringExpenseService';
+import { InvoiceData, ExpenseData, RecurringExpenseData } from '../types';
 
 const StatCard = ({ title, value, colorClass }: { title: string; value: string; colorClass: string }) => (
     <div className={`bg-gray-800 p-4 rounded-lg shadow-md`}>
@@ -39,14 +40,20 @@ const RecentList = ({ title, items, linkTo, type }: { title: string; items: (Inv
 const Overview = () => {
     const [invoices, setInvoices] = useState<InvoiceData[]>([]);
     const [expenses, setExpenses] = useState<ExpenseData[]>([]);
+    const [recurringExpenses, setRecurringExpenses] = useState<RecurringExpenseData[]>([]);
     const [loading, setLoading] = useState(true);
     const location = useLocation();
 
     const fetchData = useCallback(async () => {
         setLoading(true);
-        const [inv, exp] = await Promise.all([getInvoices(), getExpenses()]);
+        const [inv, exp, recExp] = await Promise.all([
+            getInvoices(), 
+            getExpenses(),
+            getRecurringExpenses()
+        ]);
         setInvoices(inv);
         setExpenses(exp);
+        setRecurringExpenses(recExp);
         setLoading(false);
     }, []);
 
@@ -64,12 +71,28 @@ const Overview = () => {
             return false;
         }
     });
-
+    
+    // Total expenses calculation should only include actual, realized expenses.
     const yearlyExpenses = expenses.filter(exp => new Date(exp.date).getFullYear() === currentYear);
 
     const totalIncome = yearlyInvoices.reduce((sum, inv) => sum + Number(inv.amount), 0);
     const totalExpenses = yearlyExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
     const profit = totalIncome - totalExpenses;
+
+    // Combine one-time and recurring expenses for the "Recent Expenses" list
+    const combinedExpensesForList: ExpenseData[] = [
+        ...expenses,
+        ...recurringExpenses.map(r => ({
+            id: r.id,
+            date: r.nextDueDate, // Use nextDueDate for sorting and display
+            vendor: r.vendor,
+            description: `${r.description} (Nächste Fälligkeit)`,
+            amount: r.amount,
+            currency: r.currency,
+            category: r.category,
+        }))
+    ].sort((a, b) => b.date.localeCompare(a.date));
+
 
     if (loading) {
         return <div className="text-center p-10">Lade Übersicht...</div>;
@@ -85,7 +108,7 @@ const Overview = () => {
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <RecentList title="Letzte Einnahmen" items={invoices} linkTo="/invoices" type="invoice" />
-                <RecentList title="Letzte Ausgaben" items={expenses} linkTo="/expenses" type="expense" />
+                <RecentList title="Letzte Ausgaben" items={combinedExpensesForList} linkTo="/expenses" type="expense" />
             </div>
         </div>
     );
