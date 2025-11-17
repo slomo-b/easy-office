@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { InvoiceData, CustomerData, InvoiceItem } from '../types';
 import { Trash2 } from 'lucide-react';
@@ -76,7 +77,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, customers, onDataChange
     const newItem: InvoiceItem = { 
         description: '', 
         quantity: 1, 
-        unit: 'Stunde', 
+        unit: 'Stunden', 
         price: '',
         vatRate: data.vatEnabled ? defaultVatRate : ''
     };

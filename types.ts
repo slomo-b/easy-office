@@ -1,3 +1,4 @@
+
 export interface InvoiceItem {
   description: string;
   quantity: number | '';
@@ -100,7 +101,7 @@ export interface ServiceData {
   id: string;
   name: string;
   description: string;
-  unit: 'Stunde' | 'Tag' | 'Pauschal';
+  unit: 'Stunden' | 'Tage' | 'Pauschal';
   price: number | '';
   vatRate: number | '';
 }

@@ -59,7 +59,6 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, qrCodeSvg, isLoad
   const processedTemplate = data.htmlTemplate
     .replace(/{{logoImage}}/g, logoHtml)
     .replace(/{{qrBillSvg}}/g, qrBillHtml)
-    .replace(/{{qrCodeImage}}/g, qrBillHtml) // Backward compatibility for old template
     .replace(/{{invoiceItems}}/g, itemsHtml)
     .replace(/{{projectLine}}/g, projectLineHtml)
     .replace(/{{totalsBlock}}/g, totalsBlockHtml)

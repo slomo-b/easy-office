@@ -100,7 +100,7 @@ export const createNewInvoice = async (settings: SettingsData): Promise<InvoiceD
   const newItems: InvoiceItem[] = [{
       description: '',
       quantity: 1,
-      unit: 'Stunde',
+      unit: 'Stunden',
       price: '',
       vatRate: settings.isVatEnabled ? settings.vatRate : ''
   }];
@@ -184,7 +184,7 @@ export const createInvoiceFromProject = async (
         return {
             description,
             quantity: Number(data.totalHours.toFixed(4)),
-            unit: service?.unit || 'Stunde',
+            unit: service?.unit || 'Stunden',
             price: Number(service?.price) || 0,
             vatRate: newInvoice.vatEnabled ? (service?.vatRate || settings.vatRate) : '',
         };

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ServiceData } from '../types';
 
@@ -53,8 +54,8 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ data, onDataChange }) => {
                     onChange={handleChange}
                     className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
                 >
-                    <option value="Stunde">Stunde</option>
-                    <option value="Tag">Tag</option>
+                    <option value="Stunden">Stunden</option>
+                    <option value="Tage">Tage</option>
                     <option value="Pauschal">Pauschal</option>
                 </select>
             </div>
