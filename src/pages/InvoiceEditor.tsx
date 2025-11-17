@@ -194,15 +194,24 @@ const InvoiceEditor = () => {
     if (!invoiceData) return;
     setIsDownloadingPdf(true);
     
-    const printElement = document.createElement('div');
-    printElement.innerHTML = processedTemplate;
-    document.body.appendChild(printElement);
-    const elementToPrint = printElement.querySelector('#print-area');
+    // Create a container for the print content that is off-screen but rendered
+    // by the browser, so all styles are applied correctly.
+    const printContainer = document.createElement('div');
+    printContainer.style.position = 'absolute';
+    printContainer.style.left = '-9999px';
+    printContainer.style.top = '0';
+    
+    // The processedTemplate contains the full HTML structure, including the #print-area div.
+    printContainer.innerHTML = processedTemplate;
+    document.body.appendChild(printContainer);
+    
+    // Now, select the element to be printed from within our off-screen container.
+    const elementToPrint = printContainer.querySelector('#print-area');
 
     if (!elementToPrint) {
       console.error("Could not find #print-area for PDF generation.");
+      document.body.removeChild(printContainer); // Cleanup on error
       setIsDownloadingPdf(false);
-      document.body.removeChild(printElement);
       return;
     }
 
@@ -214,9 +223,14 @@ const InvoiceEditor = () => {
       jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
+    // Use a promise-based approach for better flow control and cleanup
     html2pdf().from(elementToPrint).set(opt).save().then(() => {
+        document.body.removeChild(printContainer);
         setIsDownloadingPdf(false);
-        document.body.removeChild(printElement);
+    }).catch((error) => {
+        console.error("PDF generation failed:", error);
+        document.body.removeChild(printContainer);
+        setIsDownloadingPdf(false);
     });
   };
 

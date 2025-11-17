@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { ServiceData } from '../types';
+import { ChevronDown } from 'lucide-react';
 
 interface ServiceFormProps {
   data: ServiceData;
@@ -47,17 +48,22 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ data, onDataChange }) => {
                 <label htmlFor="unit" className="mb-1 text-sm font-medium text-gray-400">
                     Einheit
                 </label>
-                <select
-                    id="unit"
-                    name="unit"
-                    value={data.unit}
-                    onChange={handleChange}
-                    className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
-                >
-                    <option value="Stunden">Stunden</option>
-                    <option value="Tage">Tage</option>
-                    <option value="Pauschal">Pauschal</option>
-                </select>
+                <div className="relative">
+                  <select
+                      id="unit"
+                      name="unit"
+                      value={data.unit}
+                      onChange={handleChange}
+                      className="w-full appearance-none bg-gray-700 border border-gray-600 rounded-md px-3 py-2 pr-10 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+                  >
+                      <option value="Stunden">Stunden</option>
+                      <option value="Tage">Tage</option>
+                      <option value="Pauschal">Pauschal</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                      <ChevronDown size={20} />
+                  </div>
+                </div>
             </div>
              <div className="flex flex-col col-span-2">
                 <InputField label="Standard MwSt.-Satz (%)" id="vatRate" value={data.vatRate} onChange={handleChange} type="number" />

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ProjectData, CustomerData, ServiceData, TaskData, ExpenseData, TaskStatus, TaskTimeLog, SettingsData } from '../types';
@@ -8,7 +9,7 @@ import { getSettings } from '../services/settingsService';
 import { getExpenses, createNewExpense, saveExpense } from '../services/expenseService';
 import ExpenseForm from '../components/ExpenseForm';
 import { createInvoiceFromProject } from '../services/invoiceService';
-import { Play, Square, PlusCircle, Trash2, Clock } from 'lucide-react';
+import { Play, Square, PlusCircle, Trash2, Clock, ChevronDown } from 'lucide-react';
 
 const formatDuration = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -288,7 +289,11 @@ const ProjectEditor = () => {
     
     const totalProjectHours = project.tasks.reduce((sum, task) => sum + calculateTaskDuration(task), 0) / (1000 * 60 * 60);
 
-    const TaskCard = ({ task }: { task: TaskData }) => {
+    // FIX: Explicitly type TaskCard as a React.FC to correctly handle the 'key' prop.
+    interface TaskCardProps {
+        task: TaskData;
+    }
+    const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
         const service = services.find(s => s.id === task.serviceId);
         const isRunning = activeTimerTaskId === task.id;
         const totalDurationMs = isRunning ? elapsedTime : calculateTaskDuration(task);
@@ -400,10 +405,15 @@ const ProjectEditor = () => {
                                        <div className="bg-gray-700 p-3 rounded-md space-y-2">
                                            <input type="text" placeholder="Aufgabentitel" value={newTaskData.title} onChange={e => setNewTaskData({...newTaskData, title: e.target.value})} className="w-full bg-gray-600 border-gray-500 rounded px-2 py-1 text-sm"/>
                                            <textarea placeholder="Beschreibung (optional)" value={newTaskData.description} onChange={e => setNewTaskData({...newTaskData, description: e.target.value})} className="w-full bg-gray-600 border-gray-500 rounded px-2 py-1 text-sm" rows={2}></textarea>
-                                           <select value={newTaskData.serviceId} onChange={e => setNewTaskData({...newTaskData, serviceId: e.target.value})} className="w-full bg-gray-600 border-gray-500 rounded px-2 py-1 text-sm">
-                                               <option value="">-- Leistung --</option>
-                                               {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                           </select>
+                                           <div className="relative">
+                                            <select value={newTaskData.serviceId} onChange={e => setNewTaskData({...newTaskData, serviceId: e.target.value})} className="w-full appearance-none bg-gray-600 border-gray-500 rounded px-2 py-1 pr-8 text-sm text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 transition">
+                                                <option value="">-- Leistung --</option>
+                                                {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                            </select>
+                                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                                                <ChevronDown size={16} />
+                                            </div>
+                                           </div>
                                            <div className="flex justify-end gap-2">
                                                <button onClick={() => setShowNewTaskFormForStatus(null)} className="text-gray-400 text-xs">Abbrechen</button>
                                                <button onClick={handleCreateTask} className="bg-emerald-500 text-white px-2 py-1 text-xs rounded">Speichern</button>
@@ -447,26 +457,36 @@ const ProjectEditor = () => {
                     <div className="space-y-4">
                         <div>
                             <label className="mb-1 text-sm font-medium text-gray-400 block">Projektname</label>
-                            <input type="text" value={project.name} onChange={e => handleProjectDataChange('name', e.target.value)} className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white"/>
+                            <input type="text" value={project.name} onChange={e => handleProjectDataChange('name', e.target.value)} className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"/>
                         </div>
                         <div>
                             <label className="mb-1 text-sm font-medium text-gray-400 block">Kunde</label>
-                            <select value={project.customerId} onChange={e => handleProjectDataChange('customerId', e.target.value)} className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white">
-                                <option value="">-- Kunde auswählen --</option>
-                                {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                            </select>
+                            <div className="relative">
+                              <select value={project.customerId} onChange={e => handleProjectDataChange('customerId', e.target.value)} className="w-full appearance-none bg-gray-700 border border-gray-600 rounded-md px-3 py-2 pr-10 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">
+                                  <option value="">-- Kunde auswählen --</option>
+                                  {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                              </select>
+                              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                                  <ChevronDown size={20} />
+                              </div>
+                            </div>
                         </div>
                          <div>
                             <label className="mb-1 text-sm font-medium text-gray-400 block">Status</label>
-                            <select value={project.status} onChange={e => handleProjectDataChange('status', e.target.value as ProjectData['status'])} className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white">
-                                <option value="open">Offen</option>
-                                <option value="in-progress">In Arbeit</option>
-                                <option value="done">Erledigt</option>
-                            </select>
+                            <div className="relative">
+                              <select value={project.status} onChange={e => handleProjectDataChange('status', e.target.value as ProjectData['status'])} className="w-full appearance-none bg-gray-700 border border-gray-600 rounded-md px-3 py-2 pr-10 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">
+                                  <option value="open">Offen</option>
+                                  <option value="in-progress">In Arbeit</option>
+                                  <option value="done">Erledigt</option>
+                              </select>
+                              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                                  <ChevronDown size={20} />
+                              </div>
+                            </div>
                         </div>
                         <div>
                             <label className="mb-1 text-sm font-medium text-gray-400 block">Beschreibung</label>
-                            <textarea value={project.description} onChange={e => handleProjectDataChange('description', e.target.value)} className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white" rows={4}></textarea>
+                            <textarea value={project.description} onChange={e => handleProjectDataChange('description', e.target.value)} className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition" rows={4}></textarea>
                         </div>
                          {id && (
                             <div className="border-t border-gray-700 pt-4">

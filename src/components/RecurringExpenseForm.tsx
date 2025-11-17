@@ -1,5 +1,7 @@
+
 import React from 'react';
 import { RecurringExpenseData } from '../types';
+import { ChevronDown } from 'lucide-react';
 
 interface RecurringExpenseFormProps {
   data: RecurringExpenseData;
@@ -46,33 +48,43 @@ const RecurringExpenseForm: React.FC<RecurringExpenseFormProps> = ({ data, onDat
                 <label htmlFor="currency" className="mb-1 text-sm font-medium text-gray-400">
                     Währung
                 </label>
-                <select
-                    id="currency"
-                    name="currency"
-                    value={data.currency}
-                    onChange={handleChange}
-                    className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
-                >
-                    <option value="CHF">CHF</option>
-                    <option value="EUR">EUR</option>
-                </select>
+                <div className="relative">
+                  <select
+                      id="currency"
+                      name="currency"
+                      value={data.currency}
+                      onChange={handleChange}
+                      className="w-full appearance-none bg-gray-700 border border-gray-600 rounded-md px-3 py-2 pr-10 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+                  >
+                      <option value="CHF">CHF</option>
+                      <option value="EUR">EUR</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                      <ChevronDown size={20} />
+                  </div>
+                </div>
             </div>
              <InputField label="Kategorie" id="category" value={data.category} onChange={handleChange} className="col-span-2"/>
              <div className="flex flex-col">
                 <label htmlFor="interval" className="mb-1 text-sm font-medium text-gray-400">
                     Intervall
                 </label>
-                <select
-                    id="interval"
-                    name="interval"
-                    value={data.interval}
-                    onChange={handleChange}
-                    className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
-                >
-                    <option value="monthly">Monatlich</option>
-                    <option value="quarterly">Quartalsweise</option>
-                    <option value="yearly">Jährlich</option>
-                </select>
+                <div className="relative">
+                  <select
+                      id="interval"
+                      name="interval"
+                      value={data.interval}
+                      onChange={handleChange}
+                      className="w-full appearance-none bg-gray-700 border border-gray-600 rounded-md px-3 py-2 pr-10 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+                  >
+                      <option value="monthly">Monatlich</option>
+                      <option value="quarterly">Quartalsweise</option>
+                      <option value="yearly">Jährlich</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                      <ChevronDown size={20} />
+                  </div>
+                </div>
             </div>
             <InputField label="Start-Datum" id="startDate" value={data.startDate} onChange={handleChange} type="date" />
         </div>

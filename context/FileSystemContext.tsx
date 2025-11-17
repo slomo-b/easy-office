@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useContext, useEffect, ReactNode, PropsWithChildren } from 'react';
 import { initializeFileSystem, isSupported } from '../services/fileSystem';
 
 interface FileSystemContextType {
@@ -8,7 +8,8 @@ interface FileSystemContextType {
 
 const FileSystemContext = createContext<FileSystemContextType | undefined>(undefined);
 
-export const FileSystemProvider = ({ children }: { children: ReactNode }) => {
+// FIX: Use PropsWithChildren for components that accept children.
+export const FileSystemProvider = ({ children }: PropsWithChildren) => {
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

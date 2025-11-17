@@ -28,7 +28,13 @@ const calculateTotalHours = (tasks: TaskData[]): number => {
     return totalMilliseconds / (1000 * 60 * 60);
 };
 
-const ProjectCard = ({ project, customerName }: { project: ProjectData; customerName: string }) => {
+// FIX: Explicitly type ProjectCard as a React.FC to correctly handle the 'key' prop.
+interface ProjectCardProps {
+    project: ProjectData;
+    customerName: string;
+}
+
+const ProjectCard: React.FC<ProjectCardProps> = ({ project, customerName }) => {
     const navigate = useNavigate();
     
     const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {

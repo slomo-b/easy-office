@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { InvoiceData, CustomerData, InvoiceItem } from '../types';
-import { Trash2 } from 'lucide-react';
+import { Trash2, ChevronDown } from 'lucide-react';
 
 interface InvoiceFormProps {
   data: InvoiceData;
@@ -147,16 +147,21 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, customers, onDataChange
             <label htmlFor="customer-select" className="mb-1 text-sm font-medium text-gray-400">
                 Kunde auswählen (optional)
             </label>
-            <select
-                id="customer-select"
-                onChange={handleCustomerSelect}
-                className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
-            >
-                <option value="">-- Manuelle Eingabe --</option>
-                {customers.map(customer => (
-                    <option key={customer.id} value={customer.id}>{customer.name}</option>
-                ))}
-            </select>
+            <div className="relative">
+              <select
+                  id="customer-select"
+                  onChange={handleCustomerSelect}
+                  className="w-full appearance-none bg-gray-700 border border-gray-600 rounded-md px-3 py-2 pr-10 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+              >
+                  <option value="">-- Manuelle Eingabe --</option>
+                  {customers.map(customer => (
+                      <option key={customer.id} value={customer.id}>{customer.name}</option>
+                  ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                  <ChevronDown size={20} />
+              </div>
+            </div>
         </div>
         <InputField label="Name" id="debtorName" value={data.debtorName} onChange={handleChange} className="col-span-2" />
         <InputField label="Strasse" id="debtorStreet" value={data.debtorStreet} onChange={handleChange} />
@@ -171,16 +176,21 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, customers, onDataChange
             <label htmlFor="currency" className="mb-1 text-sm font-medium text-gray-400">
                 Währung
             </label>
-            <select
-                id="currency"
-                name="currency"
-                value={data.currency}
-                onChange={handleChange}
-                className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
-            >
-                <option value="CHF">CHF</option>
-                <option value="EUR">EUR</option>
-            </select>
+            <div className="relative">
+              <select
+                  id="currency"
+                  name="currency"
+                  value={data.currency}
+                  onChange={handleChange}
+                  className="w-full appearance-none bg-gray-700 border border-gray-600 rounded-md px-3 py-2 pr-10 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+              >
+                  <option value="CHF">CHF</option>
+                  <option value="EUR">EUR</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                  <ChevronDown size={20} />
+              </div>
+            </div>
         </div>
         <div></div>
         <InputField label="Referenznummer (QR-R)" id="reference" value={data.reference} onChange={handleChange} className="col-span-2" />

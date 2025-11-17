@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ProjectData, CustomerData, ServiceData, TaskData, ExpenseData, TaskStatus, TaskTimeLog, SettingsData } from '../types';
@@ -289,7 +288,11 @@ const ProjectEditor = () => {
     
     const totalProjectHours = project.tasks.reduce((sum, task) => sum + calculateTaskDuration(task), 0) / (1000 * 60 * 60);
 
-    const TaskCard = ({ task }: { task: TaskData }) => {
+    // FIX: Explicitly type TaskCard as a React.FC to correctly handle the 'key' prop.
+    interface TaskCardProps {
+        task: TaskData;
+    }
+    const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
         const service = services.find(s => s.id === task.serviceId);
         const isRunning = activeTimerTaskId === task.id;
         const totalDurationMs = isRunning ? elapsedTime : calculateTaskDuration(task);
