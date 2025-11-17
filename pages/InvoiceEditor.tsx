@@ -10,7 +10,6 @@ import InvoiceForm from '../components/InvoiceForm';
 import InvoicePreview from '../components/InvoicePreview';
 import HtmlEditor from '../components/HtmlEditor';
 import { Download, ZoomIn, X } from 'lucide-react';
-import html2pdf from 'html2pdf.js';
 
 const InvoiceEditor = () => {
   const { id } = useParams<{ id: string }>();
@@ -21,7 +20,7 @@ const InvoiceEditor = () => {
   const [qrCodeSvg, setQrCodeSvg] = useState<string>('');
   const [isLoadingQr, setIsLoadingQr] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [isDownloadingPdf, setIsDownloadingPdf] = useState<boolean>(false);
+  const [isPrinting, setIsPrinting] = useState<boolean>(false);
   const [isZoomModalOpen, setIsZoomModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
@@ -107,7 +106,6 @@ const InvoiceEditor = () => {
     setInvoiceData(prev => prev ? { ...prev, htmlTemplate: template } : null);
   };
   
-  // FIX: Added logic to process the invoice template with data, which is then passed to the InvoicePreview component.
   const processedTemplate = useMemo(() => {
     if (!invoiceData) return '';
 
@@ -179,6 +177,7 @@ const InvoiceEditor = () => {
       .replace(/{{amount}}/g, formatAmount(invoiceData.total))
       .replace(/{{reference}}/g, invoiceData.reference)
       .replace(/{{unstructuredMessage}}/g, invoiceData.unstructuredMessage)
+      .replace(/{{date}}/g, new Date(invoiceData.createdAt).toLocaleDateString('de-CH'));
   }, [invoiceData, qrCodeSvg, isLoadingQr]);
 
 
@@ -191,35 +190,25 @@ const InvoiceEditor = () => {
     }
   };
   
-  const handleDownloadPdf = () => {
+  const handlePrintPdf = () => {
     if (!invoiceData) return;
-    setIsDownloadingPdf(true);
+    setIsPrinting(true);
     
-    // Create a temporary element to render the template for PDF generation
-    const printElement = document.createElement('div');
-    printElement.innerHTML = processedTemplate;
-    document.body.appendChild(printElement);
-    const elementToPrint = printElement.querySelector('#print-area');
+    // Create a temporary container for the content to be printed.
+    const printContainer = document.createElement('div');
+    // The processed template *contains* the #print-area element, which is targeted by the print styles.
+    printContainer.innerHTML = processedTemplate;
 
-    if (!elementToPrint) {
-      console.error("Could not find #print-area for PDF generation.");
-      setIsDownloadingPdf(false);
-      document.body.removeChild(printElement);
-      return;
-    }
+    // The print styles will handle visibility, so we don't need to position this off-screen.
+    // Appending it is enough for the print styles to find #print-area.
+    document.body.appendChild(printContainer);
 
-    const opt = {
-      margin:       0,
-      filename:     `Rechnung-${invoiceData.unstructuredMessage || invoiceData.id}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
+    // Trigger the browser's print dialog. This is a blocking operation.
+    window.print();
 
-    html2pdf().from(elementToPrint).set(opt).save().then(() => {
-        setIsDownloadingPdf(false);
-        document.body.removeChild(printElement);
-    });
+    // Clean up the temporary container after the print dialog is handled (closed or cancelled).
+    document.body.removeChild(printContainer);
+    setIsPrinting(false);
   };
 
 
@@ -248,12 +237,12 @@ const InvoiceEditor = () => {
             <h2 className="text-3xl font-bold text-white">{id ? 'Rechnung bearbeiten' : 'Neue Rechnung erstellen'}</h2>
             <div className="flex items-center gap-2">
                  <button
-                    onClick={handleDownloadPdf}
-                    disabled={isDownloadingPdf}
+                    onClick={handlePrintPdf}
+                    disabled={isPrinting}
                     className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 flex items-center gap-2 disabled:bg-gray-500"
                 >
                     <Download size={16} />
-                    {isDownloadingPdf ? 'Generiere...' : 'PDF herunterladen'}
+                    {isPrinting ? 'Vorbereiten...' : 'Drucken / PDF speichern'}
                 </button>
                 <button
                     onClick={handleSave}

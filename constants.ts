@@ -28,7 +28,7 @@ export const DEFAULT_HTML_TEMPLATE = `
             </div>
             <div class="w-1/3 text-right">
                 <h1 class="text-3xl font-bold text-emerald-600 mb-2 tracking-tight">RECHNUNG</h1>
-                <p><span class="font-semibold text-gray-600">Datum:</span> ${new Date().toLocaleDateString('de-CH')}</p>
+                <p><span class="font-semibold text-gray-600">Datum:</span> {{date}}</p>
                 <p><span class="font-semibold text-gray-600">Rechnungs-Nr:</span> {{unstructuredMessage}}</p>
                 {{projectLine}}
             </div>
