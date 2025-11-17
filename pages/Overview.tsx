@@ -36,6 +36,37 @@ const RecentList = ({ title, items, linkTo, type }: { title: string; items: (Inv
     </div>
 );
 
+const calculateRecurringTotalForYear = (recurringExpenses: RecurringExpenseData[], year: number): number => {
+    let total = 0;
+    const today = new Date();
+    today.setHours(23, 59, 59, 999); // Ensure today is included in comparisons
+
+    recurringExpenses.forEach(expense => {
+        let cursorDate = new Date(expense.startDate);
+        cursorDate.setHours(12, 0, 0, 0); // Avoid timezone issues around midnight
+
+        while (cursorDate <= today) {
+            if (cursorDate.getFullYear() === year) {
+                total += Number(expense.amount);
+            }
+            
+            switch (expense.interval) {
+                case 'monthly':
+                    cursorDate.setMonth(cursorDate.getMonth() + 1);
+                    break;
+                case 'quarterly':
+                    cursorDate.setMonth(cursorDate.getMonth() + 3);
+                    break;
+                case 'yearly':
+                    cursorDate.setFullYear(cursorDate.getFullYear() + 1);
+                    break;
+            }
+        }
+    });
+
+    return total;
+};
+
 
 const Overview = () => {
     const [invoices, setInvoices] = useState<InvoiceData[]>([]);
@@ -62,6 +93,8 @@ const Overview = () => {
     }, [location]);
     
     const currentYear = new Date().getFullYear();
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
 
     const yearlyInvoices = invoices.filter(inv => {
         try {
@@ -74,26 +107,49 @@ const Overview = () => {
     
     const totalIncome = yearlyInvoices.reduce((sum, inv) => sum + Number(inv.amount), 0);
     
-    // Calculate total expenses based *only* on the actual, created expense records for the current year.
-    // This reflects what has actually been paid/recorded, not a forecast.
-    const yearlyExpenses = expenses.filter(exp => new Date(exp.date).getFullYear() === currentYear);
-    const totalExpenses = yearlyExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
+    const totalOneTimeExpenses = expenses
+        .filter(exp => new Date(exp.date).getFullYear() === currentYear)
+        .reduce((sum, exp) => sum + Number(exp.amount), 0);
+
+    const totalRecurringExpensesForYear = calculateRecurringTotalForYear(recurringExpenses, currentYear);
+
+    const totalExpenses = totalOneTimeExpenses + totalRecurringExpensesForYear;
 
     const profit = totalIncome - totalExpenses;
 
-    // For the list view, combine one-time expenses with upcoming recurring expenses to give a full overview.
-    const combinedExpensesForList: ExpenseData[] = [
-        ...expenses,
-        ...recurringExpenses.map(r => ({
-            id: r.id,
-            date: r.nextDueDate, 
-            vendor: r.vendor,
-            description: `${r.description} (Nächste Fälligkeit)`,
-            amount: r.amount,
-            currency: r.currency,
-            category: r.category,
-        }))
-    ].sort((a, b) => b.date.localeCompare(a.date));
+    // Generate virtual expense instances from recurring expenses for the list view
+    const virtualRecurringInstances: ExpenseData[] = [];
+    recurringExpenses.forEach(r => {
+        let cursorDate = new Date(r.startDate);
+        cursorDate.setHours(12, 0, 0, 0);
+
+        while (cursorDate <= today) {
+            virtualRecurringInstances.push({
+                id: `${r.id}_${cursorDate.toISOString()}`,
+                date: cursorDate.toISOString().split('T')[0],
+                vendor: r.vendor,
+                description: r.description,
+                amount: r.amount,
+                currency: r.currency,
+                category: r.category,
+            });
+
+            switch (r.interval) {
+                case 'monthly':
+                    cursorDate.setMonth(cursorDate.getMonth() + 1);
+                    break;
+                case 'quarterly':
+                    cursorDate.setMonth(cursorDate.getMonth() + 3);
+                    break;
+                case 'yearly':
+                    cursorDate.setFullYear(cursorDate.getFullYear() + 1);
+                    break;
+            }
+        }
+    });
+
+    const combinedExpensesForList: ExpenseData[] = [...expenses, ...virtualRecurringInstances]
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
 
     if (loading) {

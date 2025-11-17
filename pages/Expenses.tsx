@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ExpenseData, RecurringExpenseData } from '../types';
-import { getExpenses, deleteExpense, createNewExpense, saveExpense } from '../services/expenseService';
-import { getRecurringExpenses, deleteRecurringExpense, saveRecurringExpense, calculateNextDueDate } from '../services/recurringExpenseService';
+import { getExpenses, deleteExpense } from '../services/expenseService';
+import { getRecurringExpenses, deleteRecurringExpense } from '../services/recurringExpenseService';
 import { Repeat } from 'lucide-react';
 
 const Expenses = () => {
   const [expenses, setExpenses] = useState<ExpenseData[]>([]);
   const [recurringExpenses, setRecurringExpenses] = useState<RecurringExpenseData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isProcessing, setIsProcessing] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -38,27 +37,6 @@ const Expenses = () => {
     }
   };
 
-  const handleCreateExpense = async (recurringExpense: RecurringExpenseData) => {
-    setIsProcessing(recurringExpense.id);
-    const newExpense = createNewExpense();
-    newExpense.date = recurringExpense.nextDueDate;
-    newExpense.vendor = recurringExpense.vendor;
-    newExpense.description = recurringExpense.description;
-    newExpense.amount = recurringExpense.amount;
-    newExpense.currency = recurringExpense.currency;
-    newExpense.category = recurringExpense.category;
-    await saveExpense(newExpense);
-
-    const updatedRecurringExpense = {
-        ...recurringExpense,
-        nextDueDate: calculateNextDueDate(recurringExpense.nextDueDate, recurringExpense.interval)
-    };
-    await saveRecurringExpense(updatedRecurringExpense);
-
-    await loadData();
-    setIsProcessing(null);
-  };
-
   if (loading) {
     return <div className="text-center p-10">Lade Ausgaben...</div>;
   }
@@ -71,9 +49,6 @@ const Expenses = () => {
   ];
         
   combinedExpenses.sort((a, b) => b.sortDate.localeCompare(a.sortDate));
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
 
   return (
     <div>
@@ -95,7 +70,7 @@ const Expenses = () => {
         <table className="min-w-full">
           <thead className="bg-gray-700">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Datum / Fälligkeit</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Datum / Nächste Fälligkeit</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Anbieter</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Beschreibung</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Betrag</th>
@@ -106,11 +81,10 @@ const Expenses = () => {
           <tbody className="divide-y divide-gray-700">
             {combinedExpenses.length > 0 ? combinedExpenses.map(item => {
               const isRecurring = item.type === 'recurring';
-              const isDue = isRecurring && new Date(item.nextDueDate) <= today;
 
               return (
               <tr key={item.id} className="hover:bg-gray-700/50">
-                <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDue ? 'text-yellow-400 font-semibold' : 'text-gray-400'}`}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                     {new Date(item.sortDate).toLocaleDateString('de-CH')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{item.vendor}</td>
@@ -123,14 +97,6 @@ const Expenses = () => {
                     }
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-4">
-                  {isDue && (
-                      <button 
-                        onClick={() => handleCreateExpense(item)} 
-                        disabled={isProcessing === item.id}
-                        className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1 px-2 rounded text-xs transition-colors duration-300 disabled:bg-gray-500">
-                          {isProcessing === item.id ? 'Erstelle...' : 'Ausgabe erstellen'}
-                      </button>
-                  )}
                   <Link to={isRecurring ? `/recurring-expense/edit/${item.id}` : `/expense/edit/${item.id}`} className="text-emerald-400 hover:text-emerald-300">
                     Bearbeiten
                   </Link>

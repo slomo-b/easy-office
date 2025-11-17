@@ -4,10 +4,8 @@ import { RecurringExpenseData } from '../types';
 import { 
     getRecurringExpenseById, 
     saveRecurringExpense, 
-    createNewRecurringExpense,
-    calculateNextDueDate
+    createNewRecurringExpense
 } from '../services/recurringExpenseService';
-import { saveExpense, createNewExpense } from '../services/expenseService';
 import RecurringExpenseForm from '../components/RecurringExpenseForm';
 
 const RecurringExpenseEditor = () => {
@@ -47,28 +45,10 @@ const RecurringExpenseEditor = () => {
     if (expenseData) {
       setIsSaving(true);
       
-      const isNew = !id;
-
-      if (isNew) {
-          // For a new recurring expense, we first create the initial one-time expense
-          const initialExpense = createNewExpense();
-          initialExpense.date = expenseData.startDate;
-          initialExpense.vendor = expenseData.vendor;
-          initialExpense.description = expenseData.description;
-          initialExpense.amount = expenseData.amount;
-          initialExpense.currency = expenseData.currency;
-          initialExpense.category = expenseData.category;
-          await saveExpense(initialExpense);
-          
-          // Then we set the nextDueDate for the *next* occurrence and save the recurring template
-          const nextDueDate = calculateNextDueDate(expenseData.startDate, expenseData.interval);
-          const recurringTemplate = { ...expenseData, nextDueDate };
-          await saveRecurringExpense(recurringTemplate);
-
-      } else {
-          // For existing ones, just save the changes
-          await saveRecurringExpense(expenseData);
-      }
+      // The logic to create an initial one-time expense has been removed.
+      // We now only save the recurring expense template.
+      // The total cost is calculated dynamically on the overview page.
+      await saveRecurringExpense(expenseData);
 
       setIsSaving(false);
       navigate('/expenses');
