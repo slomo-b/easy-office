@@ -39,7 +39,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ data, onDataChange }) => {
   return (
     <div className="space-y-6 bg-gray-800 p-6 rounded-lg shadow-md">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-             <InputField label="Datum" id="date" value={data.date} onChange={handleChange} type="date" className="col-span-2" />
+             <InputField label="Fälligkeitsdatum" id="date" value={data.date} onChange={handleChange} type="date" className="col-span-2" />
              <InputField label="Anbieter / Verkäufer" id="vendor" value={data.vendor} onChange={handleChange} className="col-span-2"/>
              <InputField label="Beschreibung" id="description" value={data.description} onChange={handleChange} className="col-span-2" />
              <InputField label="Betrag" id="amount" value={data.amount} onChange={handleChange} type="number" />

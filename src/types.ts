@@ -31,6 +31,11 @@ export interface InvoiceData {
   unstructuredMessage: string;
   projectName?: string; // Optional project name
   items: InvoiceItem[];
+  
+  // Status Tracking
+  createdAt: string; // ISO String
+  paidAt: string | null;
+  status: 'open' | 'paid';
 
   // Customization
   htmlTemplate: string;
@@ -39,13 +44,15 @@ export interface InvoiceData {
 
 export interface ExpenseData {
   id: string;
-  date: string; // YYYY-MM-DD
+  date: string; // YYYY-MM-DD -> Due Date
   vendor: string;
   description: string;
   amount: number | '';
   currency: 'CHF' | 'EUR';
   category: string;
   projectId?: string; // Optional link to a Project
+  status: 'due' | 'paid';
+  paidAt: string | null;
 }
 
 export interface RecurringExpenseData {

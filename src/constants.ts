@@ -128,6 +128,9 @@ export const DEFAULT_INVOICE_DATA: Omit<InvoiceData, 'id'> = {
   items: [],
   logoSrc: '',
   htmlTemplate: DEFAULT_HTML_TEMPLATE,
+  createdAt: new Date().toISOString(),
+  paidAt: null,
+  status: 'open',
 };
 
 export const DEFAULT_EXPENSE_DATA: Omit<ExpenseData, 'id'> = {
@@ -136,5 +139,7 @@ export const DEFAULT_EXPENSE_DATA: Omit<ExpenseData, 'id'> = {
     description: '',
     amount: '',
     currency: 'CHF',
-    category: 'Software'
+    category: 'Software',
+    status: 'due',
+    paidAt: null,
 };

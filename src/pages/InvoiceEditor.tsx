@@ -7,7 +7,7 @@ import { generateQrCode } from '../services/qrBillService';
 import InvoiceForm from '../components/InvoiceForm';
 import InvoicePreview from '../components/InvoicePreview';
 import HtmlEditor from '../components/HtmlEditor';
-import { Download } from 'lucide-react';
+import { Download, CheckCircle, XCircle } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 
 const InvoiceEditor = () => {
@@ -87,6 +87,18 @@ const InvoiceEditor = () => {
         return { ...prev, [field]: value };
     });
   };
+
+  const handleStatusToggle = () => {
+    setInvoiceData(prev => {
+        if (!prev) return null;
+        const isPaid = prev.status === 'paid';
+        return {
+            ...prev,
+            status: isPaid ? 'open' : 'paid',
+            paidAt: isPaid ? null : new Date().toISOString(),
+        };
+    });
+  };
   
   const handleTemplateChange = (template: string) => {
     setInvoiceData(prev => prev ? { ...prev, htmlTemplate: template } : null);
@@ -126,7 +138,18 @@ const InvoiceEditor = () => {
   return (
     <div>
         <div className="flex justify-between items-center mb-6">
-            <h2 className="text-3xl font-bold text-white">{id ? 'Rechnung bearbeiten' : 'Neue Rechnung erstellen'}</h2>
+            <div className="flex items-center gap-4">
+              <h2 className="text-3xl font-bold text-white">{id ? 'Rechnung bearbeiten' : 'Neue Rechnung erstellen'}</h2>
+              {invoiceData.status === 'paid' ? (
+                  <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-green-500/20 text-green-300">
+                    <CheckCircle size={16} /> Bezahlt am {invoiceData.paidAt ? new Date(invoiceData.paidAt).toLocaleDateString('de-CH') : ''}
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-yellow-500/20 text-yellow-300">
+                    Offen
+                  </span>
+                )}
+            </div>
             <div className="flex items-center gap-2">
                  <button
                     onClick={handleDownloadPdf}
@@ -134,8 +157,17 @@ const InvoiceEditor = () => {
                     className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 flex items-center gap-2 disabled:bg-gray-500"
                 >
                     <Download size={16} />
-                    {isDownloadingPdf ? 'Generiere...' : 'PDF herunterladen'}
+                    {isDownloadingPdf ? 'Generiere...' : 'PDF'}
                 </button>
+                 {invoiceData.status === 'open' ? (
+                    <button onClick={handleStatusToggle} className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2">
+                        <CheckCircle size={16} /> Als bezahlt markieren
+                    </button>
+                 ) : (
+                    <button onClick={handleStatusToggle} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2">
+                        <XCircle size={16} /> Zahlung zurücksetzen
+                    </button>
+                 )}
                 <button
                     onClick={handleSave}
                     disabled={isSaving}

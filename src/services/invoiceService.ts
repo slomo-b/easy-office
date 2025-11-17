@@ -11,7 +11,7 @@ export const getInvoices = async (): Promise<InvoiceData[]> => {
     const invoices = await Promise.all(
       fileNames.map(fileName => fileSystem.readFile<InvoiceData>(`${INVOICES_DIR}/${fileName}`))
     );
-    return invoices.sort((a, b) => b.id.localeCompare(a.id));
+    return invoices.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   } catch (error) {
     console.error('Error reading invoices from file system', error);
     return [];
@@ -86,6 +86,9 @@ export const createNewInvoice = async (): Promise<InvoiceData> => {
     items: [],
     amount: 0,
     htmlTemplate: DEFAULT_HTML_TEMPLATE,
+    createdAt: new Date().toISOString(),
+    paidAt: null,
+    status: 'open',
   };
 };
 
