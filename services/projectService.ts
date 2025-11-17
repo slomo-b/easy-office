@@ -16,7 +16,14 @@ export const getProjects = async (): Promise<ProjectData[]> => {
   try {
     const fileNames = await fileSystem.readDirectory(PROJECTS_DIR);
     const projects = await Promise.all(
-      fileNames.map(fileName => fileSystem.readFile<ProjectData>(`${PROJECTS_DIR}/${fileName}`))
+      fileNames.map(async (fileName) => {
+        const project = await fileSystem.readFile<ProjectData>(`${PROJECTS_DIR}/${fileName}`);
+        // Backwards compatibility: Ensure older projects have a 'tasks' array.
+        if (!project.tasks) {
+          project.tasks = [];
+        }
+        return project;
+      })
     );
     return projects.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   } catch (error) {
@@ -27,7 +34,12 @@ export const getProjects = async (): Promise<ProjectData[]> => {
 
 export const getProjectById = async (id: string): Promise<ProjectData | undefined> => {
   try {
-    return await fileSystem.readFile<ProjectData>(`${PROJECTS_DIR}/${id}.json`);
+    const project = await fileSystem.readFile<ProjectData>(`${PROJECTS_DIR}/${id}.json`);
+    // Backwards compatibility: Ensure older projects have a 'tasks' array.
+    if (project && !project.tasks) {
+      project.tasks = [];
+    }
+    return project;
   } catch (error) {
     console.error(`Error reading project ${id} from file system`, error);
     return undefined;
