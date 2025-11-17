@@ -1,6 +1,7 @@
 import { InvoiceData } from '../types';
 import { DEFAULT_INVOICE_DATA, DEFAULT_HTML_TEMPLATE } from '../constants';
 import * as fileSystem from './fileSystemService';
+import { getSettings } from './settingsService';
 
 const INVOICES_DIR = 'invoices';
 
@@ -36,10 +37,24 @@ export const saveInvoice = async (invoice: InvoiceData): Promise<InvoiceData> =>
   return invoice;
 };
 
-export const createNewInvoice = (): InvoiceData => {
+export const createNewInvoice = async (): Promise<InvoiceData> => {
+  const settings = await getSettings();
+  
+  const creditorData = {
+    creditorIban: settings.creditorIban,
+    creditorName: settings.creditorName,
+    creditorStreet: settings.creditorStreet,
+    creditorHouseNr: settings.creditorHouseNr,
+    creditorZip: settings.creditorZip,
+    creditorCity: settings.creditorCity,
+    creditorCountry: settings.creditorCountry,
+    logoSrc: settings.logoSrc,
+  };
+
   return {
     id: `inv_${new Date().getTime()}_${Math.random().toString(36).substring(2, 9)}`,
     ...DEFAULT_INVOICE_DATA,
+    ...creditorData,
     htmlTemplate: DEFAULT_HTML_TEMPLATE,
   };
 };

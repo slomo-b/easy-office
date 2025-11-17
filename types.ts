@@ -37,3 +37,17 @@ export interface ExpenseData {
   currency: 'CHF' | 'EUR';
   category: string;
 }
+
+export interface SettingsData {
+  // Creditor / Company Details
+  creditorIban: string;
+  creditorName: string;
+  creditorStreet: string;
+  creditorHouseNr: string;
+  creditorZip: string;
+  creditorCity: string;
+  creditorCountry: string;
+
+  // Customization
+  logoSrc: string;
+}

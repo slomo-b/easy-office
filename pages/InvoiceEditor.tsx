@@ -25,7 +25,8 @@ const InvoiceEditor = () => {
             navigate('/invoices'); // Invoice not found, redirect
           }
         } else {
-          setInvoiceData(createNewInvoice());
+          const newInvoice = await createNewInvoice();
+          setInvoiceData(newInvoice);
         }
     };
     loadInvoice();

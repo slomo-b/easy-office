@@ -6,6 +6,7 @@ import Invoices from './pages/Dashboard';
 import InvoiceEditor from './pages/InvoiceEditor';
 import Expenses from './pages/Expenses';
 import ExpenseEditor from './pages/ExpenseEditor';
+import Settings from './pages/Settings';
 import { useFileSystem } from './context/FileSystemContext';
 
 function App() {
@@ -45,6 +46,7 @@ function App() {
             <Route path="/expenses" element={<Expenses />} />
             <Route path="/expense/new" element={<ExpenseEditor />} />
             <Route path="/expense/edit/:id" element={<ExpenseEditor />} />
+            <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>
       </div>
