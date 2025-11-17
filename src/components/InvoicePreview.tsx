@@ -1,14 +1,16 @@
 
+
 import React from 'react';
 import { InvoiceData } from '../types';
 
 interface InvoicePreviewProps {
   data: InvoiceData;
   qrCodeSvg: string;
+  qrError: string | null;
   isLoadingQr: boolean;
 }
 
-const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, qrCodeSvg, isLoadingQr }) => {
+const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, qrCodeSvg, qrError, isLoadingQr }) => {
   const formatAmount = (amount: number | '') => {
       if (amount === '') return '...';
       return Number(amount).toFixed(2);
@@ -24,7 +26,8 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, qrCodeSvg, isLoad
   } else if (qrCodeSvg) {
     qrCodeHtml = qrCodeSvg;
   } else {
-    qrCodeHtml = `<div style="width: 200px; height: 200px;" class="bg-gray-100 flex items-center justify-center text-center text-xs text-gray-500 p-2 border border-dashed border-gray-300">QR-Code kann nicht generiert werden.<br/>(Betrag muss grösser als 0 sein)</div>`;
+    const errorMessage = qrError ? qrError.replace(/\n/g, '<br/>') : 'QR-Code kann nicht generiert werden.<br/>(Betrag muss grösser als 0 sein)';
+    qrCodeHtml = `<div style="width: 200px; height: 200px;" class="bg-gray-100 flex items-center justify-center text-center text-xs text-red-500 p-2 border border-dashed border-gray-300">${errorMessage}</div>`;
   }
   
   const itemsHtml = data.items.map((item, index) => {

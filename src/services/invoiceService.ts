@@ -82,7 +82,7 @@ export const createNewInvoice = async (): Promise<InvoiceData> => {
     ...DEFAULT_INVOICE_DATA,
     ...creditorData,
     unstructuredMessage: newInvoiceNumber,
-    reference: newInvoiceNumber,
+    reference: '',
     items: [],
     amount: 0,
     htmlTemplate: DEFAULT_HTML_TEMPLATE,

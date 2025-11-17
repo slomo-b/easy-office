@@ -16,6 +16,7 @@ const InvoiceEditor = () => {
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
   const [customers, setCustomers] = useState<CustomerData[]>([]);
   const [qrCodeSvg, setQrCodeSvg] = useState<string>('');
+  const [qrError, setQrError] = useState<string | null>(null);
   const [isLoadingQr, setIsLoadingQr] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState<boolean>(false);
@@ -51,9 +52,15 @@ const InvoiceEditor = () => {
     try {
       const svg = await generateQrCode(invoiceData);
       setQrCodeSvg(svg);
+      setQrError(null);
     } catch (error) {
       console.error('Failed to generate QR code:', error);
       setQrCodeSvg('');
+      if (error instanceof Error) {
+        setQrError(error.message);
+      } else {
+        setQrError("Unbekannter Fehler bei der QR-Code-Generierung.");
+      }
     } finally {
       setIsLoadingQr(false);
     }
@@ -75,11 +82,6 @@ const InvoiceEditor = () => {
                 return sum + (quantity * price);
             }, 0);
             return { ...prev, items: newItems, amount: total };
-        }
-        
-        // When invoice number changes, also update the reference number
-        if (field === 'unstructuredMessage') {
-            return { ...prev, unstructuredMessage: value, reference: value };
         }
         
         return { ...prev, [field]: value };
@@ -172,6 +174,7 @@ const InvoiceEditor = () => {
             <InvoicePreview
                 data={invoiceData}
                 qrCodeSvg={qrCodeSvg}
+                qrError={qrError}
                 isLoadingQr={isLoadingQr}
             />
             </div>

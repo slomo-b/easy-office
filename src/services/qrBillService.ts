@@ -1,4 +1,5 @@
 
+
 import { InvoiceData } from "../types";
 import { Generator } from 'swissqrbill';
 
@@ -52,6 +53,11 @@ export async function generateQrCode(data: InvoiceData): Promise<string> {
 
   } catch (error) {
     console.error("Swiss QR Bill generation failed:", error);
-    throw error;
+    if (error instanceof Error) {
+      if (error.message.toLowerCase().includes("reference")) {
+        throw new Error("Ungültige Referenz für QR-IBAN.\nBitte geben Sie eine 27-stellige QR-Referenz an, oder verwenden Sie eine normale IBAN und lassen Sie das Referenzfeld leer.");
+      }
+    }
+    throw new Error("Fehler bei der QR-Code Generierung. Überprüfen Sie alle Eingaben.");
   }
 }
