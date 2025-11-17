@@ -1,7 +1,8 @@
 import { InvoiceData } from "../types";
-// FIX: The swissqrbill package has a faulty exports map.
-// We need to import directly from the browser ESM build to make it work with Vite.
-import { Generator } from 'swissqrbill/lib/esm/browser/index.js';
+// Use the standard package import. Vite will resolve this to the correct browser-specific
+// module using the 'browser' field in the package.json, which is the correct and
+// most robust way to handle this. This avoids errors with Vite's dependency scanner.
+import { Generator } from 'swissqrbill';
 
 export async function generateQrCode(data: InvoiceData): Promise<string> {
   if (!data || !data.total || Number(data.total) <= 0) {
