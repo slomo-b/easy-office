@@ -1,11 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { CustomerData } from '../types';
 import { getCustomers, deleteCustomer } from '../services/customerService';
+import CustomerList from '../components/CustomerList';
+import { Search } from 'lucide-react';
+
+export type SortableCustomerKeys = keyof Pick<CustomerData, 'name' | 'city'>;
 
 const Customers = () => {
   const [customers, setCustomers] = useState<CustomerData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortConfig, setSortConfig] = useState<{ key: SortableCustomerKeys; direction: 'ascending' | 'descending' } | null>({
+    key: 'name',
+    direction: 'ascending',
+  });
 
   const loadCustomers = useCallback(async () => {
     setLoading(true);
@@ -19,11 +28,44 @@ const Customers = () => {
   }, [loadCustomers]);
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Sind Sie sicher, dass Sie diesen Kunden löschen möchten?')) {
+    if (window.confirm('Sind Sie sicher, dass Sie diesen Kunden löschen möchten? Alle zugehörigen Projekte und Rechnungen bleiben erhalten, sind aber nicht mehr verknüpft.')) {
       await deleteCustomer(id);
       await loadCustomers();
     }
   };
+
+  const requestSort = (key: SortableCustomerKeys) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const filteredAndSortedCustomers = useMemo(() => {
+    let processableCustomers = [...customers];
+
+    if (searchQuery) {
+      const lowercasedQuery = searchQuery.toLowerCase();
+      processableCustomers = processableCustomers.filter(customer =>
+        Object.values(customer).some(value =>
+          String(value).toLowerCase().includes(lowercasedQuery)
+        )
+      );
+    }
+
+    if (sortConfig !== null) {
+      processableCustomers.sort((a, b) => {
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+        if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'ascending' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return processableCustomers;
+  }, [customers, searchQuery, sortConfig]);
 
   if (loading) {
     return <div className="text-center p-10">Lade Kunden...</div>;
@@ -38,42 +80,28 @@ const Customers = () => {
           Neuen Kunden anlegen
         </Link>
       </div>
-      
-      <div className="bg-gray-800 shadow-md rounded-lg overflow-hidden">
-        <table className="min-w-full">
-          <thead className="bg-gray-700">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Adresse</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">Aktionen</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-700">
-            {customers.length > 0 ? customers.map(customer => (
-              <tr key={customer.id} className="hover:bg-gray-700/50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{customer.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                    {customer.street} {customer.houseNr}, {customer.zip} {customer.city}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <Link to={`/customer/edit/${customer.id}`} className="text-emerald-400 hover:text-emerald-300 mr-4">
-                    Bearbeiten
-                  </Link>
-                  <button onClick={() => handleDelete(customer.id)} className="text-red-500 hover:text-red-400">
-                    Löschen
-                  </button>
-                </td>
-              </tr>
-            )) : (
-                <tr>
-                    <td colSpan={3} className="text-center py-10 text-gray-400">
-                        Keine Kunden gefunden.
-                    </td>
-                </tr>
-            )}
-          </tbody>
-        </table>
+
+      <div className="mb-4">
+        <div className="relative">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+            <Search className="h-5 w-5 text-gray-400" />
+          </span>
+          <input
+            type="text"
+            placeholder="Kunden durchsuchen..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full max-w-sm bg-gray-700 border border-gray-600 rounded-md pl-10 pr-4 py-2 text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 transition"
+          />
+        </div>
       </div>
+
+      <CustomerList
+        customers={filteredAndSortedCustomers}
+        onDelete={handleDelete}
+        requestSort={requestSort}
+        sortConfig={sortConfig}
+      />
     </div>
   );
 };
