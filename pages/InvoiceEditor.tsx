@@ -37,24 +37,9 @@ const InvoiceEditor = () => {
     loadData();
   }, [id, navigate]);
   
-  // Recalculate total amount whenever items change
-  useEffect(() => {
-    if (invoiceData) {
-      const total = invoiceData.items.reduce((sum, item) => {
-        const quantity = Number(item.quantity) || 0;
-        const price = Number(item.price) || 0;
-        return sum + (quantity * price);
-      }, 0);
-      
-      if(invoiceData.amount !== total) {
-          handleDataChange('amount', total);
-      }
-    }
-  }, [invoiceData?.items]);
-
 
   const regenerateQrCode = useCallback(async () => {
-    if (!invoiceData || !invoiceData.amount) {
+    if (!invoiceData || !invoiceData.amount || Number(invoiceData.amount) <= 0) {
         setQrCodeDataUrl('');
         setIsLoadingQr(false);
         return;
@@ -76,7 +61,21 @@ const InvoiceEditor = () => {
   }, [regenerateQrCode]);
 
   const handleDataChange = (field: keyof InvoiceData, value: any) => {
-    setInvoiceData(prev => prev ? { ...prev, [field]: value } : null);
+    setInvoiceData(prev => {
+        if (!prev) return null;
+
+        if (field === 'items') {
+            const newItems = value as InvoiceItem[];
+            const total = newItems.reduce((sum, item) => {
+                const quantity = Number(item.quantity) || 0;
+                const price = Number(item.price) || 0;
+                return sum + (quantity * price);
+            }, 0);
+            return { ...prev, items: newItems, amount: total };
+        } else {
+            return { ...prev, [field]: value };
+        }
+    });
   };
   
   const handleTemplateChange = (template: string) => {
