@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ExpenseData, RecurringExpenseData } from '../types';
 import { getExpenses, deleteExpense, createNewExpense, saveExpense } from '../services/expenseService';
 import { getRecurringExpenses, deleteRecurringExpense, saveRecurringExpense, calculateNextDueDate } from '../services/recurringExpenseService';
+import { Repeat } from 'lucide-react';
 
 const Expenses = () => {
   const [expenses, setExpenses] = useState<ExpenseData[]>([]);
@@ -80,7 +81,7 @@ const Expenses = () => {
         <h2 className="text-3xl font-bold text-white">Ausgaben</h2>
         <div className="flex items-center gap-4">
           <Link to="/recurring-expense/new" className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 flex items-center gap-2 text-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M15.312 5.312a1 1 0 010 1.414L12.414 10l2.898 2.898a1 1 0 11-1.414 1.414L11 11.414l-2.898 2.898a1 1 0 11-1.414-1.414L9.586 10 6.688 7.102a1 1 0 111.414-1.414L11 8.586l2.898-2.898a1 1 0 011.414 0zM10 18a8 8 0 100-16 8 8 0 000 16z" clipRule="evenodd" /></svg>
+            <Repeat className="h-4 w-4" />
             Wiederkehrende Ausgabe
           </Link>
           <Link to="/expense/new" className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 flex items-center gap-2 text-sm">

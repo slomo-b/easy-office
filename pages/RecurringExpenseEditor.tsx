@@ -17,7 +17,7 @@ const RecurringExpenseEditor = () => {
           if (existingExpense) {
             setExpenseData(existingExpense);
           } else {
-            navigate('/recurring-expenses'); // Expense not found, redirect
+            navigate('/expenses'); // Expense not found, redirect
           }
         } else {
           setExpenseData(createNewRecurringExpense());
@@ -42,7 +42,7 @@ const RecurringExpenseEditor = () => {
       setIsSaving(true);
       await saveRecurringExpense(expenseData);
       setIsSaving(false);
-      navigate('/recurring-expenses');
+      navigate('/expenses');
     }
   };
   
@@ -56,7 +56,7 @@ const RecurringExpenseEditor = () => {
             <h2 className="text-3xl font-bold text-white">{id ? 'Wiederkehrende Ausgabe bearbeiten' : 'Neue wiederkehrende Ausgabe'}</h2>
             <div>
                 <button
-                    onClick={() => navigate('/recurring-expenses')}
+                    onClick={() => navigate('/expenses')}
                     className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 mr-4"
                 >
                     Abbrechen
