@@ -3,10 +3,10 @@
 import { InvoiceData, ExpenseData } from './types';
 
 export const DEFAULT_HTML_TEMPLATE = `
-<div id="print-area" class="bg-white text-gray-800" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; font-size: 10pt; line-height: 1.6; width: 210mm; min-height: 297mm; margin: auto; display: flex; flex-direction: column; justify-content: space-between;">
+<div id="print-area" class="bg-white text-gray-800" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; font-size: 10pt; line-height: 1.6; width: 210mm; min-height: 297mm; margin: auto; display: flex; flex-direction: column;">
 
-    <!-- This container holds the main content and footer -->
-    <div>
+    <!-- Main content area. flex-grow allows it to expand and push the QR bill to the bottom of the page. -->
+    <div style="flex-grow: 1;">
         <!-- Main invoice content with padding -->
         <div class="p-12">
             <!-- Header -->
@@ -74,8 +74,7 @@ export const DEFAULT_HTML_TEMPLATE = `
     </div>
 
 
-    <!-- FIX: Removed backticks from comment to avoid template literal parsing errors -->
-    <!-- QR Bill Section - justify-content: space-between on the parent pushes this to the bottom -->
+    <!-- QR Bill Section - flex-shrink: 0 prevents it from shrinking, page-break-inside: avoid prevents it from splitting across pages. -->
     <div style="width: 210mm; height: 105mm; page-break-inside: avoid; flex-shrink: 0;">
         {{qrBillSvg}}
     </div>
