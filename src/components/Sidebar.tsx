@@ -30,8 +30,12 @@ const NavItem = ({ to, icon, label, isCollapsed }: { to: string, icon: React.Rea
 
 const Sidebar = ({ isCollapsed, setIsCollapsed }: { isCollapsed: boolean, setIsCollapsed: (isCollapsed: boolean) => void }) => {
   return (
-    <div className={`bg-gray-800 shadow-lg flex flex-col transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
-      <div className={`flex items-center border-b border-gray-700 transition-all duration-300 h-[69px] ${isCollapsed ? 'justify-center' : 'px-4'}`}>
+    <div className={`bg-gray-800 shadow-lg flex flex-col transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'} rounded-l-2xl`}>
+      {/* Draggable Header Area */}
+      <div 
+        className={`flex items-center border-b border-gray-700 transition-all duration-300 h-[69px] ${isCollapsed ? 'justify-center' : 'px-4'}`}
+        style={{ WebkitAppRegion: 'drag' } as React.CSSProperties} 
+      >
         <img src={logo} alt="easy office Logo" className="h-9 w-9 flex-shrink-0" />
         {!isCollapsed && (
           <div className="ml-3">
@@ -40,7 +44,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }: { isCollapsed: boolean, setIsC
           </div>
         )}
       </div>
-      <nav className="flex-1 px-2 py-4 space-y-2">
+      
+      <nav className="flex-1 px-2 py-4 space-y-2 overflow-y-auto no-scrollbar">
         <NavItem 
             isCollapsed={isCollapsed}
             to="/" 

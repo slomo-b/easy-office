@@ -1,3 +1,17 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+body {
+  background: transparent;
+}
+
+#root {
+  height: 100vh;
+  overflow: hidden;
+  background-color: #111827; /* gray-900 */
+  border-radius: 16px;
+  border: 1px solid #374151; /* gray-700 border for definition */
+  box-sizing: border-box;
+  position: relative;
+}
