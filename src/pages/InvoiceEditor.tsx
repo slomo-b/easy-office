@@ -4,7 +4,7 @@ import { InvoiceData, CustomerData, InvoiceItem, SettingsData } from '../types';
 import { getInvoiceById, saveInvoice, createNewInvoice, calculateInvoiceTotals } from '../services/invoiceService';
 import { getCustomers } from '../services/customerService';
 import { getSettings } from '../services/settingsService';
-import { generateQrBillSvg } from '../services/qrBillService';
+import { generateQrBillComponentData, QrBillComponentData } from '../services/qrBillService';
 import InvoiceForm from '../components/InvoiceForm';
 import InvoicePreview from '../components/InvoicePreview';
 import HtmlEditor from '../components/HtmlEditor';
@@ -19,7 +19,7 @@ const InvoiceEditor = () => {
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [customers, setCustomers] = useState<CustomerData[]>([]);
-  const [qrCodeSvg, setQrCodeSvg] = useState<string>('');
+  const [qrBillData, setQrBillData] = useState<QrBillComponentData | null>(null);
   const [isLoadingQr, setIsLoadingQr] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isPrinting, setIsPrinting] = useState<boolean>(false);
@@ -45,8 +45,8 @@ const InvoiceEditor = () => {
   useEffect(() => {
       if(invoiceData) {
           setIsLoadingQr(true);
-          const svg = generateQrBillSvg(invoiceData);
-          setQrCodeSvg(svg);
+          const data = generateQrBillComponentData(invoiceData);
+          setQrBillData(data);
           setTimeout(() => setIsLoadingQr(false), 50); 
       }
   }, [invoiceData]);
@@ -99,13 +99,8 @@ const InvoiceEditor = () => {
       ? `<div class="text-sm"><div class="flex justify-between py-1 text-gray-600"><span>Zwischentotal</span><span>${invoiceData.currency} ${formatAmount(invoiceData.subtotal)}</span></div><div class="flex justify-between py-1 text-gray-600"><span>MwSt.</span><span>${invoiceData.currency} ${formatAmount(invoiceData.vatAmount)}</span></div><div class="flex justify-between py-2 font-bold text-lg text-gray-900 border-t border-gray-300 mt-2"><span>Total</span><span>${invoiceData.currency} ${formatAmount(invoiceData.total)}</span></div></div>`
       : `<div class="flex justify-between py-2 font-bold text-lg text-gray-900"><span>Total</span><span>${invoiceData.currency} ${formatAmount(invoiceData.total)}</span></div>`;
 
-    const qrHtmlResult = isLoadingQr 
-      ? `<div style="height: 105mm; display: flex; align-items: center; justify-content: center;" class="bg-gray-200 animate-pulse text-gray-500">Generiere QR-Rechnung...</div>`
-      : qrCodeSvg || `<div style="height: 105mm; display: flex; align-items: center; justify-content: center;" class="bg-gray-100 text-center text-xs text-gray-500 p-2 border border-dashed border-gray-300">QR-Rechnung kann nicht generiert werden.<br/>(Betrag muss grösser als 0 sein)</div>`;
-      
-    return invoiceData.htmlTemplate
+    let template = invoiceData.htmlTemplate
         .replace(/{{logoImage}}/g, logoHtml)
-        .replace(/{{qrBillSvg}}/g, qrHtmlResult)
         .replace(/{{invoiceItems}}/g, itemsHtml)
         .replace(/{{projectLine}}/g, projectLineHtml)
         .replace(/{{totalsBlock}}/g, totalsBlockHtml)
@@ -124,7 +119,27 @@ const InvoiceEditor = () => {
         .replace(/{{date}}/g, new Date(invoiceData.createdAt).toLocaleDateString('de-CH'))
         .replace(/{{unstructuredMessage}}/g, invoiceData.unstructuredMessage);
 
-  }, [invoiceData, qrCodeSvg, isLoadingQr]);
+    if (qrBillData) {
+        template = template
+            .replace(/{{qrBill.qrCodeImage}}/g, qrBillData.qrCodeImage)
+            .replace(/{{qrBill.creditor.account}}/g, qrBillData.creditor.account)
+            .replace(/{{qrBill.creditor.name}}/g, qrBillData.creditor.name)
+            .replace(/{{qrBill.creditor.addressLine1}}/g, qrBillData.creditor.addressLine1)
+            .replace(/{{qrBill.creditor.addressLine2}}/g, qrBillData.creditor.addressLine2)
+            .replace(/{{qrBill.debtor.name}}/g, qrBillData.debtor.name)
+            .replace(/{{qrBill.debtor.addressLine1}}/g, qrBillData.debtor.addressLine1)
+            .replace(/{{qrBill.debtor.addressLine2}}/g, qrBillData.debtor.addressLine2)
+            .replace(/{{qrBill.referenceBlockReceipt}}/g, qrBillData.referenceBlockReceipt)
+            .replace(/{{qrBill.referenceBlockPayment}}/g, qrBillData.referenceBlockPayment)
+            .replace(/{{qrBill.currency}}/g, qrBillData.currency)
+            .replace(/{{qrBill.amountFormatted}}/g, qrBillData.amountFormatted)
+            .replace(/{{qrBill.additionalInformation}}/g, qrBillData.additionalInformation)
+            .replace(/{{qrBill.alternativeSchemes}}/g, qrBillData.alternativeSchemes)
+    }
+
+    return template;
+
+  }, [invoiceData, qrBillData, isLoadingQr]);
 
   const handleSave = async () => {
     if (invoiceData) {

@@ -74,9 +74,97 @@ export const DEFAULT_HTML_TEMPLATE = `
     </div>
 
 
-    <!-- QR Bill Section - flex-shrink: 0 prevents it from shrinking, page-break-inside: avoid prevents it from splitting across pages. -->
-    <div style="width: 210mm; height: 105mm; page-break-inside: avoid; flex-shrink: 0;">
-        {{qrBillSvg}}
+    <!-- QR Bill Section - Rebuilt with HTML elements for better control -->
+    <div style="width: 210mm; height: 105mm; page-break-inside: avoid; flex-shrink: 0; display: flex; font-family: 'Helvetica', Arial, sans-serif; color: #000;">
+        
+        <!-- Scissors line top -->
+        <div style="position: absolute; top: 0; left: 5mm; right: 5mm; height: 0.5mm; border-top: 1px dashed #000;"></div>
+        
+        <!-- Left Part (Receipt) -->
+        <div style="width: 62mm; padding: 5mm; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+                <h2 style="font-size: 11pt; font-weight: bold; margin-bottom: 2mm;">Empfangsschein</h2>
+                <div style="font-size: 8pt; line-height: 1.2;">
+                    <p style="font-size: 6pt; font-weight: bold; margin-bottom: 1mm;">Konto / Zahlbar an</p>
+                    <p>{{qrBill.creditor.account}}</p>
+                    <p>{{qrBill.creditor.name}}</p>
+                    <p>{{qrBill.creditor.addressLine1}}</p>
+                    <p>{{qrBill.creditor.addressLine2}}</p>
+                </div>
+                <div style="font-size: 8pt; line-height: 1.2; margin-top: 2mm;">
+                    {{qrBill.referenceBlockReceipt}}
+                </div>
+                <div style="font-size: 8pt; line-height: 1.2; margin-top: 2mm;">
+                    <p style="font-size: 6pt; font-weight: bold; margin-bottom: 1mm;">Zahlbar durch</p>
+                    <p>{{qrBill.debtor.name}}</p>
+                    <p>{{qrBill.debtor.addressLine1}}</p>
+                    <p>{{qrBill.debtor.addressLine2}}</p>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <div style="font-size: 8pt; line-height: 1.2;">
+                    <p style="font-size: 6pt; font-weight: bold;">Währung</p>
+                    <p>{{qrBill.currency}}</p>
+                </div>
+                <div style="font-size: 8pt; line-height: 1.2;">
+                    <p style="font-size: 6pt; font-weight: bold;">Betrag</p>
+                    <p>{{qrBill.amountFormatted}}</p>
+                </div>
+            </div>
+             <div style="font-size: 8pt; text-align: right;">
+                 <p style="font-size: 6pt; font-weight: bold; margin-bottom: 1mm;">Annahmestelle</p>
+            </div>
+        </div>
+
+        <!-- Scissors line middle -->
+        <div style="height: 105mm; width: 0.5mm; border-left: 1px dashed #000; position: absolute; left: 62mm; top: 0;"></div>
+
+        <!-- Right Part (Payment) -->
+        <div style="width: 148mm; padding: 5mm; display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="display: flex; justify-content: space-between;">
+                <div style="width: 55mm;">
+                     <h2 style="font-size: 11pt; font-weight: bold; margin-bottom: 2mm;">Zahlteil</h2>
+                     <div style="width: 46mm; height: 46mm; margin: 5mm 0;">
+                        {{qrBill.qrCodeImage}}
+                     </div>
+                </div>
+                <div style="font-size: 8pt; line-height: 1.2; width: 80mm;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10mm;">
+                        <div>
+                            <p style="font-size: 6pt; font-weight: bold;">Währung</p>
+                            <p>{{qrBill.currency}}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <p style="font-size: 6pt; font-weight: bold;">Betrag</p>
+                             <p>{{qrBill.amountFormatted}}</p>
+                        </div>
+                    </div>
+                    {{qrBill.alternativeSchemes}}
+                </div>
+            </div>
+            <div style="font-size: 8pt; line-height: 1.2; display: flex; justify-content: space-between;">
+                <div style="width: 55mm;">
+                    <p style="font-size: 6pt; font-weight: bold; margin-bottom: 1mm;">Konto / Zahlbar an</p>
+                    <p>{{qrBill.creditor.account}}</p>
+                    <p>{{qrBill.creditor.name}}</p>
+                    <p>{{qrBill.creditor.addressLine1}}</p>
+                    <p>{{qrBill.creditor.addressLine2}}</p>
+                </div>
+                <div style="width: 80mm;">
+                    {{qrBill.referenceBlockPayment}}
+                    <div style="margin-top: 2mm;">
+                        <p style="font-size: 6pt; font-weight: bold; margin-bottom: 1mm;">Zusätzliche Informationen</p>
+                        <p>{{qrBill.additionalInformation}}</p>
+                    </div>
+                </div>
+            </div>
+             <div style="font-size: 8pt; line-height: 1.2;">
+                <p style="font-size: 6pt; font-weight: bold; margin-bottom: 1mm;">Zahlbar durch</p>
+                <p>{{qrBill.debtor.name}}</p>
+                <p>{{qrBill.debtor.addressLine1}}</p>
+                <p>{{qrBill.debtor.addressLine2}}</p>
+            </div>
+        </div>
     </div>
 </div>
 `;
