@@ -52,10 +52,7 @@ function App() {
       <Sidebar isCollapsed={isSidebarCollapsed} setIsCollapsed={setIsSidebarCollapsed} />
       <div className="flex-1 flex flex-col overflow-hidden bg-gray-900 rounded-r-2xl relative">
         {/* Draggable Header Area for Main Content */}
-        <div 
-            className="absolute top-0 left-0 w-full h-12 z-40" 
-            style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
-        ></div>
+        <div className="absolute top-0 left-0 w-full h-12 z-40 titlebar-drag-region"></div>
 
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-6 pt-12 relative z-0">
           <Routes>

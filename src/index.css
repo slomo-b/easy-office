@@ -15,3 +15,13 @@ body {
   box-sizing: border-box;
   position: relative;
 }
+
+/* Electron Drag Regions */
+.titlebar-drag-region {
+  -webkit-app-region: drag;
+  user-select: none; /* Prevents text selection while dragging */
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}
