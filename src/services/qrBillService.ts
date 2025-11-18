@@ -1,8 +1,7 @@
 
 
 import { InvoiceData } from "../types";
-import { SwissQRBill } from 'swissqrbill/svg';
-import { QR } from 'swissqrbill/qr';
+import { SwissQRBill, QR } from 'swissqrbill/svg';
 
 export interface QrBillComponentData {
     qrCodeImage: string;
