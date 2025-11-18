@@ -11,6 +11,7 @@ import {
   ChevronsLeft,
   ChevronsRight
 } from 'lucide-react';
+import logo from '../logo.svg';
 
 const NavItem = ({ to, icon, label, isCollapsed }: { to: string, icon: React.ReactNode, label: string, isCollapsed: boolean }) => (
     <NavLink
@@ -31,7 +32,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }: { isCollapsed: boolean, setIsC
   return (
     <div className={`bg-gray-800 shadow-lg flex flex-col transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
       <div className={`flex items-center border-b border-gray-700 transition-all duration-300 h-[69px] ${isCollapsed ? 'justify-center' : 'px-4'}`}>
-        <img src="/src/logo.svg" alt="easy office Logo" className="h-9 w-9 flex-shrink-0" />
+        <img src={logo} alt="easy office Logo" className="h-9 w-9 flex-shrink-0" />
         {!isCollapsed && (
           <div className="ml-3">
             <h1 className="text-2xl font-bold text-emerald-400 whitespace-nowrap">easy office</h1>
