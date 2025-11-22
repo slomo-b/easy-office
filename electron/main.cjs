@@ -3,8 +3,10 @@ const path = require('path');
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 1280,
+    height: 820,
+    minWidth: 1000,
+    minHeight: 600,
     frame: false, // Kein System-Rahmen
     transparent: true, // Transparenter Hintergrund für abgerundete Ecken via CSS
     backgroundColor: '#00000000', // Vollständig transparent als Startfarbe
@@ -16,7 +18,10 @@ function createWindow() {
       contextIsolation: true, // Protect against prototype pollution
       nodeIntegration: false, // Keep renderer process and main process separate
     },
-    icon: path.join(__dirname, '../src/logo.svg')
+    // __dirname ist der Ordner der aktuellen Datei (electron/)
+    // Im Entwicklungsmodus: ../public/favicon.ico
+    // Im Produktionsmodus: ../dist/favicon.ico (da Vite dorthin baut)
+    icon: path.join(__dirname, app.isPackaged ? '../dist/favicon.ico' : '../public/favicon.ico')
   });
 
   const devUrl = 'http://localhost:5173';

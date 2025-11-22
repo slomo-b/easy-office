@@ -16,16 +16,18 @@ import Projects from './pages/Projects';
 import ProjectEditor from './pages/ProjectEditor';
 import Services from './pages/Services';
 import ServiceEditor from './pages/ServiceEditor';
+import WindowControls from './components/WindowControls';
 import { useFileSystem } from './context/FileSystemContext';
 
-function App() {
+function AppContent() {
   const { isReady, error } = useFileSystem();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   if (error) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-900">
-        <div className="text-center bg-gray-800 p-10 rounded-lg shadow-2xl max-w-lg mx-auto">
+        <WindowControls />
+        <div className="text-center bg-gray-800 p-10 rounded-lg shadow-2xl max-w-lg mx-auto relative">
           <h1 className="text-3xl font-bold text-red-500 mb-4">Fehler</h1>
           <p className="text-gray-300">{error}</p>
         </div>
@@ -36,6 +38,7 @@ function App() {
   if (!isReady) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
+         <WindowControls />
         <div className="flex flex-col items-center">
           <p>Initialisiere Dateisystem...</p>
         </div>
@@ -44,10 +47,20 @@ function App() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-900 text-gray-200 font-sans">
+    <div className="flex h-screen text-gray-200 font-sans relative">
       <Sidebar isCollapsed={isSidebarCollapsed} setIsCollapsed={setIsSidebarCollapsed} />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-6">
+      <div className="flex-1 flex flex-col overflow-hidden bg-gray-900 rounded-r-2xl relative">
+        {/* === START: Robuster Titelleisten-Container === */}
+        <div className="w-full h-10 flex justify-between items-center flex-shrink-0">
+          {/* 1. Die Drag-Fläche: wächst, um den gesamten freien Platz zu füllen. */}
+          <div className="flex-grow h-full titlebar-drag-region" />
+
+          {/* 2. Die Buttons: haben eine feste Größe und werden an den rechten Rand geschoben. */}
+          <WindowControls />
+        </div>
+        {/* === END: Robuster Titelleisten-Container === */}
+
+        <main className="flex-1 overflow-x-hidden overflow-y-auto p-6">
           <Routes>
             <Route path="/" element={<Overview />} />
             <Route path="/invoices" element={<Invoices />} />
@@ -72,6 +85,12 @@ function App() {
         </main>
       </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AppContent />
   );
 }
 

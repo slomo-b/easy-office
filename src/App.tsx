@@ -51,7 +51,7 @@ function App() {
       <Sidebar isCollapsed={isSidebarCollapsed} setIsCollapsed={setIsSidebarCollapsed} />
       <div className="flex-1 flex flex-col overflow-hidden bg-gray-900 rounded-r-2xl relative">
         {/* === START: Robuster Titelleisten-Container === */}
-        <div className="w-full h-12 flex justify-between items-center flex-shrink-0">
+        <div className="w-full h-10 flex justify-between items-center flex-shrink-0">
           {/* 1. Die Drag-Fläche: wächst, um den gesamten freien Platz zu füllen. */}
           <div className="flex-grow h-full titlebar-drag-region" />
 

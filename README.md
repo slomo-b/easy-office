@@ -1,7 +1,7 @@
 # Easy Office
 
 <p align="center">
-  <img src="./src/logo.svg" alt="Easy Office Logo" width="150"/>
+  <img src="./src/logo.png" alt="Easy Office Logo" width="150"/>
 </p>
 
 <p align="center">

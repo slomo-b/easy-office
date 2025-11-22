@@ -27,7 +27,7 @@ const WindowControls: React.FC = () => {
     // WICHTIG: Keine absolute Positionierung mehr.
     // `flex-shrink-0` verhindert, dass die Buttons bei Platzmangel kleiner werden.
     // Die Klasse `titlebar-no-drag` ist weiterhin entscheidend.
-    <div className="flex-shrink-0 h-12 flex items-center space-x-2 px-4 titlebar-no-drag">
+    <div className="flex-shrink-0 h-10 flex items-center space-x-2 px-4 titlebar-no-drag">
       <button onClick={handleMinimize} className="p-2 rounded-full hover:bg-gray-700 transition-colors">
         <Minimize size={16} />
       </button>

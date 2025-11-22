@@ -11,7 +11,6 @@ import {
   ChevronsLeft,
   ChevronsRight
 } from 'lucide-react';
-import logo from '../logo.svg';
 
 const NavItem = ({ to, icon, label, isCollapsed }: { to: string, icon: React.ReactNode, label: string, isCollapsed: boolean }) => (
     <NavLink
@@ -30,19 +29,26 @@ const NavItem = ({ to, icon, label, isCollapsed }: { to: string, icon: React.Rea
 
 const Sidebar = ({ isCollapsed, setIsCollapsed }: { isCollapsed: boolean, setIsCollapsed: (isCollapsed: boolean) => void }) => {
   return (
-    <div className={`bg-gray-800 shadow-lg flex flex-col transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'} rounded-l-2xl`}>
-      {/* Draggable Header Area */}
-      <div className={`flex items-center border-b border-gray-700 transition-all duration-300 h-[69px] titlebar-drag-region ${isCollapsed ? 'justify-center' : 'px-4'}`}>
-        <img src={logo} alt="easy office Logo" className="h-9 w-9 flex-shrink-0" />
-        {!isCollapsed && (
-          <div className="ml-3">
+    // 1. Abgerundete Ecken links hinzugefügt (`rounded-l-2xl`)
+    <div className={`bg-gray-800 shadow-lg flex flex-col transition-all duration-300 rounded-l-2xl ${isCollapsed ? 'w-20' : 'w-64'}`}>
+      {/* 2. Header-Bereich zu Flexbox gemacht, um Logo und Text nebeneinander zu platzieren */}
+      <div className={`flex items-center p-4 border-b border-gray-700 transition-all duration-300 ${isCollapsed ? 'h-28 justify-center' : 'h-32'}`}>
+        {isCollapsed ? (
+          // Logo für die eingeklappte Sidebar
+          <img src="/logo.png" alt="Easy Office Logo" className="h-10 w-auto" />
+        ) : (
+          // Logo und Text für die ausgeklappte Sidebar
+          <>
+            {/* Logo füllt den verfügbaren Platz aus */}
+            <img src="/logo.png" alt="Easy Office Logo" className="h-12 w-auto mr-4 ml-4 " />
+          <div>
             <h1 className="text-2xl font-bold text-emerald-400 whitespace-nowrap">easy office</h1>
             <p className="text-sm text-gray-400 whitespace-nowrap">für Freelancer</p>
           </div>
+          </>
         )}
       </div>
-      
-      <nav className="flex-1 px-2 py-4 space-y-2 overflow-y-auto no-scrollbar">
+      <nav className="flex-1 px-2 py-4 space-y-2">
         <NavItem 
             isCollapsed={isCollapsed}
             to="/" 
