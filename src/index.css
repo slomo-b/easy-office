@@ -2,26 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  background: transparent;
-}
-
-#root {
-  height: 100vh;
-  overflow: hidden;
-  background-color: #111827; /* gray-900 */
-  border-radius: 16px;
-  border: 1px solid #374151; /* gray-700 border for definition */
-  box-sizing: border-box;
-  position: relative;
-}
-
-/* Electron Drag Regions */
+/* This makes the element draggable. */
 .titlebar-drag-region {
   -webkit-app-region: drag;
-  user-select: none; /* Prevents text selection while dragging */
 }
 
-.no-drag {
+/* This makes the element clickable, even if it's inside a draggable region. */
+.titlebar-no-drag {
   -webkit-app-region: no-drag;
 }

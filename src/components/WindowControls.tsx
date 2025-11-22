@@ -1,37 +1,44 @@
 import React from 'react';
-import { Minus, Square, X } from 'lucide-react';
+import { Minimize, Maximize, X } from 'lucide-react';
 
-// Declare electron window.require for TypeScript
+// Define the API that the preload script exposes
 declare global {
-    interface Window {
-        require: any;
-    }
+  interface Window {
+    api: {
+      send: (channel: string, ...args: any[]) => void;
+    };
+  }
 }
 
 const WindowControls: React.FC = () => {
-    const isElectron = !!window.require;
+  const handleMinimize = () => {
+    window.api.send('minimize-window');
+  };
 
-    if (!isElectron) return null;
+  const handleMaximize = () => {
+    window.api.send('maximize-window');
+  };
 
-    const { ipcRenderer } = window.require('electron');
+  const handleClose = () => {
+    window.api.send('close-window');
+  };
 
-    const minimize = () => ipcRenderer.send('minimize-window');
-    const maximize = () => ipcRenderer.send('maximize-window');
-    const close = () => ipcRenderer.send('close-window');
-
-    return (
-        <div className="absolute top-0 right-0 p-3 flex gap-2 z-50 pointer-events-auto no-drag">
-            <button onClick={minimize} className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded-md transition-colors">
-                <Minus size={18} />
-            </button>
-            <button onClick={maximize} className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded-md transition-colors">
-                <Square size={16} />
-            </button>
-            <button onClick={close} className="p-1.5 text-gray-400 hover:text-white hover:bg-red-600 rounded-md transition-colors">
-                <X size={18} />
-            </button>
-        </div>
-    );
+  return (
+    // WICHTIG: Keine absolute Positionierung mehr.
+    // `flex-shrink-0` verhindert, dass die Buttons bei Platzmangel kleiner werden.
+    // Die Klasse `titlebar-no-drag` ist weiterhin entscheidend.
+    <div className="flex-shrink-0 h-12 flex items-center space-x-2 px-4 titlebar-no-drag">
+      <button onClick={handleMinimize} className="p-2 rounded-full hover:bg-gray-700 transition-colors">
+        <Minimize size={16} />
+      </button>
+      <button onClick={handleMaximize} className="p-2 rounded-full hover:bg-gray-700 transition-colors">
+        <Maximize size={16} />
+      </button>
+      <button onClick={handleClose} className="p-2 rounded-full hover:bg-red-500 transition-colors">
+        <X size={16} />
+      </button>
+    </div>
+  );
 };
 
 export default WindowControls;

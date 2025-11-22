@@ -48,13 +48,19 @@ function App() {
 
   return (
     <div className="flex h-screen text-gray-200 font-sans relative">
-      <WindowControls />
       <Sidebar isCollapsed={isSidebarCollapsed} setIsCollapsed={setIsSidebarCollapsed} />
       <div className="flex-1 flex flex-col overflow-hidden bg-gray-900 rounded-r-2xl relative">
-        {/* Draggable Header Area for Main Content */}
-        <div className="absolute top-0 left-0 w-full h-12 z-40 titlebar-drag-region"></div>
+        {/* === START: Robuster Titelleisten-Container === */}
+        <div className="w-full h-12 flex justify-between items-center flex-shrink-0">
+          {/* 1. Die Drag-Fläche: wächst, um den gesamten freien Platz zu füllen. */}
+          <div className="flex-grow h-full titlebar-drag-region" />
 
-        <main className="flex-1 overflow-x-hidden overflow-y-auto p-6 pt-12 relative z-0">
+          {/* 2. Die Buttons: haben eine feste Größe und werden an den rechten Rand geschoben. */}
+          <WindowControls />
+        </div>
+        {/* === END: Robuster Titelleisten-Container === */}
+
+        <main className="flex-1 overflow-x-hidden overflow-y-auto p-6">
           <Routes>
             <Route path="/" element={<Overview />} />
             <Route path="/invoices" element={<Invoices />} />

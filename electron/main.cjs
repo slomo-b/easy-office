@@ -10,17 +10,40 @@ function createWindow() {
     backgroundColor: '#00000000', // Vollständig transparent als Startfarbe
     hasShadow: true,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false, // Erlaubt window.require im Renderer-Process
-      webSecurity: false, 
+      // __dirname points to the path of the currently executing script (electron/main.cjs)
+      // path.join resolves the path to the preload script
+      preload: path.join(__dirname, 'preload.cjs'),
+      contextIsolation: true, // Protect against prototype pollution
+      nodeIntegration: false, // Keep renderer process and main process separate
     },
     icon: path.join(__dirname, '../src/logo.svg')
   });
 
-  // Versuche zuerst den Vite Dev Server zu laden, sonst fallback auf build Ordner
-  win.loadURL('http://localhost:5173').catch(() => {
+  const devUrl = 'http://localhost:5173';
+  const prodFile = path.join(__dirname, '../dist/index.html');
+
+  // --- START: Verbessertes Laden für Entwicklung ---
+  // Diese Funktion versucht, die Entwicklungs-URL zu laden. Wenn sie fehlschlägt,
+  // wartet sie kurz und versucht es erneut. Das gibt dem Vite-Server Zeit zum Starten.
+  const loadDevUrl = (url, retries = 5) => {
+    win.loadURL(url).catch((err) => {
+      console.log(`Failed to load ${url}. Retrying in 1 second... (${retries} retries left)`);
+      if (retries > 0) {
+        setTimeout(() => loadDevUrl(url, retries - 1), 1000);
+      } else {
+        console.error('Could not connect to development server. Trying to load production build...');
+        win.loadFile(prodFile);
+      }
+    });
+  };
+
+  // Wenn die App nicht im Paketmodus läuft (d.h. im Entwicklungsmodus), lade die Dev-URL.
+  if (!app.isPackaged) {
+    loadDevUrl(devUrl);
+  } else {
       win.loadFile(path.join(__dirname, '../dist/index.html'));
-  });
+  }
+  // --- END: Verbessertes Laden für Entwicklung ---
 
   // IPC Listener für die Fenstersteuerung aus der React App
   ipcMain.on('minimize-window', () => {
