@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { Button, Image } from '@heroui/react';
 import {
   LayoutDashboard,
   KanbanSquare,
@@ -17,37 +18,51 @@ const NavItem = ({ to, icon, label, isCollapsed }: { to: string, icon: React.Rea
       to={to}
       end={to === '/'}
       className={({ isActive }) =>
-        `flex items-center px-4 py-2 text-gray-300 rounded-lg hover:bg-gray-700 hover:text-white transition-colors duration-200 ${
-          isActive ? 'bg-emerald-500 text-white' : ''
+        `flex items-center px-4 py-2 rounded-lg transition-all duration-200 ${
+          isActive 
+            ? 'bg-primary text-primary-foreground shadow-lg' 
+            : 'text-default-600 hover:bg-default-100 hover:text-default-foreground'
         } ${isCollapsed ? 'justify-center' : ''}`
       }
     >
         {icon}
-        {!isCollapsed && <span className="ml-3 whitespace-nowrap">{label}</span>}
+        {!isCollapsed && <span className="ml-3 whitespace-nowrap font-medium">{label}</span>}
     </NavLink>
 );
 
 const Sidebar = ({ isCollapsed, setIsCollapsed }: { isCollapsed: boolean, setIsCollapsed: (isCollapsed: boolean) => void }) => {
   return (
-    // 1. Abgerundete Ecken links hinzugefügt (`rounded-l-2xl`)
-    <div className={`bg-gray-800 shadow-lg flex flex-col transition-all duration-300 rounded-l-2xl ${isCollapsed ? 'w-20' : 'w-64'}`}>
-      {/* 2. Header-Bereich zu Flexbox gemacht, um Logo und Text nebeneinander zu platzieren */}
-      <div className={`flex items-center p-4 border-b border-gray-700 transition-all duration-300 ${isCollapsed ? 'h-28 justify-center' : 'h-32'}`}>
+    <div className={`bg-content1 shadow-lg flex flex-col transition-all duration-300 rounded-l-2xl border-r border-divider ${isCollapsed ? 'w-20' : 'w-64'}`}>
+      {/* Header mit Logo */}
+      <div className={`flex items-center p-4 border-b border-divider transition-all duration-300 ${isCollapsed ? 'h-28 justify-center' : 'h-32'}`}>
         {isCollapsed ? (
-          // Logo für die eingeklappte Sidebar
-          <img src="/logo.png" alt="Easy Office Logo" className="h-10 w-auto" />
+          <Image
+            src="/logo.png"
+            alt="Easy Office Logo"
+            width={40}
+            height={40}
+            className="rounded-lg"
+            radius="lg"
+          />
         ) : (
-          // Logo und Text für die ausgeklappte Sidebar
-          <>
-            {/* Logo füllt den verfügbaren Platz aus */}
-            <img src="/logo.png" alt="Easy Office Logo" className="h-12 w-auto mr-4 ml-4 " />
-          <div>
-            <h1 className="text-2xl font-bold text-emerald-400 whitespace-nowrap">easy office</h1>
-            <p className="text-sm text-gray-400 whitespace-nowrap">für Freelancer</p>
+          <div className="flex items-center gap-3 w-full">
+            <Image
+              src="/logo.png"
+              alt="Easy Office Logo"
+              width={48}
+              height={48}
+              className="rounded-lg"
+              radius="lg"
+            />
+            <div className="flex flex-col">
+              <h1 className="text-2xl font-bold text-primary whitespace-nowrap">easy office</h1>
+              <p className="text-sm text-default-500 whitespace-nowrap">für Freelancer</p>
+            </div>
           </div>
-          </>
         )}
       </div>
+      
+      {/* Navigation */}
       <nav className="flex-1 px-2 py-4 space-y-2">
         <NavItem 
             isCollapsed={isCollapsed}
@@ -86,20 +101,24 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }: { isCollapsed: boolean, setIsC
             icon={<ClipboardList className="h-5 w-5 flex-shrink-0" />}
         />
       </nav>
-      <div className="px-2 py-4 border-t border-gray-700 space-y-2">
+      
+      {/* Footer */}
+      <div className="px-2 py-4 border-t border-divider space-y-2">
          <NavItem 
             isCollapsed={isCollapsed}
             to="/settings" 
             label="Einstellungen" 
             icon={<Settings className="h-5 w-5 flex-shrink-0" />}
         />
-        <button
+        <Button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="flex items-center justify-center w-full px-4 py-2 text-gray-400 rounded-lg hover:bg-gray-700 hover:text-white transition-colors duration-200"
+            isIconOnly
+            variant="light"
+            className="w-full justify-center"
             aria-label={isCollapsed ? "Seitenleiste ausklappen" : "Seitenleiste einklappen"}
         >
             {isCollapsed ? <ChevronsRight className="h-5 w-5" /> : <ChevronsLeft className="h-5 w-5" />}
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -135,6 +135,7 @@ export interface ProjectData {
 }
 
 // New Interface for abstracting file system operations
+
 export interface IFileSystemService {
   initialize: () => Promise<void>;
   writeFile: (path: string, content: object) => Promise<void>;
@@ -144,4 +145,25 @@ export interface IFileSystemService {
   isSupported: () => boolean;
   exportAllData: () => Promise<void>;
   importAllData: (file: File) => Promise<void>;
+}
+
+export interface QRBill {
+  amount: number;
+  reference: string;
+  creditor: {
+    name: string;
+    address: string;
+    zip: string;
+    city: string;
+    account: string;
+  };
+  debtor: {
+    name: string;
+    address: string;
+    zip: string;
+    city: string;
+  };
+  usage: string;
+  message: string;
+  additionalInformation: string;
 }

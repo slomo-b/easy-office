@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUp, ArrowDown, ChevronsUpDown, CheckCircle, CircleDollarSign, CreditCard } from 'lucide-react';
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Chip, Button, Link as HeroLink, Card, CardBody } from '@heroui/react';
+import { ArrowUp, ArrowDown, CheckCircle, CircleDollarSign, CreditCard, TrendingDown, Plus } from 'lucide-react';
 import { CombinedExpense, SortableExpenseKeys } from '../pages/Expenses';
 
 interface ExpenseListProps {
@@ -11,114 +12,154 @@ interface ExpenseListProps {
   sortConfig: { key: SortableExpenseKeys; direction: 'ascending' | 'descending' } | null;
 }
 
-const SortableHeader: React.FC<{
-    sortKey: SortableExpenseKeys;
-    title: string;
-    requestSort: (key: SortableExpenseKeys) => void;
-    sortConfig: ExpenseListProps['sortConfig'];
-    className?: string;
-}> = ({ sortKey, title, requestSort, sortConfig, className = '' }) => {
-    const isSorted = sortConfig?.key === sortKey;
-    const direction = sortConfig?.direction;
-    const Icon = isSorted ? (direction === 'ascending' ? ArrowUp : ArrowDown) : ChevronsUpDown;
-
-    return (
-        <th className={`px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider ${className}`}>
-            <button onClick={() => requestSort(sortKey)} className="flex items-center gap-2 hover:text-white transition-colors">
-                {title}
-                <Icon size={14} className={isSorted ? 'text-white' : 'text-gray-500'}/>
-            </button>
-        </th>
-    );
-};
-
 const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, onDelete, onStatusToggle, requestSort, sortConfig }) => {
   if (expenses.length === 0) {
     return (
-      <div className="text-center py-10 bg-gray-800 rounded-lg">
-        <p className="text-gray-400">Keine Ausgaben für Ihre Suche gefunden.</p>
-         <Link to="/expense/new" className="mt-4 inline-block bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300">
-          Erste Ausgabe erfassen
-        </Link>
-      </div>
+      <Card className="border-none bg-content1">
+        <CardBody className="flex flex-col items-center justify-center py-20 px-6">
+          <div className="mb-6 p-4 rounded-full bg-default-100">
+            <TrendingDown className="h-8 w-8 text-default-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground mb-2">Keine Ausgaben gefunden</h3>
+          <p className="text-default-400 text-sm mb-8 text-center max-w-md">
+            Erfasse deine erste Ausgabe, um zu beginnen.
+          </p>
+          <Button 
+            as={Link} 
+            to="/expense/new" 
+            color="primary"
+            size="md"
+            className="w-fit"
+            startContent={<Plus className="h-4 w-4" />}
+          >
+            Erste Ausgabe erfassen
+          </Button>
+        </CardBody>
+      </Card>
     );
   }
 
   return (
-    <div className="bg-gray-800 shadow-md rounded-lg overflow-hidden">
-      <table className="min-w-full">
-        <thead className="bg-gray-700">
-          <tr>
-            <SortableHeader sortKey="status" title="Status" requestSort={requestSort} sortConfig={sortConfig} />
-            <SortableHeader sortKey="sortDate" title="Datum" requestSort={requestSort} sortConfig={sortConfig} />
-            <SortableHeader sortKey="vendor" title="Anbieter" requestSort={requestSort} sortConfig={sortConfig} />
-            <SortableHeader sortKey="amount" title="Betrag" requestSort={requestSort} sortConfig={sortConfig} />
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Typ</th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">Aktionen</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-700">
+    <Card className="border-none bg-content1">
+      <Table 
+        aria-label="Ausgaben Tabelle"
+        selectionMode="none"
+        removeWrapper
+      >
+        <TableHeader>
+          <TableColumn>
+            <button onClick={() => requestSort('status')} className="flex items-center gap-2 hover:text-foreground transition-colors text-default-500">
+              Status
+              {sortConfig?.key === 'status' && (sortConfig.direction === 'ascending' ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
+            </button>
+          </TableColumn>
+          <TableColumn>
+            <button onClick={() => requestSort('sortDate')} className="flex items-center gap-2 hover:text-foreground transition-colors text-default-500">
+              Datum
+              {sortConfig?.key === 'sortDate' && (sortConfig.direction === 'ascending' ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
+            </button>
+          </TableColumn>
+          <TableColumn>
+            <button onClick={() => requestSort('vendor')} className="flex items-center gap-2 hover:text-foreground transition-colors text-default-500">
+              Anbieter
+              {sortConfig?.key === 'vendor' && (sortConfig.direction === 'ascending' ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
+            </button>
+          </TableColumn>
+          <TableColumn>
+            <button onClick={() => requestSort('amount')} className="flex items-center gap-2 hover:text-foreground transition-colors text-default-500">
+              Betrag
+              {sortConfig?.key === 'amount' && (sortConfig.direction === 'ascending' ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
+            </button>
+          </TableColumn>
+          <TableColumn>Typ</TableColumn>
+          <TableColumn className="text-right">Aktionen</TableColumn>
+        </TableHeader>
+        <TableBody>
           {expenses.map(item => {
             const isRecurring = item.type === 'recurring';
             const isPaid = !isRecurring && item.status === 'paid';
             const isDue = item.status === 'due';
             const isPlanned = isRecurring && item.status === 'planned';
 
-            let statusBadge;
+            let statusColor: 'success' | 'warning' | 'default' = 'default';
+            let statusText = 'Geplant';
             if (isPaid) {
-                statusBadge = <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-300">Bezahlt</span>;
+              statusColor = 'success';
+              statusText = 'Bezahlt';
             } else if (isDue) {
-                statusBadge = <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-300">Fällig</span>;
-            } else { // planned
-                statusBadge = <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-500/20 text-gray-300">Geplant</span>;
+              statusColor = 'warning';
+              statusText = 'Fällig';
             }
             
             return (
-              <tr key={item.id} className={`transition-opacity ${isPaid ? 'opacity-60' : ''} ${isPlanned ? 'opacity-80' : ''} hover:opacity-100 hover:bg-gray-700/50`}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">{statusBadge}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                    <div className="flex flex-col">
-                        <span>{new Date(item.sortDate).toLocaleDateString('de-CH')}</span>
-                        {item.type === 'one-time' && item.paidAt && <span className="text-xs text-gray-500">Bezahlt: {new Date(item.paidAt).toLocaleDateString('de-CH')}</span>}
-                    </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{item.vendor}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-white font-mono">{item.currency} {Number(item.amount).toFixed(2)}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                  {isRecurring 
-                    ? <span className="capitalize">{item.interval === 'monthly' ? 'Monatlich' : item.interval === 'quarterly' ? 'Quartalsweise' : 'Jährlich'}</span>
-                    : 'Einmalig'
-                  }
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                  { (isDue || isPaid) && 
-                      <button 
-                          onClick={() => onStatusToggle(item.id, item.type)} 
-                          className={`p-2 rounded-lg transition-colors ${
-                              isRecurring && isDue ? 'text-blue-400 hover:bg-blue-500/20' : 
-                              isPaid ? 'text-yellow-400 hover:bg-yellow-500/20' : 'text-green-400 hover:bg-green-500/20'
-                          }`}
-                          title={
-                              isRecurring && isDue ? 'Jetzt bezahlen & verbuchen' : 
-                              isPaid ? 'Als fällig markieren' : 'Als bezahlt markieren'
-                          }
-                      >
-                        {isRecurring && isDue ? <CreditCard size={16} /> : isPaid ? <CircleDollarSign size={16} /> : <CheckCircle size={16} />}
-                      </button>
-                  }
-                  <Link to={isRecurring ? `/recurring-expense/edit/${item.id}` : `/expense/edit/${item.id}`} className="text-emerald-400 hover:text-emerald-300 p-2 rounded-lg hover:bg-emerald-500/20">
-                    Bearbeiten
-                  </Link>
-                  <button onClick={() => onDelete(item.id, item.type)} className="text-red-500 hover:text-red-400 p-2 rounded-lg hover:bg-red-500/20">
-                    Löschen
-                  </button>
-                </td>
-              </tr>
+              <TableRow key={item.id} className={`${isPaid ? 'opacity-60' : ''} ${isPlanned ? 'opacity-80' : ''}`}>
+                <TableCell>
+                  <Chip color={statusColor} variant="flat" size="sm">
+                    {statusText}
+                  </Chip>
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col">
+                    <span className="text-foreground">{new Date(item.sortDate).toLocaleDateString('de-CH')}</span>
+                    {item.type === 'one-time' && item.paidAt && (
+                      <span className="text-xs text-default-400">
+                        Bezahlt: {new Date(item.paidAt).toLocaleDateString('de-CH')}
+                      </span>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <span className="text-foreground">{item.vendor}</span>
+                </TableCell>
+                <TableCell>
+                  <span className="font-mono text-foreground">
+                    {item.currency} {Number(item.amount).toFixed(2)}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <span className="text-default-500 capitalize">
+                    {isRecurring 
+                      ? (item.interval === 'monthly' ? 'Monatlich' : item.interval === 'quarterly' ? 'Quartalsweise' : 'Jährlich')
+                      : 'Einmalig'
+                    }
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center justify-end gap-2">
+                    { (isDue || isPaid) && 
+                        <Button
+                            isIconOnly
+                            variant="light"
+                            size="sm"
+                            color={isPaid ? 'warning' : 'success'}
+                            onClick={() => onStatusToggle(item.id, item.type)}
+                            title={
+                                isRecurring && isDue ? 'Jetzt bezahlen & verbuchen' : 
+                                isPaid ? 'Als fällig markieren' : 'Als bezahlt markieren'
+                            }
+                        >
+                          {isRecurring && isDue ? <CreditCard size={16} /> : isPaid ? <CircleDollarSign size={16} /> : <CheckCircle size={16} />}
+                        </Button>
+                    }
+                    <HeroLink as={Link} to={isRecurring ? `/recurring-expense/edit/${item.id}` : `/expense/edit/${item.id}`} color="primary" size="sm">
+                      Bearbeiten
+                    </HeroLink>
+                    <Button
+                        variant="light"
+                        color="danger"
+                        size="sm"
+                        onClick={() => onDelete(item.id, item.type)}
+                    >
+                      Löschen
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
             );
           })}
-        </tbody>
-      </table>
-    </div>
+        </TableBody>
+      </Table>
+    </Card>
   );
 };
 

@@ -1,15 +1,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import tailwindcss from 'tailwindcss'
+import tailwindcssPostcss from '@tailwindcss/postcss'
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  // Explizite PostCSS-Konfiguration direkt in Vite.
-  // Das ist der robusteste Weg, um sicherzustellen, dass Tailwind geladen wird.
+  // PostCSS-Konfiguration für Tailwind CSS v4
   css: {
     postcss: {
-      plugins: [tailwindcss],
+      plugins: [tailwindcssPostcss()],
     },
   },
   base: './', // Wichtig für Electron: Relative Pfade für Assets

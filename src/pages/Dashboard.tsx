@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { Input, Button, Tabs, Tab, Spinner } from '@heroui/react';
 import { InvoiceData } from '../types';
 import { getInvoices, deleteInvoice, saveInvoice } from '../services/invoiceService';
 import InvoiceList from '../components/InvoiceList';
-import { Search } from 'lucide-react';
+import { Search, Plus } from 'lucide-react';
 
 // Define a type for sortable keys to ensure type safety
 export type SortableInvoiceKeys = keyof Pick<InvoiceData, 'debtorName' | 'projectName' | 'unstructuredMessage' | 'total' | 'createdAt' | 'status'>;
@@ -110,49 +111,59 @@ const Invoices = () => {
   }, [invoices, searchQuery, sortConfig, statusFilter]);
 
   if (loading) {
-    return <div className="text-center p-10">Lade Rechnungen...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Spinner size="lg" color="primary" />
+      </div>
+    );
   }
-  
-  const StatusButton: React.FC<{ filterValue: typeof statusFilter, text: string }> = ({ filterValue, text }) => (
-    <button
-      onClick={() => setStatusFilter(filterValue)}
-      className={`px-3 py-1 text-sm rounded-md transition ${statusFilter === filterValue ? 'bg-emerald-500 text-white' : 'bg-gray-700 hover:bg-gray-600'}`}
-    >
-      {text}
-    </button>
-  );
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold text-white">Einnahmen / Rechnungen</h2>
-        <Link to="/invoice/new" className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-            </svg>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-4xl font-bold text-foreground mb-2">Einnahmen / Rechnungen</h2>
+          <p className="text-default-500">Verwalte deine Rechnungen und Einnahmen</p>
+        </div>
+        <Button
+          as={Link}
+          to="/invoice/new"
+          className="bg-gradient-to-tr from-blue-600 to-cyan-500 text-white shadow-lg"
+          radius="full"
+          size="lg"
+          startContent={<Plus className="h-6 w-6 font-bold" />}
+          variant="shadow"
+        >
           Neue Rechnung erstellen
-        </Link>
+        </Button>
       </div>
        
-       <div className="mb-4 flex flex-col md:flex-row gap-4">
-            <div className="relative flex-grow">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-                    <Search className="h-5 w-5 text-gray-400" />
-                </span>
-                <input
-                    type="text"
-                    placeholder="Rechnungen durchsuchen..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-md pl-10 pr-4 py-2 text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 transition"
-                />
-            </div>
-            <div className="flex items-center gap-2 bg-gray-800 p-1 rounded-lg">
-                <StatusButton filterValue="all" text="Alle" />
-                <StatusButton filterValue="open" text="Offen" />
-                <StatusButton filterValue="paid" text="Bezahlt" />
-            </div>
-       </div>
+      <div className="flex flex-col md:flex-row gap-4">
+        <Input
+          type="text"
+          placeholder="Rechnungen durchsuchen..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          startContent={<Search className="h-4 w-4 text-default-400" />}
+          className="flex-1"
+          variant="bordered"
+        />
+        <Tabs
+          selectedKey={statusFilter}
+          onSelectionChange={(key) => setStatusFilter(key as typeof statusFilter)}
+          variant="underlined"
+          classNames={{
+            tabList: "gap-6 w-full relative rounded-none p-0 border-b border-divider",
+            cursor: "w-full bg-primary",
+            tab: "max-w-fit px-0 h-12",
+            tabContent: "group-data-[selected=true]:text-primary"
+          }}
+        >
+          <Tab key="all" title="Alle" />
+          <Tab key="open" title="Offen" />
+          <Tab key="paid" title="Bezahlt" />
+        </Tabs>
+      </div>
 
       <InvoiceList 
         invoices={filteredAndSortedInvoices} 

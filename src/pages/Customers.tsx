@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { Input, Button, Spinner } from '@heroui/react';
 import { CustomerData } from '../types';
 import { getCustomers, deleteCustomer } from '../services/customerService';
 import CustomerList from '../components/CustomerList';
-import { Search } from 'lucide-react';
+import { Search, Plus } from 'lucide-react';
 
 export type SortableCustomerKeys = keyof Pick<CustomerData, 'name' | 'city'>;
 
@@ -68,32 +69,40 @@ const Customers = () => {
   }, [customers, searchQuery, sortConfig]);
 
   if (loading) {
-    return <div className="text-center p-10">Lade Kunden...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Spinner size="lg" color="primary" />
+      </div>
+    );
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold text-white">Kunden</h2>
-        <Link to="/customer/new" className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-4xl font-bold text-foreground mb-2">Kunden</h2>
+          <p className="text-default-500">Verwalte deine Kunden und Kontakte</p>
+        </div>
+        <Button
+          as={Link}
+          to="/customer/new"
+          color="primary"
+          size="lg"
+          startContent={<Plus className="h-5 w-5" />}
+        >
           Neuen Kunden anlegen
-        </Link>
+        </Button>
       </div>
 
-      <div className="mb-4">
-        <div className="relative">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-            <Search className="h-5 w-5 text-gray-400" />
-          </span>
-          <input
-            type="text"
-            placeholder="Kunden durchsuchen..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full max-w-sm bg-gray-700 border border-gray-600 rounded-md pl-10 pr-4 py-2 text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 transition"
-          />
-        </div>
+      <div className="max-w-sm">
+        <Input
+          type="text"
+          placeholder="Kunden durchsuchen..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          startContent={<Search className="h-4 w-4 text-default-400" />}
+          variant="bordered"
+        />
       </div>
 
       <CustomerList

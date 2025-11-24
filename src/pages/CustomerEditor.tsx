@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Button, Spinner } from '@heroui/react';
 import { CustomerData } from '../types';
 import { getCustomerById, saveCustomer, createNewCustomer } from '../services/customerService';
 import CustomerForm from '../components/CustomerForm';
@@ -40,27 +41,35 @@ const CustomerEditor = () => {
   };
   
   if (!customerData) {
-    return <div className="text-center p-10">Lade Kundendaten...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Spinner size="lg" color="primary" />
+      </div>
+    );
   }
 
   return (
-    <div>
-        <div className="flex justify-between items-center mb-6">
-            <h2 className="text-3xl font-bold text-white">{id ? 'Kunde bearbeiten' : 'Neuen Kunden anlegen'}</h2>
+    <div className="space-y-6">
+        <div className="flex justify-between items-center">
             <div>
-                <button
+              <h2 className="text-4xl font-bold text-foreground mb-2">{id ? 'Kunde bearbeiten' : 'Neuen Kunden anlegen'}</h2>
+              <p className="text-default-500">{id ? 'Bearbeite die Kundendaten' : 'Erstelle einen neuen Kunden'}</p>
+            </div>
+            <div className="flex gap-3">
+                <Button
+                    variant="bordered"
                     onClick={() => navigate('/customers')}
-                    className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 mr-4"
                 >
                     Abbrechen
-                </button>
-                <button
+                </Button>
+                <Button
+                    color="primary"
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 disabled:bg-gray-500"
+                    isLoading={isSaving}
                 >
                     {isSaving ? 'Speichern...' : 'Speichern'}
-                </button>
+                </Button>
             </div>
         </div>
         

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { Button, Chip, Spinner } from '@heroui/react';
 import { ExpenseData } from '../types';
 import { getExpenseById, saveExpense, createNewExpense } from '../services/expenseService';
 import ExpenseForm from '../components/ExpenseForm';
@@ -61,7 +62,11 @@ const ExpenseEditor = () => {
   };
   
   if (!expenseData) {
-    return <div className="text-center p-10">Lade Ausgabedaten...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Spinner size="lg" color="primary" />
+      </div>
+    );
   }
   
   const handleCancel = () => {
@@ -73,43 +78,55 @@ const ExpenseEditor = () => {
   };
 
   return (
-    <div>
-        <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+        <div className="flex justify-between items-center">
             <div className="flex items-center gap-4">
-                <h2 className="text-3xl font-bold text-white">{id ? 'Ausgabe bearbeiten' : 'Neue Ausgabe erfassen'}</h2>
+                <div>
+                  <h2 className="text-4xl font-bold text-foreground mb-2">{id ? 'Ausgabe bearbeiten' : 'Neue Ausgabe erfassen'}</h2>
+                  <p className="text-default-500">{id ? 'Bearbeite die Ausgabedaten' : 'Erfasse eine neue Ausgabe'}</p>
+                </div>
                 {expenseData.status === 'paid' ? (
-                  <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-green-500/20 text-green-300">
-                    <CheckCircle size={16} /> Bezahlt am {expenseData.paidAt ? new Date(expenseData.paidAt).toLocaleDateString('de-CH') : ''}
-                  </span>
+                  <Chip color="success" variant="flat" startContent={<CheckCircle size={16} />}>
+                    Bezahlt am {expenseData.paidAt ? new Date(expenseData.paidAt).toLocaleDateString('de-CH') : ''}
+                  </Chip>
                 ) : (
-                  <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-yellow-500/20 text-yellow-300">
+                  <Chip color="warning" variant="flat">
                     Fällig
-                  </span>
+                  </Chip>
                 )}
             </div>
             <div className="flex items-center gap-2">
-                <button
+                <Button
+                    variant="bordered"
                     onClick={handleCancel}
-                    className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300"
                 >
                     Abbrechen
-                </button>
+                </Button>
                 {expenseData.status === 'due' ? (
-                    <button onClick={handleStatusToggle} className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2">
-                        <CheckCircle size={16} /> Als bezahlt markieren
-                    </button>
+                    <Button 
+                        color="warning" 
+                        onClick={handleStatusToggle}
+                        startContent={<CheckCircle size={16} />}
+                    >
+                        Als bezahlt markieren
+                    </Button>
                  ) : (
-                    <button onClick={handleStatusToggle} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2">
-                        <XCircle size={16} /> Zahlung zurücksetzen
-                    </button>
+                    <Button 
+                        variant="bordered"
+                        onClick={handleStatusToggle}
+                        startContent={<XCircle size={16} />}
+                    >
+                        Zahlung zurücksetzen
+                    </Button>
                  )}
-                <button
+                <Button
+                    color="primary"
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 disabled:bg-gray-500"
+                    isLoading={isSaving}
                 >
                     {isSaving ? 'Speichern...' : 'Speichern'}
-                </button>
+                </Button>
             </div>
         </div>
         

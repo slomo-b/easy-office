@@ -25,11 +25,11 @@ function App() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-900">
+      <div className="flex items-center justify-center h-screen bg-background">
         <WindowControls />
-        <div className="text-center bg-gray-800 p-10 rounded-lg shadow-2xl max-w-lg mx-auto relative">
-          <h1 className="text-3xl font-bold text-red-500 mb-4">Fehler</h1>
-          <p className="text-gray-300">{error}</p>
+        <div className="text-center bg-content1 p-10 rounded-lg shadow-2xl max-w-lg mx-auto relative">
+          <h1 className="text-3xl font-bold text-danger mb-4">Fehler</h1>
+          <p className="text-foreground">{error}</p>
         </div>
       </div>
     );
@@ -37,7 +37,7 @@ function App() {
 
   if (!isReady) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
+      <div className="flex items-center justify-center h-screen bg-background text-foreground">
          <WindowControls />
         <div className="flex flex-col items-center">
           <p>Initialisiere Dateisystem...</p>
@@ -47,9 +47,9 @@ function App() {
   }
 
   return (
-    <div className="flex h-screen text-gray-200 font-sans relative">
+    <div className="flex h-screen text-foreground font-sans relative">
       <Sidebar isCollapsed={isSidebarCollapsed} setIsCollapsed={setIsSidebarCollapsed} />
-      <div className="flex-1 flex flex-col overflow-hidden bg-gray-900 rounded-r-2xl relative">
+      <div className="flex-1 flex flex-col overflow-hidden bg-background rounded-r-2xl relative">
         {/* === START: Robuster Titelleisten-Container === */}
         <div className="w-full h-10 flex justify-between items-center flex-shrink-0">
           {/* 1. Die Drag-Fläche: wächst, um den gesamten freien Platz zu füllen. */}

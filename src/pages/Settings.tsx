@@ -99,19 +99,22 @@ const Settings = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold text-white">Einstellungen</h2>
+        <div>
+          <h2 className="text-4xl font-bold text-foreground mb-2">Einstellungen</h2>
+          <p className="text-default-500">Verwalte deine App-Einstellungen und Daten</p>
+        </div>
         <div>
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 disabled:bg-gray-500"
+            className="bg-primary hover:opacity-80 text-primary-foreground font-bold py-2 px-4 rounded-lg transition-opacity duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSaving ? 'Speichern...' : 'Speichern'}
           </button>
         </div>
       </div>
        {message && (
-          <div className={`${message.type === 'success' ? 'bg-green-500/20 border-green-500 text-green-300' : 'bg-red-500/20 border-red-500 text-red-300'} px-4 py-3 rounded-lg relative mb-4`} role="alert">
+          <div className={`${message.type === 'success' ? 'bg-success/20 border-success text-success' : 'bg-danger/20 border-danger text-danger'} px-4 py-3 rounded-lg relative mb-4 border`} role="alert">
             <span className="block sm:inline">{message.text}</span>
           </div>
         )}
@@ -123,14 +126,14 @@ const Settings = () => {
                 onLogoChange={handleLogoChange}
             />
           </div>
-          <div className="bg-gray-800 p-6 rounded-lg shadow-md h-fit">
-               <h3 className="text-lg font-semibold text-emerald-400 border-b border-gray-700 pb-2 mb-4">Datenverwaltung</h3>
-               <p className="text-sm text-gray-400 mb-4">Erstellen Sie ein Backup all Ihrer Daten oder spielen Sie ein bestehendes Backup wieder ein.</p>
+          <div className="bg-content1 p-6 rounded-lg shadow-md h-fit">
+               <h3 className="text-lg font-semibold text-primary border-b border-divider pb-2 mb-4">Datenverwaltung</h3>
+               <p className="text-sm text-default-500 mb-4">Erstellen Sie ein Backup all Ihrer Daten oder spielen Sie ein bestehendes Backup wieder ein.</p>
                <div className="space-y-3">
                    <button
                         onClick={handleExport}
                         disabled={isExporting}
-                        className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 disabled:bg-gray-500"
+                        className="w-full flex items-center justify-center gap-2 bg-primary hover:opacity-80 text-primary-foreground font-bold py-2 px-4 rounded-lg transition-opacity duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <Download size={16} />
                         {isExporting ? 'Exportiere...' : 'Daten exportieren (ZIP)'}
@@ -138,7 +141,7 @@ const Settings = () => {
                     <button
                         onClick={handleImportClick}
                         disabled={isImporting}
-                        className="w-full flex items-center justify-center gap-2 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 disabled:bg-gray-500"
+                        className="w-full flex items-center justify-center gap-2 bg-content2 hover:bg-content3 text-foreground font-bold py-2 px-4 rounded-lg transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <Upload size={16} />
                         {isImporting ? 'Importiere...' : 'Daten importieren (ZIP)'}

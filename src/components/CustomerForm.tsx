@@ -15,7 +15,7 @@ const InputField: React.FC<{
   className?: string;
 }> = ({ label, id, value, onChange, type = 'text', className = '' }) => (
   <div className={`flex flex-col ${className}`}>
-    <label htmlFor={id} className="mb-1 text-sm font-medium text-gray-400">
+    <label htmlFor={id} className="mb-1 text-sm font-medium text-default-500">
       {label}
     </label>
     <input
@@ -24,7 +24,7 @@ const InputField: React.FC<{
       name={id}
       value={value}
       onChange={onChange}
-      className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+      className="bg-content2 border border-divider rounded-md px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition"
     />
   </div>
 );
@@ -36,7 +36,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ data, onDataChange }) => {
   };
 
   return (
-    <div className="space-y-4 bg-gray-800 p-6 rounded-lg shadow-md">
+    <div className="space-y-4 bg-content1 p-6 rounded-lg shadow-md">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
              <InputField label="Name" id="name" value={data.name} onChange={handleChange} className="col-span-2"/>
              <InputField label="Strasse" id="street" value={data.street} onChange={handleChange} />

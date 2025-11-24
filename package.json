@@ -13,6 +13,10 @@
     "electron": "electron ."
   },
   "dependencies": {
+    "@heroui/react": "^2.8.5",
+    "@heroui/theme": "^2.4.23",
+    "@tailwindcss/postcss": "^4.1.17",
+    "framer-motion": "^12.23.24",
     "html2canvas": "^1.4.1",
     "jspdf": "^2.5.1",
     "jszip": "^3.10.1",
@@ -28,11 +32,11 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
-    "concurrently": "^8.2.2",
     "autoprefixer": "^10.4.19",
+    "concurrently": "^8.2.2",
     "electron": "^31.0.0",
     "postcss": "^8.4.39",
-    "tailwindcss": "^3.4.6",
+    "tailwindcss": "^4.0.0",
     "typescript": "^5.5.3",
     "vite": "^5.3.4"
   },

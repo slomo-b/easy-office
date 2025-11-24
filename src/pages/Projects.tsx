@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Button, Spinner, Card, CardBody, CardHeader, CardFooter, Chip, Avatar } from '@heroui/react';
+import { Plus, Clock, MoreHorizontal } from 'lucide-react';
 import { ProjectData, CustomerData, TaskData } from '../types';
 import { getProjects, saveProject } from '../services/projectService';
 import { getCustomers } from '../services/customerService';
@@ -10,10 +12,10 @@ const statusMap: Record<ProjectData['status'], string> = {
   done: 'Erledigt',
 };
 
-const statusColors: Record<ProjectData['status'], string> = {
-  open: 'border-l-blue-500',
-  'in-progress': 'border-l-yellow-500',
-  done: 'border-l-green-500',
+const statusColorMap: Record<ProjectData['status'], "primary" | "warning" | "success" | "default" | "secondary" | "danger"> = {
+  open: 'primary',
+  'in-progress': 'warning',
+  done: 'success',
 };
 
 const calculateTotalHours = (tasks: TaskData[]): number => {
@@ -44,18 +46,54 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, customerName }) => {
     const totalHours = calculateTotalHours(project.tasks);
 
     return (
-        <div 
+        <Card 
+            isPressable
+            onPress={() => navigate(`/project/edit/${project.id}`)}
             draggable 
             onDragStart={handleDragStart}
-            onClick={() => navigate(`/project/edit/${project.id}`)}
-            className={`bg-gray-800 p-4 rounded-lg shadow-md mb-3 border-l-4 ${statusColors[project.status]} cursor-pointer hover:bg-gray-700/50 transition-colors duration-200`}
+            className="mb-3 w-full hover:scale-[1.02] transition-transform duration-200"
+            shadow="sm"
         >
-            <h4 className="font-bold text-white">{project.name}</h4>
-            <p className="text-sm text-gray-400">{customerName}</p>
-            <div className="mt-2 text-xs text-gray-500">
-                <span>{totalHours.toFixed(2)}h erfasst</span>
-            </div>
-        </div>
+            <CardHeader className="flex justify-between items-start pb-2">
+                <div className="flex flex-col items-start gap-1">
+                    <h4 className="font-bold text-foreground text-left text-medium line-clamp-1">{project.name}</h4>
+                    <span className="text-tiny text-default-400 uppercase font-bold tracking-wider">
+                        #{project.id.slice(-4)}
+                    </span>
+                </div>
+                <Button isIconOnly variant="light" size="sm" className="-mr-2 -mt-2 text-default-400">
+                    <MoreHorizontal size={16} />
+                </Button>
+            </CardHeader>
+            
+            <CardBody className="py-2">
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-default-50 border border-default-100">
+                    <Avatar 
+                        name={customerName} 
+                        size="sm" 
+                        isBordered 
+                        className="transition-transform"
+                        color={statusColorMap[project.status]}
+                    />
+                    <div className="flex flex-col">
+                        <span className="text-tiny text-default-500">Kunde</span>
+                        <span className="text-sm font-medium text-foreground line-clamp-1">{customerName}</span>
+                    </div>
+                </div>
+            </CardBody>
+
+            <CardFooter className="justify-between pt-2">
+                <div className="flex items-center gap-2">
+                    <Chip size="sm" variant="dot" color={statusColorMap[project.status]} className="border-none pl-1">
+                        {statusMap[project.status]}
+                    </Chip>
+                </div>
+                <div className="flex items-center text-tiny text-default-400 gap-1 bg-default-100 px-2 py-1 rounded-full">
+                    <Clock size={12} />
+                    <span className="font-mono font-medium">{totalHours.toFixed(1)}h</span>
+                </div>
+            </CardFooter>
+        </Card>
     );
 };
 
@@ -106,7 +144,11 @@ const Projects = () => {
   };
 
   if (loading) {
-    return <div className="text-center p-10">Lade Projekte...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Spinner size="lg" color="primary" />
+      </div>
+    );
   }
 
   const projectsByStatus = {
@@ -116,13 +158,23 @@ const Projects = () => {
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold text-white">Projekte</h2>
-        <Link to="/project/new" className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
-            Neues Projekt
-        </Link>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-4xl font-bold text-foreground mb-2">Projekte</h2>
+          <p className="text-default-500">Verwalte deine Projekte und Zeitaufzeichnungen</p>
+        </div>
+        <Button
+          as={Link}
+          to="/project/new"
+          className="bg-gradient-to-tr from-blue-600 to-cyan-500 text-white shadow-lg"
+          radius="full"
+          size="lg"
+          startContent={<Plus className="h-6 w-6 font-bold" />}
+          variant="shadow"
+        >
+          Neues Projekt
+        </Button>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -132,15 +184,18 @@ const Projects = () => {
                 onDrop={(e) => handleDrop(e, status)}
                 onDragOver={(e) => handleDragOver(e, status)}
                 onDragLeave={handleDragLeave}
-                className={`bg-gray-900 rounded-lg p-4 transition-colors duration-300 ${dragOverColumn === status ? 'bg-gray-700/50' : ''}`}
+                className={`rounded-2xl p-4 transition-colors duration-300 ${dragOverColumn === status ? 'bg-default-100' : 'bg-default-50/50'}`}
             >
-                <h3 className="text-lg font-semibold text-emerald-400 mb-4">{statusMap[status]} ({projectsByStatus[status].length})</h3>
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-default-700">{statusMap[status]}</h3>
+                    <Chip size="sm" variant="flat" color="default">{projectsByStatus[status].length}</Chip>
+                </div>
                 <div className="space-y-3 min-h-[200px]">
                     {projectsByStatus[status].map(project => (
                         <ProjectCard key={project.id} project={project} customerName={customerMap[project.customerId] || 'Unbekannt'} />
                     ))}
                     {projectsByStatus[status].length === 0 && (
-                        <div className="text-center text-gray-500 pt-10">
+                        <div className="text-center text-default-400 pt-10">
                             <p>Keine Projekte in diesem Status.</p>
                         </div>
                     )}

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from '@heroui/react';
 import { Minimize, Maximize, X } from 'lucide-react';
 
 // Define the API that the preload script exposes
@@ -24,19 +25,34 @@ const WindowControls: React.FC = () => {
   };
 
   return (
-    // WICHTIG: Keine absolute Positionierung mehr.
-    // `flex-shrink-0` verhindert, dass die Buttons bei Platzmangel kleiner werden.
-    // Die Klasse `titlebar-no-drag` ist weiterhin entscheidend.
     <div className="flex-shrink-0 h-10 flex items-center space-x-2 px-4 titlebar-no-drag">
-      <button onClick={handleMinimize} className="p-2 rounded-full hover:bg-gray-700 transition-colors">
+      <Button
+        isIconOnly
+        variant="light"
+        size="sm"
+        onClick={handleMinimize}
+        className="min-w-0 w-6 h-6"
+      >
         <Minimize size={16} />
-      </button>
-      <button onClick={handleMaximize} className="p-2 rounded-full hover:bg-gray-700 transition-colors">
+      </Button>
+      <Button
+        isIconOnly
+        variant="light"
+        size="sm"
+        onClick={handleMaximize}
+        className="min-w-0 w-6 h-6"
+      >
         <Maximize size={16} />
-      </button>
-      <button onClick={handleClose} className="p-2 rounded-full hover:bg-red-500 transition-colors">
+      </Button>
+      <Button
+        isIconOnly
+        variant="light"
+        size="sm"
+        onClick={handleClose}
+        className="min-w-0 w-6 h-6 text-danger hover:bg-danger hover:text-danger-foreground"
+      >
         <X size={16} />
-      </button>
+      </Button>
     </div>
   );
 };

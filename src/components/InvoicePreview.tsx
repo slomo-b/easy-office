@@ -55,12 +55,12 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ processedTemplate, onZo
   }, [processedTemplate]);
 
   return (
-    <div className="bg-gray-800 p-4 rounded-lg shadow-md sticky top-6 flex flex-col h-[calc(100vh-4rem-1.5rem)]">
-      <div className="flex justify-between items-center border-b border-gray-700 pb-2 mb-4 flex-shrink-0">
-        <h3 className="text-lg font-semibold text-emerald-400">Vorschau</h3>
+    <div className="bg-content1 p-4 rounded-lg shadow-md sticky top-6 flex flex-col h-[calc(100vh-4rem-1.5rem)]">
+      <div className="flex justify-between items-center border-b border-divider pb-2 mb-4 flex-shrink-0">
+        <h3 className="text-lg font-semibold text-primary">Vorschau</h3>
         <button
             onClick={onZoomClick}
-            className="p-1 text-gray-400 rounded-full hover:bg-gray-700 hover:text-white transition-all"
+            className="p-1 text-default-500 rounded-full hover:bg-content2 hover:text-foreground transition-all"
             title="Vorschau vergrössern"
             aria-label="Vorschau vergrössern"
         >
@@ -70,7 +70,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ processedTemplate, onZo
       
       <div 
         ref={viewportRef}
-        className="flex-grow overflow-hidden flex justify-center items-center bg-gray-900/50 rounded-sm p-2"
+        className="flex-grow overflow-hidden flex justify-center items-center bg-background/50 rounded-sm p-2"
       >
         <div style={{
           transform: `scale(${scale})`,

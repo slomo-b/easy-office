@@ -1,3 +1,38 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@plugin './hero.ts';
+@source '../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
+
+@custom-variant dark (&:is(.dark *));
+
+/* Custom color variables for gradients */
+:root {
+  --gradient-start: #34F0B1;
+  --gradient-end: #00D4FF;
+  --electric-cyan: #00E5FF;
+  --lime-glow: #A7F3D0;
+  --deep-ocean: #0B141A;
+  --dark-slate: #111B22;
+  --midnight: #16232B;
+  --soft-blue: #1E2A36;
+  --light-gray: #E2E8F0;
+  --muted-gray: #94A3B8;
+}
+
+/* Gradient utility classes */
+.gradient-primary {
+  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+}
+
+.gradient-horizontal {
+  background: linear-gradient(90deg, var(--electric-cyan) 0%, var(--gradient-start) 100%);
+}
+
+/* Make the entire window transparent */
+html, body {
+  background-color: transparent !important;
+}
+
+/* Define the draggable region for the custom titlebar */
+.titlebar-drag-region {
+  -webkit-app-region: drag;
+}
