@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { Input, Tabs, Tab, Button } from '@heroui/react';
 import { InvoiceData } from '../types';
 import { getInvoices, deleteInvoice, saveInvoice } from '../services/invoiceService';
 import InvoiceList from '../components/InvoiceList';
-import { Search } from 'lucide-react';
+import { Search, Plus, FileText, CreditCard } from 'lucide-react';
 
 // Define a type for sortable keys to ensure type safety
 export type SortableInvoiceKeys = keyof Pick<InvoiceData, 'debtorName' | 'projectName' | 'unstructuredMessage' | 'total' | 'createdAt' | 'status'>;
@@ -111,52 +112,214 @@ const Invoices = () => {
   }, [invoices, searchQuery, sortConfig, statusFilter]);
 
   if (loading) {
-    return <div className="text-center p-10">Lade Rechnungen...</div>;
+    return (
+      <div className="space-y-8">
+        {/* Header Skeleton */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-[#1E2A36] rounded-xl animate-pulse" />
+            <div className="space-y-2">
+              <div className="h-10 w-64 bg-[#16232B] rounded-xl animate-pulse" />
+              <div className="h-5 w-80 bg-[#64748B]/30 rounded-lg animate-pulse" />
+            </div>
+          </div>
+        </div>
+
+        {/* Controls Skeleton */}
+        <div className="space-y-4">
+          <div className="h-12 w-full bg-[#16232B] rounded-xl animate-pulse" />
+          <div className="flex gap-4">
+            <div className="h-10 w-48 bg-[#1E2A36] rounded-lg animate-pulse" />
+            <div className="h-10 w-32 bg-[#1E2A36] rounded-lg animate-pulse" />
+            <div className="h-10 w-32 bg-[#1E2A36] rounded-lg animate-pulse" />
+          </div>
+        </div>
+
+        {/* Content Skeleton */}
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-16 w-full bg-[#16232B] rounded-xl animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
   }
-  
-  const StatusButton: React.FC<{ filterValue: typeof statusFilter, text: string }> = ({ filterValue, text }) => (
-    <button
-      onClick={() => setStatusFilter(filterValue)}
-      className={`px-3 py-1 text-sm rounded-md transition ${statusFilter === filterValue ? 'bg-emerald-500 text-white' : 'bg-gray-700 hover:bg-gray-600'}`}
-    >
-      {text}
-    </button>
-  );
+
+  const totalInvoices = invoices.length;
+  const paidInvoices = invoices.filter(inv => inv.status === 'paid').length;
+  const openInvoices = invoices.filter(inv => inv.status === 'open').length;
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold text-white">Einnahmen / Rechnungen</h2>
-        <Link to="/invoice/new" className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-            </svg>
-          Neue Rechnung erstellen
-        </Link>
-      </div>
-       
-       <div className="mb-4 flex flex-col md:flex-row gap-4">
-            <div className="relative flex-grow">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-                    <Search className="h-5 w-5 text-gray-400" />
-                </span>
-                <input
-                    type="text"
-                    placeholder="Rechnungen durchsuchen..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-md pl-10 pr-4 py-2 text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 transition"
-                />
-            </div>
-            <div className="flex items-center gap-2 bg-gray-800 p-1 rounded-lg">
-                <StatusButton filterValue="all" text="Alle" />
-                <StatusButton filterValue="open" text="Offen" />
-                <StatusButton filterValue="paid" text="Bezahlt" />
-            </div>
-       </div>
+    <div className="space-y-8">
+      {/* Header with Title and Action Button */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="p-3 rounded-xl bg-gradient-to-br from-[#00E5FF]/20 to-[#34F0B1]/10 border border-[#1E2A36]">
+            <CreditCard className="h-8 w-8 text-[#00E5FF]" />
+          </div>
+          <div>
+            <h1 className="text-4xl font-bold mb-1" style={{
+                background: 'linear-gradient(135deg, #E2E8F0 0%, #94A3B8 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                lineHeight: '1.1',
+                display: 'inline-block',
+                paddingBottom: '2px'
+            }}>
+              Rechnungen / Einnahmen
+            </h1>
+          </div>
+        </div>
 
-      <InvoiceList 
-        invoices={filteredAndSortedInvoices} 
+        <Button
+          as={Link}
+          to="/invoice/new"
+          className="bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/25 hover:shadow-xl hover:shadow-[#00E5FF]/30 self-start sm:self-center"
+          radius="lg"
+          size="lg"
+          startContent={<Plus className="h-5 w-5" />}
+        >
+          Neue Rechnung
+        </Button>
+      </div>
+
+      <div className="h-px bg-gradient-to-r from-transparent via-[#00E5FF]/30 to-transparent" />
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div className="bg-gradient-to-br from-[#111B22]/80 to-[#16232B]/60 border border-[#1E2A36] rounded-xl p-4 backdrop-blur-xl">
+          <div className="flex items-center gap-3">
+            <FileText className="h-8 w-8 text-[#A7F3D0]" />
+            <div>
+              <p className="text-sm text-[#64748B] uppercase tracking-wider">Gesamt</p>
+              <p className="text-2xl font-bold text-[#E2E8F0]">{totalInvoices}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-[#111B22]/80 to-[#16232B]/60 border border-[#1E2A36] rounded-xl p-4 backdrop-blur-xl">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#FCD34D] to-[#FBBF24] flex items-center justify-center">
+              <div className="w-3 h-3 bg-white rounded-full" />
+            </div>
+            <div>
+              <p className="text-sm text-[#64748B] uppercase tracking-wider">Offen</p>
+              <p className="text-2xl font-bold text-[#FBBF24]">{openInvoices}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-[#111B22]/80 to-[#16232B]/60 border border-[#1E2A36] rounded-xl p-4 backdrop-blur-xl">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#A7F3D0] to-[#34F0B1] flex items-center justify-center">
+              <div className="w-3 h-3 bg-white rounded-full" />
+            </div>
+            <div>
+              <p className="text-sm text-[#64748B] uppercase tracking-wider">Bezahlt</p>
+              <p className="text-2xl font-bold text-[#34F0B1]">{paidInvoices}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Enhanced Search and Filter Controls */}
+      <div className="flex flex-col sm:flex-row gap-6 mb-8">
+        {/* Search Input Container */}
+        <div className="flex-1 relative min-w-0 bg-[#16232B] border border-[#1E2A36] rounded-2xl shadow-xl h-full">
+          <div className="relative group h-full">
+            <div className="absolute inset-0 bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-sm" />
+            <Input
+              label=" "
+              placeholder="Rechnungen durchsuchen..."
+              value={searchQuery}
+              onValueChange={setSearchQuery}
+              startContent={
+                <div className="flex items-center justify-center h-6 w-6 my-auto">
+                  <Search className="h-4 w-4 text-[#94A3B8] group-hover:text-[#E2E8F0] transition-colors duration-300" />
+                </div>
+              }
+              className="w-full"
+              classNames={{
+                input: "bg-[#16232B] border-[#1E2A36] text-[#E2E8F0] placeholder:text-[#64748B] h-[42px] py-0",
+                inputWrapper: "bg-[#16232B] border-2 border-[#1E2A36] hover:border-[#00E5FF]/40 focus:border-[#00E5FF] hover:shadow-lg hover:shadow-[#00E5FF]/10 focus:shadow-none transition-all duration-300 rounded-[16px] h-[52px] py-0",
+                label: "text-[#94A3B8]",
+                base: "relative h-[52px]",
+                innerWrapper: "items-center h-[42px]"
+              }}
+            />
+
+            {/* Search Results Indicator */}
+            {searchQuery && (
+              <div className="absolute -top-2 -right-2 bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white text-xs px-2 py-1 rounded-full font-medium shadow-lg">
+                {filteredAndSortedInvoices.length}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Status Filter Tabs */}
+        <div className="relative">
+          <div className="flex items-center gap-2 bg-[#16232B] border-2 border-[#1E2A36] rounded-2xl p-2 shadow-xl">
+            {/* Tab: Alle */}
+            <button
+              onClick={() => setStatusFilter('all')}
+              className={`relative px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
+                statusFilter === 'all'
+                  ? 'bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg scale-105'
+                  : 'text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-[#1E2A36]'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+                  statusFilter === 'all' ? 'bg-white' : 'bg-[#00E5FF]'
+                }`} />
+                Alle
+              </span>
+            </button>
+
+            {/* Tab: Offen */}
+            <button
+              onClick={() => setStatusFilter('open')}
+              className={`relative px-4 py-2 rounded-xl font-medium transition-all duration-300 flex items-center gap-2 ${
+                statusFilter === 'open'
+                  ? 'bg-gradient-to-r from-[#FCD34D] to-[#FBBF24] text-white shadow-lg scale-105'
+                  : 'text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-[#1E2A36]'
+              }`}
+            >
+              <div className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+                statusFilter === 'open' ? 'bg-white' : 'bg-[#FBBF24]'
+              }`} />
+              Offen
+            </button>
+
+            {/* Tab: Bezahlt */}
+            <button
+              onClick={() => setStatusFilter('paid')}
+              className={`relative px-4 py-2 rounded-xl font-medium transition-all duration-300 flex items-center gap-2 ${
+                statusFilter === 'paid'
+                  ? 'bg-gradient-to-r from-[#A7F3D0] to-[#34F0B1] text-white shadow-lg scale-105'
+                  : 'text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-[#1E2A36]'
+              }`}
+            >
+              <div className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+                statusFilter === 'paid' ? 'bg-white' : 'bg-[#34F0B1]'
+              }`} />
+              Bezahlt
+            </button>
+          </div>
+
+          {/* Filter Results Counter */}
+          {statusFilter !== 'all' && (
+            <div className="absolute -top-2 -right-2 bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white text-xs px-2 py-1 rounded-full font-medium shadow-lg min-w-[20px] text-center">
+              {statusFilter === 'open' ? openInvoices : paidInvoices}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <InvoiceList
+        invoices={filteredAndSortedInvoices}
         onDelete={handleDelete}
         onStatusToggle={handleStatusToggle}
         requestSort={requestSort}

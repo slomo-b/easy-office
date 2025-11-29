@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { CustomerData } from '../types';
-import { ArrowUp, ArrowDown, ChevronsUpDown } from 'lucide-react';
+import { ArrowUp, ArrowDown, ChevronsUpDown, Plus, Trash2, Pencil, MapPin, Users } from 'lucide-react';
 import { SortableCustomerKeys } from '../pages/Customers';
 
 interface CustomerListProps {
@@ -21,16 +21,23 @@ const SortableHeader: React.FC<{
 }> = ({ sortKey, title, requestSort, sortConfig, className = '' }) => {
     const isSorted = sortConfig?.key === sortKey;
     const direction = sortConfig?.direction;
-
-    const Icon = isSorted
-        ? (direction === 'ascending' ? ArrowUp : ArrowDown)
-        : ChevronsUpDown;
+    const Icon = isSorted ? (direction === 'ascending' ? ArrowUp : ArrowDown) : ChevronsUpDown;
 
     return (
-        <th className={`px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider ${className}`}>
-            <button onClick={() => requestSort(sortKey)} className="flex items-center gap-2 hover:text-white transition-colors">
+        <th className={`px-4 py-3 text-left text-xs font-medium text-[#94A3B8] uppercase tracking-wider ${className}`}>
+            <button
+                onClick={() => requestSort(sortKey)}
+                className="flex items-center gap-2 hover:text-[#E2E8F0] transition-colors group"
+            >
                 {title}
-                <Icon size={14} className={isSorted ? 'text-white' : 'text-gray-500'}/>
+                <Icon
+                    size={12}
+                    className={`transition-colors ${
+                        isSorted
+                            ? `text-[#8B5CF6] group-hover:text-[#A855F7]`
+                            : 'text-[#64748B] group-hover:text-[#94A3B8]'
+                    }`}
+                />
             </button>
         </th>
     );
@@ -39,48 +46,85 @@ const SortableHeader: React.FC<{
 const CustomerList: React.FC<CustomerListProps> = ({ customers, onDelete, requestSort, sortConfig }) => {
   if (customers.length === 0) {
     return (
-      <div className="text-center py-10 bg-gray-800 rounded-lg">
-        <p className="text-gray-400">Keine Kunden für Ihre Suche gefunden.</p>
-        <Link to="/customer/new" className="mt-4 inline-block bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300">
-          Ersten Kunden anlegen
-        </Link>
+      <div className="relative overflow-hidden border border-[#1E2A36] bg-gradient-to-br from-[#111B22]/80 to-[#16232B]/60 rounded-2xl p-12 backdrop-blur-xl">
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#8B5CF6]/5 to-[#A855F7]/5" />
+
+        <div className="relative z-10 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-[#64748B]/50 to-[#1E2A36]/50 border-2 border-dashed border-[#64748B] flex items-center justify-center">
+            <Users className="h-8 w-8 text-[#64748B]" />
+          </div>
+          <h3 className="text-xl font-semibold text-[#E2E8F0] mb-2">Keine Kunden gefunden</h3>
+          <p className="text-[#94A3B8] mb-6">Erstellen Sie Ihren ersten Kunden, um Ihre Kundendatenbank zu starten.</p>
+
+          <Link
+            to="/customer/new"
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-[#8B5CF6] to-[#A855F7] text-white px-6 py-3 rounded-xl font-medium shadow-lg shadow-[#8B5CF6]/25 hover:shadow-xl hover:shadow-[#8B5CF6]/30 transition-all duration-300 hover:scale-105"
+          >
+            <Plus className="h-5 w-5" />
+            Ersten Kunden anlegen
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-gray-800 shadow-md rounded-lg overflow-hidden">
-      <table className="min-w-full">
-        <thead className="bg-gray-700">
-          <tr>
-            <SortableHeader sortKey="name" title="Name" requestSort={requestSort} sortConfig={sortConfig} />
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Adresse</th>
-            <SortableHeader sortKey="city" title="Ort" requestSort={requestSort} sortConfig={sortConfig} />
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">Aktionen</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-700">
-          {customers.map(customer => (
-            <tr key={customer.id} className="hover:bg-gray-700/50">
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{customer.name}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                {customer.street} {customer.houseNr}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                {customer.zip} {customer.city}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                <Link to={`/customer/edit/${customer.id}`} className="text-emerald-400 hover:text-emerald-300 p-2 rounded-lg hover:bg-emerald-500/20">
-                  Bearbeiten
-                </Link>
-                <button onClick={() => onDelete(customer.id)} className="text-red-500 hover:text-red-400 p-2 rounded-lg hover:bg-red-500/20">
-                  Löschen
-                </button>
-              </td>
+    <div className="relative overflow-hidden border border-[#1E2A36] bg-gradient-to-br from-[#111B22]/80 to-[#16232B]/60 backdrop-blur-xl rounded-2xl shadow-2xl">
+      <div className="overflow-x-auto">
+        <table className="min-w-full">
+          <thead>
+            <tr className="border-b border-[#1E2A36]">
+              <SortableHeader sortKey="name" title="Name" requestSort={requestSort} sortConfig={sortConfig} />
+              <th className="px-4 py-3 text-left text-xs font-medium text-[#94A3B8] uppercase tracking-wider">Adresse</th>
+              <SortableHeader sortKey="city" title="Ort" requestSort={requestSort} sortConfig={sortConfig} />
+              <th className="px-4 py-3 text-right text-xs font-medium text-[#94A3B8] uppercase tracking-wider">Aktionen</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-[#1E2A36]">
+            {customers.map(customer => (
+              <tr key={customer.id} className="group hover:bg-[#16232B]/50 transition-all duration-300">
+                <td className="px-4 py-4">
+                  <span className="text-sm font-medium text-[#E2E8F0]">{customer.name}</span>
+                </td>
+
+                <td className="px-4 py-4">
+                  <div className="flex flex-col">
+                    <span className="text-sm text-[#94A3B8]">{customer.street} {customer.houseNr}</span>
+                  </div>
+                </td>
+
+                <td className="px-4 py-4">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-[#64748B]" />
+                    <span className="text-sm font-medium text-[#E2E8F0]">{customer.zip} {customer.city}</span>
+                  </div>
+                </td>
+
+                <td className="px-4 py-4 text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    <Link
+                      to={`/customer/edit/${customer.id}`}
+                      className="p-2 text-[#94A3B8] hover:text-[#8B5CF6] rounded-lg hover:bg-[#8B5CF6]/10 hover:border hover:border-[#8B5CF6]/30 transition-all duration-300"
+                      title="Bearbeiten"
+                    >
+                      <Pencil size={16} />
+                    </Link>
+
+                    <button
+                      onClick={() => onDelete(customer.id)}
+                      className="p-2 text-[#94A3B8] hover:text-[#EF4444] rounded-lg hover:bg-[#EF4444]/10 hover:border hover:border-[#EF4444]/30 transition-all duration-300"
+                      title="Löschen"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

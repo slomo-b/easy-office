@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Overview from './pages/Overview';
 // FIX: Corrected import path for Invoices component
-import Invoices from './pages/Dashboard';
+// FIX: Corrected import path for Invoices component - should be Invoices.tsx, not Dashboard.tsx
+import Invoices from '../pages/Invoices';
 import InvoiceEditor from './pages/InvoiceEditor';
 import Expenses from './pages/Expenses';
 import ExpenseEditor from './pages/ExpenseEditor';
@@ -47,42 +47,45 @@ function App() {
   }
 
   return (
-    <div className="flex h-screen text-foreground font-sans relative">
+    <div className="flex h-screen text-foreground font-sans relative bg-[#0B141A]">
       <Sidebar isCollapsed={isSidebarCollapsed} setIsCollapsed={setIsSidebarCollapsed} />
-      <div className="flex-1 flex flex-col overflow-hidden bg-background rounded-r-2xl relative">
-        {/* === START: Robuster Titelleisten-Container === */}
-        <div className="w-full h-10 flex justify-between items-center flex-shrink-0">
-          {/* 1. Die Drag-Fläche: wächst, um den gesamten freien Platz zu füllen. */}
-          <div className="flex-grow h-full titlebar-drag-region" />
+      <div className="flex-1 flex flex-col overflow-hidden relative">
+        {/* Abgerundete Ecke oben links */}
+        <div className="flex-1 flex flex-col overflow-hidden bg-background rounded-r-2xl relative">
+          {/* === START: Robuster Titelleisten-Container === */}
+          <div className="w-full h-10 flex justify-between items-center flex-shrink-0">
+            {/* 1. Die Drag-Fläche: wächst, um den gesamten freien Platz zu füllen. */}
+            <div className="flex-grow h-full titlebar-drag-region" />
 
-          {/* 2. Die Buttons: haben eine feste Größe und werden an den rechten Rand geschoben. */}
-          <WindowControls />
+            {/* 2. Die Buttons: haben eine feste Größe und werden an den rechten Rand geschoben. */}
+            <WindowControls />
+          </div>
+          {/* === END: Robuster Titelleisten-Container === */}
+
+          <main className="flex-1 overflow-x-hidden overflow-y-auto p-6">
+            <Routes>
+              <Route path="/" element={<Overview />} />
+              <Route path="/invoices" element={<Invoices />} />
+              <Route path="/invoice/new" element={<InvoiceEditor />} />
+              <Route path="/invoice/edit/:id" element={<InvoiceEditor />} />
+              <Route path="/expenses" element={<Expenses />} />
+              <Route path="/expense/new" element={<ExpenseEditor />} />
+              <Route path="/expense/edit/:id" element={<ExpenseEditor />} />
+              <Route path="/recurring-expense/new" element={<RecurringExpenseEditor />} />
+              <Route path="/recurring-expense/edit/:id" element={<RecurringExpenseEditor />} />
+              <Route path="/customers" element={<Customers />} />
+              <Route path="/customer/new" element={<CustomerEditor />} />
+              <Route path="/customer/edit/:id" element={<CustomerEditor />} />
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/project/new" element={<ProjectEditor />} />
+              <Route path="/project/edit/:id" element={<ProjectEditor />} />
+              <Route path="/services" element={<Services />} />
+              <Route path="/service/new" element={<ServiceEditor />} />
+              <Route path="/service/edit/:id" element={<ServiceEditor />} />
+              <Route path="/settings" element={<Settings />} />
+            </Routes>
+          </main>
         </div>
-        {/* === END: Robuster Titelleisten-Container === */}
-
-        <main className="flex-1 overflow-x-hidden overflow-y-auto p-6">
-          <Routes>
-            <Route path="/" element={<Overview />} />
-            <Route path="/invoices" element={<Invoices />} />
-            <Route path="/invoice/new" element={<InvoiceEditor />} />
-            <Route path="/invoice/edit/:id" element={<InvoiceEditor />} />
-            <Route path="/expenses" element={<Expenses />} />
-            <Route path="/expense/new" element={<ExpenseEditor />} />
-            <Route path="/expense/edit/:id" element={<ExpenseEditor />} />
-            <Route path="/recurring-expense/new" element={<RecurringExpenseEditor />} />
-            <Route path="/recurring-expense/edit/:id" element={<RecurringExpenseEditor />} />
-            <Route path="/customers" element={<Customers />} />
-            <Route path="/customer/new" element={<CustomerEditor />} />
-            <Route path="/customer/edit/:id" element={<CustomerEditor />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/project/new" element={<ProjectEditor />} />
-            <Route path="/project/edit/:id" element={<ProjectEditor />} />
-            <Route path="/services" element={<Services />} />
-            <Route path="/service/new" element={<ServiceEditor />} />
-            <Route path="/service/edit/:id" element={<ServiceEditor />} />
-            <Route path="/settings" element={<Settings />} />
-          </Routes>
-        </main>
       </div>
     </div>
   );

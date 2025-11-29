@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { Input, Button } from '@heroui/react';
 import { CustomerData } from '../types';
 import { getCustomers, deleteCustomer } from '../services/customerService';
 import CustomerList from '../components/CustomerList';
-import { Search } from 'lucide-react';
+import { Search, Plus, Users } from 'lucide-react';
 
 export type SortableCustomerKeys = keyof Pick<CustomerData, 'name' | 'city'>;
 
@@ -68,31 +69,104 @@ const Customers = () => {
   }, [customers, searchQuery, sortConfig]);
 
   if (loading) {
-    return <div className="text-center p-10">Lade Kunden...</div>;
+    return (
+      <div className="space-y-8">
+        {/* Header Skeleton */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-[#1E2A36] rounded-xl animate-pulse" />
+            <div className="space-y-2">
+              <div className="h-10 w-64 bg-[#16232B] rounded-xl animate-pulse" />
+              <div className="h-5 w-80 bg-[#64748B]/30 rounded-lg animate-pulse" />
+            </div>
+          </div>
+        </div>
+
+        {/* Controls Skeleton */}
+        <div className="space-y-4">
+          <div className="h-12 w-full bg-[#16232B] rounded-xl animate-pulse" />
+        </div>
+
+        {/* Content Skeleton */}
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-16 w-full bg-[#16232B] rounded-xl animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold text-white">Kunden</h2>
-        <Link to="/customer/new" className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
+    <div className="space-y-8">
+      {/* Header with Title and Action Button */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="p-3 rounded-xl bg-gradient-to-br from-[#8B5CF6]/20 to-[#A855F7]/10 border border-[#1E2A36]">
+            <Users className="h-8 w-8 text-[#8B5CF6]" />
+          </div>
+          <div>
+            <h1 className="text-4xl font-bold mb-1" style={{
+                background: 'linear-gradient(135deg, #E2E8F0 0%, #94A3B8 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                lineHeight: '1.1',
+                display: 'inline-block',
+                paddingBottom: '2px'
+            }}>
+              Kunden
+            </h1>
+          </div>
+        </div>
+
+        <Button
+          as={Link}
+          to="/customer/new"
+          className="bg-gradient-to-r from-[#8B5CF6] to-[#A855F7] text-white shadow-lg shadow-[#8B5CF6]/25 hover:shadow-xl hover:shadow-[#8B5CF6]/30 self-start sm:self-center"
+          radius="lg"
+          size="lg"
+          startContent={<Plus className="h-5 w-5" />}
+        >
           Neuen Kunden anlegen
-        </Link>
+        </Button>
       </div>
 
-      <div className="mb-4">
-        <div className="relative">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-            <Search className="h-5 w-5 text-gray-400" />
-          </span>
-          <input
-            type="text"
-            placeholder="Kunden durchsuchen..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full max-w-sm bg-gray-700 border border-gray-600 rounded-md pl-10 pr-4 py-2 text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 transition"
-          />
+      <div className="h-px bg-gradient-to-r from-transparent via-[#8B5CF6]/30 to-transparent" />
+
+      {/* Enhanced Search Controls */}
+      <div className="flex flex-col sm:flex-row gap-6 mb-8">
+        {/* Search Input Container */}
+        <div className="flex-1 relative min-w-0 bg-[#16232B] border border-[#1E2A36] rounded-2xl shadow-xl h-full">
+          <div className="relative group h-full">
+            <div className="absolute inset-0 bg-gradient-to-r from-[#8B5CF6] to-[#A855F7] rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-sm" />
+            <Input
+              label=" "
+              placeholder="Kunden durchsuchen..."
+              value={searchQuery}
+              onValueChange={setSearchQuery}
+              startContent={
+                <div className="flex items-center justify-center h-6 w-6 my-auto">
+                  <Search className="h-4 w-4 text-[#94A3B8] group-hover:text-[#E2E8F0] transition-colors duration-300" />
+                </div>
+              }
+              className="w-full"
+              classNames={{
+                input: "bg-[#16232B] border-[#1E2A36] text-[#E2E8F0] placeholder:text-[#64748B] h-[42px] py-0",
+                inputWrapper: "bg-[#16232B] border-2 border-[#1E2A36] hover:border-[#8B5CF6]/40 focus:border-[#8B5CF6] hover:shadow-lg hover:shadow-[#8B5CF6]/10 focus:shadow-none transition-all duration-300 rounded-[16px] h-[52px] py-0",
+                label: "text-[#94A3B8]",
+                base: "relative h-[52px]",
+                innerWrapper: "items-center h-[42px]"
+              }}
+            />
+
+            {/* Search Results Indicator */}
+            {searchQuery && (
+              <div className="absolute -top-2 -right-2 bg-gradient-to-r from-[#8B5CF6] to-[#A855F7] text-white text-xs px-2 py-1 rounded-full font-medium shadow-lg">
+                {filteredAndSortedCustomers.length}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

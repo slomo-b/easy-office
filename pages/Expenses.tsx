@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { Input, Button } from '@heroui/react';
 import { ExpenseData, RecurringExpenseData } from '../types';
 import { getExpenses, deleteExpense, saveExpense, createNewExpense } from '../services/expenseService';
 import { getRecurringExpenses, deleteRecurringExpense, saveRecurringExpense, calculateNextDueDate } from '../services/recurringExpenseService';
-import { Repeat, Search } from 'lucide-react';
+import { Repeat, Search, Plus, DollarSign, CreditCard } from 'lucide-react';
 import ExpenseList from '../components/ExpenseList';
 
 export type CombinedExpense = 
@@ -179,53 +180,214 @@ const Expenses = () => {
 
 
   if (loading) {
-    return <div className="text-center p-10">Lade Ausgaben...</div>;
-  }
-  
-  const StatusButton: React.FC<{ filterValue: typeof statusFilter, text: string }> = ({ filterValue, text }) => (
-    <button
-      onClick={() => setStatusFilter(filterValue)}
-      className={`px-3 py-1 text-sm rounded-md transition ${statusFilter === filterValue ? 'bg-emerald-500 text-white' : 'bg-gray-700 hover:bg-gray-600'}`}
-    >
-      {text}
-    </button>
-  );
+    return (
+      <div className="space-y-8">
+        {/* Header Skeleton */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-[#1E2A36] rounded-xl animate-pulse" />
+            <div className="space-y-2">
+              <div className="h-10 w-64 bg-[#16232B] rounded-xl animate-pulse" />
+              <div className="h-5 w-80 bg-[#64748B]/30 rounded-lg animate-pulse" />
+            </div>
+          </div>
+        </div>
 
-  return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold text-white">Ausgaben</h2>
-        <div className="flex items-center gap-4">
-          <Link to="/recurring-expense/new" className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 flex items-center gap-2 text-sm">
-            <Repeat className="h-4 w-4" />
-            Wiederkehrende Ausgabe
-          </Link>
-          <Link to="/expense/new" className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 flex items-center gap-2 text-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
-            Einmalige Ausgabe
-          </Link>
+        {/* Controls Skeleton */}
+        <div className="space-y-4">
+          <div className="h-12 w-full bg-[#16232B] rounded-xl animate-pulse" />
+          <div className="flex gap-4">
+            <div className="h-10 w-48 bg-[#1E2A36] rounded-lg animate-pulse" />
+            <div className="h-10 w-32 bg-[#1E2A36] rounded-lg animate-pulse" />
+            <div className="h-10 w-32 bg-[#1E2A36] rounded-lg animate-pulse" />
+          </div>
+        </div>
+
+        {/* Content Skeleton */}
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-16 w-full bg-[#16232B] rounded-xl animate-pulse" />
+          ))}
         </div>
       </div>
-      
-      <div className="mb-4 flex flex-col md:flex-row gap-4">
-            <div className="relative flex-grow">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-                    <Search className="h-5 w-5 text-gray-400" />
-                </span>
-                <input
-                    type="text"
-                    placeholder="Ausgaben durchsuchen..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-md pl-10 pr-4 py-2 text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 transition"
-                />
+    );
+  }
+
+  const totalExpenses = expenses.length + recurringExpenses.length;
+  const dueExpenses = expenses.filter(e => e.status === 'due').length + recurringExpenses.filter(r => new Date(r.nextDueDate) <= new Date()).length;
+  const paidExpenses = expenses.filter(e => e.status === 'paid').length;
+
+  return (
+    <div className="space-y-8">
+      {/* Header with Title and Action Button */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="p-3 rounded-xl bg-gradient-to-br from-[#FC5445]/20 to-[#F97316]/10 border border-[#1E2A36]">
+            <DollarSign className="h-8 w-8 text-[#FC5445]" />
+          </div>
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-[#E2E8F0] to-[#94A3B8] bg-clip-text text-transparent mb-1">
+              Ausgaben
+            </h1>
+            <p className="text-[#64748B] text-lg">Verwalte deine Ausgaben und wiederkehrenden Zahlungen</p>
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <Button
+            as={Link}
+            to="/recurring-expense/new"
+            className="bg-gradient-to-r from-[#F97316] to-[#FC5445] text-white shadow-lg shadow-[#FC5445]/25 hover:shadow-xl hover:shadow-[#FC5445]/30"
+            radius="lg"
+            size="lg"
+            startContent={<Repeat className="h-5 w-5" />}
+          >
+            Wiederkehrende Ausgabe
+          </Button>
+          <Button
+            as={Link}
+            to="/expense/new"
+            className="bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/25 hover:shadow-xl hover:shadow-[#00E5FF]/30"
+            radius="lg"
+            size="lg"
+            startContent={<Plus className="h-5 w-5" />}
+          >
+            Einmalige Ausgabe
+          </Button>
+        </div>
+      </div>
+
+      <div className="h-px bg-gradient-to-r from-transparent via-[#FC5445]/30 to-transparent" />
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div className="bg-gradient-to-br from-[#111B22]/80 to-[#16232B]/60 border border-[#1E2A36] rounded-xl p-4 backdrop-blur-xl">
+          <div className="flex items-center gap-3">
+            <DollarSign className="h-8 w-8 text-[#F97316]" />
+            <div>
+              <p className="text-sm text-[#64748B] uppercase tracking-wider">Gesamt</p>
+              <p className="text-2xl font-bold text-[#E2E8F0]">{totalExpenses}</p>
             </div>
-            <div className="flex items-center gap-2 bg-gray-800 p-1 rounded-lg">
-                <StatusButton filterValue="all" text="Alle" />
-                <StatusButton filterValue="due" text="Fällig" />
-                <StatusButton filterValue="paid" text="Bezahlt" />
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-[#111B22]/80 to-[#16232B]/60 border border-[#1E2A36] rounded-xl p-4 backdrop-blur-xl">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#F9174A] to-[#FC5445] flex items-center justify-center">
+              <div className="w-3 h-3 bg-white rounded-full" />
             </div>
-       </div>
+            <div>
+              <p className="text-sm text-[#64748B] uppercase tracking-wider">Fällig</p>
+              <p className="text-2xl font-bold text-[#FC5445]">{dueExpenses}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-[#111B22]/80 to-[#16232B]/60 border border-[#1E2A36] rounded-xl p-4 backdrop-blur-xl">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#A7F3D0] to-[#34F0B1] flex items-center justify-center">
+              <div className="w-3 h-3 bg-white rounded-full" />
+            </div>
+            <div>
+              <p className="text-sm text-[#64748B] uppercase tracking-wider">Bezahlt</p>
+              <p className="text-2xl font-bold text-[#34F0B1]">{paidExpenses}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Enhanced Search and Filter Controls */}
+      <div className="flex flex-col xl:flex-row gap-6 mb-8">
+        {/* Search Input Container */}
+        <div className="flex-1 relative min-w-0 bg-[#16232B] border border-[#1E2A36] rounded-2xl shadow-xl h-full">
+          <div className="relative group h-full">
+            <div className="absolute inset-0 bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-sm" />
+            <Input
+              label=" "
+              placeholder="Ausgaben durchsuchen..."
+              value={searchQuery}
+              onValueChange={setSearchQuery}
+              startContent={
+                <div className="flex items-center justify-center h-6 w-6 my-auto">
+                  <Search className="h-4 w-4 text-[#94A3B8] group-hover:text-[#E2E8F0] transition-colors duration-300" />
+                </div>
+              }
+              className="w-full"
+              classNames={{
+                input: "bg-[#16232B] border-[#1E2A36] text-[#E2E8F0] placeholder:text-[#64748B] h-[42px] py-0",
+                inputWrapper: "bg-[#16232B] border-2 border-[#1E2A36] hover:border-[#00E5FF]/40 focus:border-[#00E5FF] hover:shadow-lg hover:shadow-[#00E5FF]/10 focus:shadow-none transition-all duration-300 rounded-[16px] h-[52px] py-0",
+                label: "text-[#94A3B8]",
+                base: "relative h-[52px]",
+                innerWrapper: "items-center h-[42px]"
+              }}
+            />
+
+            {/* Search Results Indicator */}
+            {searchQuery && (
+              <div className="absolute -top-2 -right-2 bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white text-xs px-2 py-1 rounded-full font-medium shadow-lg">
+                {filteredAndSortedExpenses.length}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Status Filter Tabs */}
+        <div className="relative">
+          <div className="flex items-center gap-2 bg-[#16232B] border-2 border-[#1E2A36] rounded-2xl p-2 shadow-xl">
+            {/* Tab: Alle */}
+            <button
+              onClick={() => setStatusFilter('all')}
+              className={`relative px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
+                statusFilter === 'all'
+                  ? 'bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg scale-105'
+                  : 'text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-[#1E2A36]'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+                  statusFilter === 'all' ? 'bg-white' : 'bg-[#00E5FF]'
+                }`} />
+                Alle
+              </span>
+            </button>
+
+            {/* Tab: Fällig */}
+            <button
+              onClick={() => setStatusFilter('due')}
+              className={`relative px-4 py-2 rounded-xl font-medium transition-all duration-300 flex items-center gap-2 ${
+                statusFilter === 'due'
+                  ? 'bg-gradient-to-r from-[#F9174A] to-[#FC5445] text-white shadow-lg scale-105'
+                  : 'text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-[#1E2A36]'
+              }`}
+            >
+              <div className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+                statusFilter === 'due' ? 'bg-white' : 'bg-[#FC5445]'
+              }`} />
+              Fällig
+            </button>
+
+            {/* Tab: Bezahlt */}
+            <button
+              onClick={() => setStatusFilter('paid')}
+              className={`relative px-4 py-2 rounded-xl font-medium transition-all duration-300 flex items-center gap-2 ${
+                statusFilter === 'paid'
+                  ? 'bg-gradient-to-r from-[#A7F3D0] to-[#34F0B1] text-white shadow-lg scale-105'
+                  : 'text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-[#1E2A36]'
+              }`}
+            >
+              <div className={`w-2 h-2 rounded-full transition-colors duration-300 ${statusFilter === 'paid' ? 'bg-white' : 'bg-[#34F0B1]'}`} />
+              Bezahlt
+            </button>
+          </div>
+
+          {/* Filter Results Counter */}
+          {statusFilter !== 'all' && (
+            <div className="absolute -top-2 -right-2 bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white text-xs px-2 py-1 rounded-full font-medium shadow-lg min-w-[20px] text-center">
+              {statusFilter === 'paid' ? paidExpenses : dueExpenses}
+            </div>
+          )}
+        </div>
+      </div>
 
       <ExpenseList 
         expenses={filteredAndSortedExpenses}
