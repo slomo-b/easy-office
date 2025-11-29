@@ -3,7 +3,8 @@ import { SettingsData } from '../types';
 import { getSettings, saveSettings } from '../services/settingsService';
 import { exportAllData, importAllData } from '../services/fileSystem';
 import SettingsForm from '../components/SettingsForm';
-import { Download, Upload } from 'lucide-react';
+import { Download, Upload, Settings as SettingsIcon } from 'lucide-react';
+import { Button, Card, CardBody, Alert } from '@heroui/react';
 
 const Settings = () => {
   const [settings, setSettings] = useState<SettingsData | null>(null);
@@ -93,68 +94,147 @@ const Settings = () => {
   };
 
   if (!settings) {
-    return <div className="text-center p-10">Lade Einstellungen...</div>;
+    return (
+      <div className="space-y-8">
+        {/* Header Skeleton */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-[#1E2A36] rounded-xl animate-pulse" />
+            <div className="space-y-2">
+              <div className="h-10 w-64 bg-[#16232B] rounded-xl animate-pulse" />
+              <div className="h-5 w-72 bg-[#64748B]/30 rounded-lg animate-pulse" />
+            </div>
+          </div>
+        </div>
+
+        {/* Content Skeleton */}
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 h-96 bg-[#16232B] rounded-2xl animate-pulse" />
+            <div className="h-80 bg-[#16232B] rounded-2xl animate-pulse" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-4xl font-bold text-foreground mb-2">Einstellungen</h2>
-          <p className="text-default-500">Verwalte deine App-Einstellungen und Daten</p>
-        </div>
-        <div>
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="bg-primary hover:opacity-80 text-primary-foreground font-bold py-2 px-4 rounded-lg transition-opacity duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSaving ? 'Speichern...' : 'Speichern'}
-          </button>
-        </div>
-      </div>
-       {message && (
-          <div className={`${message.type === 'success' ? 'bg-success/20 border-success text-success' : 'bg-danger/20 border-danger text-danger'} px-4 py-3 rounded-lg relative mb-4 border`} role="alert">
-            <span className="block sm:inline">{message.text}</span>
+    <div className="space-y-8">
+      {/* Header with Title and Action Button */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+        <div className="flex items-center gap-4">
+          <div className="p-3 rounded-xl bg-gradient-to-br from-[#00E5FF]/20 to-[#34F0B1]/10 border border-[#1E2A36]">
+            <SettingsIcon className="h-8 w-8 text-[#00E5FF]" />
           </div>
-        )}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <SettingsForm
+          <div>
+            <h1 className="text-4xl font-bold mb-1" style={{
+                background: 'linear-gradient(135deg, #E2E8F0 0%, #94A3B8 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                lineHeight: '1.1',
+                display: 'inline-block',
+                paddingBottom: '2px'
+            }}>
+              Einstellungen
+            </h1>
+          </div>
+        </div>
+
+        <Button
+          onClick={handleSave}
+          isLoading={isSaving}
+          className="bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/25 hover:shadow-xl hover:shadow-[#00E5FF]/30 self-start sm:self-center"
+          radius="lg"
+          size="lg"
+        >
+          {!isSaving && "Speichern"}
+        </Button>
+      </div>
+
+      <div className="h-px bg-gradient-to-r from-transparent via-[#00E5FF]/30 to-transparent mb-8" />
+
+      {message && (
+        <Alert
+          color={message.type === 'success' ? 'success' : 'danger'}
+          variant="flat"
+          classNames={{
+            base: "mb-6 border-2 backdrop-blur-xl shadow-xl",
+            title: "font-semibold",
+            description: "text-sm"
+          }}
+          title={message.text}
+        />
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          <Card className="bg-gradient-to-br from-[#111B22]/80 to-[#16232B]/60 backdrop-blur-xl shadow-2xl border border-[#1E2A36]">
+            <CardBody className="p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 rounded-lg bg-gradient-to-br from-[#00E5FF]/20 to-[#34F0B1]/10 border border-[#1E2A36]">
+                  <SettingsIcon className="h-5 w-5 text-[#00E5FF]" />
+                </div>
+                <h3 className="text-2xl font-bold text-[#E2E8F0]">Anwendungs-Einstellungen</h3>
+              </div>
+
+              <SettingsForm
                 data={settings}
                 onDataChange={handleDataChange}
                 onLogoChange={handleLogoChange}
-            />
-          </div>
-          <div className="bg-content1 p-6 rounded-lg shadow-md h-fit">
-               <h3 className="text-lg font-semibold text-primary border-b border-divider pb-2 mb-4">Datenverwaltung</h3>
-               <p className="text-sm text-default-500 mb-4">Erstellen Sie ein Backup all Ihrer Daten oder spielen Sie ein bestehendes Backup wieder ein.</p>
-               <div className="space-y-3">
-                   <button
-                        onClick={handleExport}
-                        disabled={isExporting}
-                        className="w-full flex items-center justify-center gap-2 bg-primary hover:opacity-80 text-primary-foreground font-bold py-2 px-4 rounded-lg transition-opacity duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <Download size={16} />
-                        {isExporting ? 'Exportiere...' : 'Daten exportieren (ZIP)'}
-                    </button>
-                    <button
-                        onClick={handleImportClick}
-                        disabled={isImporting}
-                        className="w-full flex items-center justify-center gap-2 bg-content2 hover:bg-content3 text-foreground font-bold py-2 px-4 rounded-lg transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <Upload size={16} />
-                        {isImporting ? 'Importiere...' : 'Daten importieren (ZIP)'}
-                    </button>
-                    <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleImport}
-                        accept=".zip"
-                        className="hidden"
-                    />
-               </div>
-          </div>
+              />
+            </CardBody>
+          </Card>
+        </div>
+
+        <Card className="bg-gradient-to-br from-[#111B22]/80 to-[#16232B]/60 backdrop-blur-xl shadow-2xl border border-[#1E2A36] h-fit">
+          <CardBody className="p-8">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-[#00E5FF]/20 to-[#34F0B1]/10 border border-[#1E2A36]">
+                <Download className="h-5 w-5 text-[#00E5FF]" />
+              </div>
+              <h3 className="text-2xl font-bold text-[#E2E8F0]">Datenverwaltung</h3>
+            </div>
+
+            <div className="h-px bg-gradient-to-r from-[#00E5FF]/30 to-transparent mb-6" />
+
+            <p className="text-[#94A3B8] text-sm mb-6">
+              Erstelle ein Backup all deiner Daten oder importiere ein bestehendes Backup.
+            </p>
+
+            <div className="space-y-4">
+              <Button
+                onClick={handleExport}
+                isLoading={isExporting}
+                variant="solid"
+                className="w-full bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] border-2 border-[#00E5FF]/20 shadow-lg text-white hover:shadow-xl"
+                size="lg"
+                startContent={!isExporting && <Download className="h-5 w-5" />}
+              >
+                {!isExporting && "Daten exportieren (ZIP)"}
+              </Button>
+
+              <Button
+                onClick={handleImportClick}
+                isLoading={isImporting}
+                variant="bordered"
+                className="w-full border-2 border-[#64748B]/30 hover:border-[#00E5FF]/40 text-[#E2E8F0] hover:bg-[#00E5FF]/10 hover:text-[#E2E8F0]"
+                size="lg"
+                startContent={!isImporting && <Upload className="h-5 w-5" />}
+              >
+                {!isImporting && "Daten importieren (ZIP)"}
+              </Button>
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleImport}
+                accept=".zip"
+                className="hidden"
+              />
+            </div>
+          </CardBody>
+        </Card>
       </div>
     </div>
   );

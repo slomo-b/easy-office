@@ -253,9 +253,9 @@ const Projects = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div>
       {/* Header with Title and Action Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#00E5FF]/20 to-[#34F0B1]/10 border border-[#1E2A36]">
             <FolderKanban className="h-8 w-8 text-[#00E5FF]" />
@@ -287,7 +287,7 @@ const Projects = () => {
         </Button>
       </div>
 
-      <div className="h-px bg-gradient-to-r from-transparent via-[#00E5FF]/30 to-transparent" />
+      <div className="h-px bg-gradient-to-r from-transparent via-[#00E5FF]/30 to-transparent mb-8" />
 
       {/* Kanban Board */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

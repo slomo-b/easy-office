@@ -1,70 +1,100 @@
 import React from 'react';
 import { ExpenseData } from '../types';
-import { ChevronDown } from 'lucide-react';
+import { Input, Select, SelectItem } from '@heroui/react';
 
 interface ExpenseFormProps {
   data: ExpenseData;
   onDataChange: (field: keyof ExpenseData, value: string | number) => void;
 }
 
-const InputField: React.FC<{
-  label: string;
-  id: keyof ExpenseData;
-  value: string | number;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  type?: string;
-  className?: string;
-}> = ({ label, id, value, onChange, type = 'text', className = '' }) => (
-  <div className={`flex flex-col ${className}`}>
-    <label htmlFor={id} className="mb-1 text-sm font-medium text-default-500">
-      {label}
-    </label>
-    <input
-      type={type}
-      id={id}
-      name={id}
-      value={value}
-      onChange={onChange}
-      className="bg-content2 border border-divider rounded-md px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition"
-      step={type === 'number' ? '0.01' : undefined}
-    />
-  </div>
-);
-
 const ExpenseForm: React.FC<ExpenseFormProps> = ({ data, onDataChange }) => {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target as HTMLInputElement;
-    onDataChange(name as keyof ExpenseData, type === 'number' ? parseFloat(value) || '' : value);
-  };
 
   return (
-    <div className="space-y-6 bg-content1 p-6 rounded-lg shadow-md">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-             <InputField label="Fälligkeitsdatum" id="date" value={data.date} onChange={handleChange} type="date" className="col-span-2" />
-             <InputField label="Anbieter / Verkäufer" id="vendor" value={data.vendor} onChange={handleChange} className="col-span-2"/>
-             <InputField label="Beschreibung" id="description" value={data.description} onChange={handleChange} className="col-span-2" />
-             <InputField label="Betrag" id="amount" value={data.amount} onChange={handleChange} type="number" />
-             <div className="flex flex-col">
-                <label htmlFor="currency" className="mb-1 text-sm font-medium text-default-500">
-                    Währung
-                </label>
-                <div className="relative">
-                  <select
-                      id="currency"
-                      name="currency"
-                      value={data.currency}
-                      onChange={handleChange}
-                      className="w-full appearance-none bg-content2 border border-divider rounded-md px-3 py-2 pr-10 text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition"
-                  >
-                      <option value="CHF">CHF</option>
-                      <option value="EUR">EUR</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-default-500">
-                      <ChevronDown size={20} />
-                  </div>
-                </div>
-            </div>
-             <InputField label="Kategorie" id="category" value={data.category} onChange={handleChange} className="col-span-2"/>
+    <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Input
+            label="Fälligkeitsdatum"
+            type="date"
+            value={data.date}
+            onChange={(e) => onDataChange('date', e.target.value)}
+            className="col-span-2"
+            classNames={{
+              label: "text-[#94A3B8] font-semibold mb-2 text-sm",
+              inputWrapper: "bg-[#16232B] border border-[#64748B]/30 focus-within:border-[#00E5FF]/70",
+              input: "text-[#E2E8F0]",
+            }}
+          />
+
+          <Input
+            label="Anbieter / Verkäufer"
+            value={data.vendor}
+            onChange={(e) => onDataChange('vendor', e.target.value)}
+            className="col-span-2"
+            classNames={{
+              label: "text-[#94A3B8] font-semibold mb-2 text-sm",
+              inputWrapper: "bg-[#16232B] border border-[#64748B]/30 focus-within:border-[#00E5FF]/70",
+              input: "text-[#E2E8F0] placeholder-[#64748B]",
+            }}
+            placeholder="Gebe Anbieter / Verkäufer ein"
+          />
+
+          <Input
+            label="Beschreibung"
+            value={data.description}
+            onChange={(e) => onDataChange('description', e.target.value)}
+            className="col-span-2"
+            classNames={{
+              label: "text-[#94A3B8] font-semibold mb-2 text-sm",
+              inputWrapper: "bg-[#16232B] border border-[#64748B]/30 focus-within:border-[#00E5FF]/70",
+              input: "text-[#E2E8F0] placeholder-[#64748B]",
+            }}
+            placeholder="Gebe Beschreibung ein"
+          />
+
+          <Input
+            label="Betrag"
+            type="number"
+            value={data.amount ? data.amount.toString() : ''}
+            onChange={(e) => onDataChange('amount', parseFloat(e.target.value) || 0)}
+            classNames={{
+              label: "text-[#94A3B8] font-semibold mb-2 text-sm",
+              inputWrapper: "bg-[#16232B] border border-[#64748B]/30 focus-within:border-[#00E5FF]/70",
+              input: "text-[#E2E8F0] placeholder-[#64748B]",
+            }}
+            placeholder="Gebe Betrag ein"
+            step="0.01"
+          />
+
+          <Select
+            label="Währung"
+            selectedKeys={[data.currency]}
+            onSelectionChange={(keys) => {
+              const selectedValue = Array.from(keys)[0] as string;
+              onDataChange('currency', selectedValue);
+            }}
+            classNames={{
+              label: "text-[#94A3B8] font-semibold mb-2 text-sm",
+              trigger: "bg-[#16232B] border border-[#64748B]/30 focus-within:border-[#00E5FF]/70 text-[#E2E8F0]",
+            }}
+          >
+            <SelectItem key="CHF">CHF</SelectItem>
+            <SelectItem key="EUR">EUR</SelectItem>
+            <SelectItem key="USD">USD</SelectItem>
+            <SelectItem key="GBP">GBP</SelectItem>
+          </Select>
+
+          <Input
+            label="Kategorie"
+            value={data.category}
+            onChange={(e) => onDataChange('category', e.target.value)}
+            className="col-span-2"
+            classNames={{
+              label: "text-[#94A3B8] font-semibold mb-2 text-sm",
+              inputWrapper: "bg-[#16232B] border border-[#64748B]/30 focus-within:border-[#00E5FF]/70",
+              input: "text-[#E2E8F0] placeholder-[#64748B]",
+            }}
+            placeholder="Gebe Kategorie ein"
+          />
         </div>
     </div>
   );

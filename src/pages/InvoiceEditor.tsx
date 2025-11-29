@@ -10,7 +10,7 @@ import { generateQrCode } from '../services/qrBillService';
 import InvoiceForm from '../components/InvoiceForm';
 import InvoicePreview from '../components/InvoicePreview';
 import HtmlEditor from '../components/HtmlEditor';
-import { Download, X } from 'lucide-react';
+import { Download, X, FileText } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -118,17 +118,17 @@ const InvoiceEditor = () => {
         return Number(amount).toFixed(2);
     }
   
-    const logoHtml = invoiceData.logoSrc 
+    const logoHtml = invoiceData.logoSrc
       ? `<img src="${invoiceData.logoSrc}" alt="Firmenlogo" style="max-height: 80px;"/>`
-      : `<div class="h-20 w-40 flex items-center justify-center text-gray-500 text-sm" style="background-color: #f3f4f6; border: 1px dashed #d1d5db; border-radius: 0.5rem;">Ihr Logo</div>`;
-  
+      : `<div class="h-20 w-40 flex items-center justify-center text-[#64748B] text-sm" style="background-color: #16232B; border: 1px dashed #64748B; border-radius: 0.5rem;">Ihr Logo</div>`;
+
     let qrBillHtml: string;
     if (isLoadingQr) {
-      qrBillHtml = `<div style="height: 105mm; display: flex; align-items: center; justify-content: center;" class="bg-gray-200 animate-pulse text-gray-500">Generiere QR-Rechnung...</div>`;
+      qrBillHtml = `<div style="height: 105mm; display: flex; align-items: center; justify-content: center;" class="bg-[#16232B] animate-pulse text-[#64748B]">Generiere QR-Rechnung...</div>`;
     } else if (qrCodeSvg) {
       qrBillHtml = qrCodeSvg;
     } else {
-      qrBillHtml = `<div style="height: 105mm; display: flex; align-items: center; justify-content: center;" class="bg-gray-100 text-center text-xs text-gray-500 p-2 border border-dashed border-gray-300">QR-Rechnung kann nicht generiert werden.<br/>(Betrag muss grösser als 0 sein)</div>`;
+      qrBillHtml = `<div style="height: 105mm; display: flex; align-items: center; justify-content: center;" class="bg-[#1E2A36] text-center text-xs text-[#64748B] p-2 border border-dashed border-[#64748B]/30" style="border-color: #64748B;">QR-Rechnung kann nicht generiert werden.<br/>(Betrag muss grösser als 0 sein)</div>`;
     }
     
     const itemsHtml = invoiceData.items.map((item, index) => {
@@ -136,29 +136,29 @@ const InvoiceEditor = () => {
       const price = Number(item.price);
       const total = quantity * price;
       const isEven = index % 2 === 0;
-      const rowClass = isEven ? 'bg-gray-50' : '';
-  
+      const rowClass = isEven ? 'bg-[#16232B]' : 'bg-[#1E2A36]';
+
       return `
           <tr class="${rowClass}">
-              <td class="py-3 px-4 text-gray-800">${item.description}</td>
-              <td class="text-right py-3 px-4 text-gray-600">${quantity.toFixed(2)} ${item.unit}</td>
-              <td class="text-right py-3 px-4 text-gray-600">${formatAmount(price)}</td>
-              <td class="text-right py-3 px-4 font-semibold text-gray-800">${formatAmount(total)}</td>
+              <td class="py-3 px-4 text-[#E2E8F0]">${item.description}</td>
+              <td class="text-right py-3 px-4 text-[#94A3B8]">${quantity.toFixed(2)} ${item.unit}</td>
+              <td class="text-right py-3 px-4 text-[#94A3B8]">${formatAmount(price)}</td>
+              <td class="text-right py-3 px-4 font-semibold text-[#00E5FF]">${formatAmount(total)}</td>
           </tr>
       `;
     }).join('');
     
-    const projectLineHtml = invoiceData.projectName 
-      ? `<p><span class="font-semibold text-gray-600">Projekt:</span> ${invoiceData.projectName}</p>`
+    const projectLineHtml = invoiceData.projectName
+      ? `<p><span class="font-semibold text-[#94A3B8]">Projekt:</span> ${invoiceData.projectName}</p>`
       : '';
-  
+
     const totalsBlockHtml = invoiceData.vatEnabled
       ? `<div class="text-sm">
-          <div class="flex justify-between py-1 text-gray-600"><span>Zwischentotal</span><span>${invoiceData.currency} ${formatAmount(invoiceData.subtotal)}</span></div>
-          <div class="flex justify-between py-1 text-gray-600"><span>MwSt.</span><span>${invoiceData.currency} ${formatAmount(invoiceData.vatAmount)}</span></div>
-          <div class="flex justify-between py-2 font-bold text-lg text-gray-900 border-t border-gray-300 mt-2"><span>Total</span><span>${invoiceData.currency} ${formatAmount(invoiceData.total)}</span></div>
+          <div class="flex justify-between py-1 text-[#94A3B8]"><span>Zwischentotal</span><span>${invoiceData.currency} ${formatAmount(invoiceData.subtotal)}</span></div>
+          <div class="flex justify-between py-1 text-[#94A3B8]"><span>MwSt.</span><span>${invoiceData.currency} ${formatAmount(invoiceData.vatAmount)}</span></div>
+          <div class="flex justify-between py-2 font-bold text-xl text-[#00E5FF] border-t border-[#64748B]/50 mt-2"><span>Total</span><span>${invoiceData.currency} ${formatAmount(invoiceData.total)}</span></div>
          </div>`
-      : `<div class="flex justify-between py-2 font-bold text-lg text-gray-900"><span>Total</span><span>${invoiceData.currency} ${formatAmount(invoiceData.total)}</span></div>`;
+      : `<div class="flex justify-between py-2 font-bold text-xl text-[#00E5FF]"><span>Total</span><span>${invoiceData.currency} ${formatAmount(invoiceData.total)}</span></div>`;
   
     return invoiceData.htmlTemplate
       .replace(/{{logoImage}}/g, logoHtml)
@@ -247,53 +247,151 @@ const InvoiceEditor = () => {
   };
 
   if (!invoiceData || !settings) {
-    return <div className="text-center p-10">Lade Rechnungsdaten...</div>;
+    return (
+      <div className="space-y-8">
+        <div className="space-y-3">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-[#1E2A36] rounded-xl animate-pulse" />
+            <div className="space-y-2">
+              <div className="h-10 w-64 bg-[#16232B] rounded-xl animate-pulse" />
+              <div className="h-5 w-80 bg-[#64748B]/30 rounded-lg animate-pulse" />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="h-80 bg-[#16232B] rounded-2xl animate-pulse" />
+              <div className="h-96 bg-[#16232B] rounded-2xl animate-pulse" />
+            </div>
+            <div className="h-[500px] bg-[#16232B] rounded-2xl animate-pulse" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div>
         {isZoomModalOpen && (
-            <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setIsZoomModalOpen(false)}>
-                <div className="relative bg-white rounded-md shadow-2xl overflow-y-auto h-[95vh]" onClick={e => e.stopPropagation()}>
-                    <button 
-                        onClick={() => setIsZoomModalOpen(false)} 
-                        className="sticky top-2 right-2 z-10 p-1.5 bg-gray-800 text-white rounded-full hover:bg-gray-700 transition-colors"
-                        aria-label="Vorschau schliessen"
-                    >
-                        <X size={24} />
-                    </button>
-                    <div dangerouslySetInnerHTML={{ __html: fullHtml }} />
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setIsZoomModalOpen(false)}>
+                <div
+                    className="relative bg-gradient-to-br from-[#111B22]/95 to-[#16232B]/90 rounded-3xl shadow-2xl border border-[#1E2A36] overflow-hidden w-full max-w-6xl h-[95vh]"
+                    onClick={e => e.stopPropagation()}
+                >
+                    <div className="absolute top-4 right-4 z-20 p-1.5 bg-[#0B141A] border border-[#1E2A36] text-[#64748B] rounded-xl hover:text-[#E2E8F0] hover:border-[#00E5FF]/50 transition-all duration-200 opacity-80 hover:opacity-100">
+                        <X size={20} className="cursor-pointer" onClick={() => setIsZoomModalOpen(false)} />
+                    </div>
+
+                    <div className="p-4 border-b border-[#64748B]/30">
+                        <div className="flex items-center gap-3">
+                            <div className="p-3 rounded-xl bg-gradient-to-br from-[#00E5FF]/20 to-[#34F0B1]/10 border border-[#1E2A36]">
+                                <FileText className="h-6 w-6 text-[#00E5FF]" />
+                            </div>
+                            <div>
+                                <h3 className="text-2xl font-bold text-[#E2E8F0]">Vollbild-Vorschau</h3>
+                                <p className="text-[#94A3B8] text-sm">Live-Rechnungsvorschau - klicke ausserhalb um zu schliessen</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="overflow-y-auto h-full p-6">
+                        <div className="bg-white rounded-lg shadow-inner p-6 min-h-[600px]">
+                            <div dangerouslySetInnerHTML={{ __html: fullHtml }} />
+                        </div>
+                    </div>
                 </div>
             </div>
         )}
 
-        <div className="flex justify-between items-center mb-6">
-            <h2 className="text-3xl font-bold text-white">{id ? 'Rechnung bearbeiten' : 'Neue Rechnung erstellen'}</h2>
-            <div className="flex items-center gap-2">
-                 <button
-                    onClick={handlePrintPdf}
-                    disabled={isPrinting}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 flex items-center gap-2 disabled:bg-gray-500"
-                >
-                    <Download size={16} />
-                    {isPrinting ? 'Generiere PDF...' : 'PDF herunterladen'}
-                </button>
-                <button onClick={handleSave} disabled={isSaving} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 disabled:bg-gray-500">
-                    {isSaving ? 'Speichern...' : 'Speichern & Schliessen'}
-                </button>
+        {/* Header with Title and Action Button */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-[#00E5FF]/20 to-[#34F0B1]/10 border border-[#1E2A36]">
+              <FileText className="h-8 w-8 text-[#00E5FF]" />
             </div>
+            <div>
+              <h1 className="text-4xl font-bold mb-1" style={{
+                  background: 'linear-gradient(135deg, #E2E8F0 0%, #94A3B8 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  lineHeight: '1.1',
+                  display: 'inline-block',
+                  paddingBottom: '2px'
+              }}>
+                {id ? 'Rechnung bearbeiten' : 'Neue Rechnung erstellen'}
+              </h1>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <Button
+              onClick={handlePrintPdf}
+              isLoading={isPrinting}
+              className="bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/25 hover:shadow-xl hover:shadow-[#00E5FF]/30"
+              radius="lg"
+              size="lg"
+              startContent={<Download className="h-5 w-5" />}
+              variant="solid"
+            >
+              {!isPrinting && 'PDF exportieren'}
+            </Button>
+            <Button
+              as={"button" as any}
+              onClick={handleSave}
+              isLoading={isSaving}
+              className="bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/25 hover:shadow-xl hover:shadow-[#00E5FF]/30"
+              radius="lg"
+              size="lg"
+            >
+              {!isSaving && (id ? 'Speichern' : 'Erstellen')}
+            </Button>
+          </div>
         </div>
+
+        <div className="h-px bg-gradient-to-r from-transparent via-[#00E5FF]/30 to-transparent mb-8" />
         
         <main className="flex flex-col lg:flex-row gap-6">
             <div className="flex-1 flex flex-col gap-6">
-              <InvoiceForm data={invoiceData} customers={customers} onDataChange={handleDataChange} defaultVatRate={settings.vatRate} />
-              <HtmlEditor template={invoiceData.htmlTemplate} onTemplateChange={handleTemplateChange} />
+              <div className="bg-gradient-to-br from-[#111B22]/80 to-[#16232B]/60 p-6 rounded-2xl backdrop-blur-xl shadow-2xl border border-[#1E2A36]">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#00E5FF]/20 to-[#34F0B1]/10 border border-[#1E2A36]">
+                    <FileText className="h-5 w-5 text-[#00E5FF]" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-[#E2E8F0]">Rechnungsdaten</h2>
+                </div>
+                <InvoiceForm data={invoiceData} customers={customers} onDataChange={handleDataChange} defaultVatRate={settings.vatRate} />
+              </div>
+
+              <div className="bg-gradient-to-br from-[#111B22]/80 to-[#16232B]/60 p-6 rounded-2xl backdrop-blur-xl shadow-2xl border border-[#1E2A36]">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#00E5FF]/20 to-[#34F0B1]/10 border border-[#1E2A36]">
+                    <FileText className="h-5 w-5 text-[#00E5FF]" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-[#E2E8F0]">HTML-Template</h2>
+                </div>
+                <HtmlEditor template={invoiceData.htmlTemplate} onTemplateChange={handleTemplateChange} />
+              </div>
             </div>
+
             <div className="w-full lg:w-[420px] flex-shrink-0">
-              <InvoicePreview 
-                  processedTemplate={fullHtml}
-                  onZoomClick={() => setIsZoomModalOpen(true)}
-              />
+              <div className="sticky top-8 space-y-4">
+                <div className="bg-gradient-to-br from-[#111B22]/80 to-[#16232B]/60 p-6 rounded-2xl backdrop-blur-xl shadow-2xl border border-[#1E2A36]">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 rounded-lg bg-gradient-to-br from-[#00E5FF]/20 to-[#34F0B1]/10 border border-[#1E2A36]">
+                      <FileText className="h-5 w-5 text-[#00E5FF]" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-[#E2E8F0]">Live-Vorschau</h2>
+                  </div>
+
+                  <InvoicePreview
+                      processedTemplate={fullHtml}
+                      onZoomClick={() => setIsZoomModalOpen(true)}
+                  />
+                </div>
+              </div>
             </div>
         </main>
     </div>

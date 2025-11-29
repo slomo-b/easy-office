@@ -12,15 +12,13 @@ const StatCard = ({
     value,
     subtitle,
     color,
-    icon,
-    trend
+    icon
 }: {
     title: string;
     value: string;
     subtitle?: string;
     color: 'success' | 'warning' | 'danger' | 'primary' | 'default';
     icon: React.ReactNode;
-    trend?: 'up' | 'down' | 'neutral';
 }) => {
     const getGradient = (color: string) => {
         switch (color) {
@@ -77,11 +75,6 @@ const StatCard = ({
                     <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                             <p className="text-xs font-medium text-[#94A3B8] uppercase tracking-wider">{title}</p>
-                            {trend && (
-                                <div className={`flex items-center gap-1 ${trend === 'up' ? 'text-[#34F0B1]' : trend === 'down' ? 'text-[#F87171]' : 'text-[#94A3B8]'}`}>
-                                    {trend === 'up' ? <TrendingUp className="h-3 w-3" /> : trend === 'down' ? <TrendingDown className="h-3 w-3" /> : null}
-                                </div>
-                            )}
                         </div>
                         <p className={`text-2xl font-bold bg-gradient-to-r ${getGradient(color)} bg-clip-text text-transparent mb-1`}>
                             {value}
@@ -369,10 +362,10 @@ const Overview = () => {
     }
 
     return (
-        <div className="space-y-8">
+        <div>
             {/* Header */}
             <div className="space-y-2">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 mb-4">
                     <div className="p-3 rounded-xl bg-gradient-to-br from-[#00E5FF]/20 to-[#34F0B1]/10 border border-[#1E2A36]">
                         <Calendar className="h-8 w-8 text-[#00E5FF]" />
                     </div>
@@ -390,18 +383,17 @@ const Overview = () => {
                         </h1>
                     </div>
                 </div>
-                <div className="h-px bg-gradient-to-r from-transparent via-[#00E5FF]/30 to-transparent" />
+                <div className="h-px bg-gradient-to-r from-transparent via-[#00E5FF]/30 to-transparent mb-8" />
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                 <StatCard
                     title="Einnahmen (bezahlt)"
                     subtitle={`${paidInvoices.length} Rechnungen`}
                     value={`CHF ${totalIncome.toFixed(2)}`}
                     color="success"
                     icon={<TrendingUp className="h-8 w-8" />}
-                    trend="up"
                 />
                 <StatCard
                     title="Offene Rechnungen"
@@ -416,7 +408,6 @@ const Overview = () => {
                     value={`CHF ${totalExpenses.toFixed(2)}`}
                     color="danger"
                     icon={<TrendingDown className="h-8 w-8" />}
-                    trend="down"
                 />
                 <StatCard
                     title="Gewinn (Cashflow)"
@@ -424,7 +415,6 @@ const Overview = () => {
                     value={`CHF ${profit.toFixed(2)}`}
                     color={profit >= 0 ? 'success' : 'danger'}
                     icon={<DollarSign className="h-8 w-8" />}
-                    trend={profit >= 0 ? 'up' : 'down'}
                 />
             </div>
 

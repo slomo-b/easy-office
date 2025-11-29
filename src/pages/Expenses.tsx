@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Input, Button, Spinner } from '@heroui/react';
+import { Input, Button } from '@heroui/react';
 import { ExpenseData, RecurringExpenseData } from '../types';
 import { getExpenses, deleteExpense, saveExpense, createNewExpense } from '../services/expenseService';
 import { getRecurringExpenses, deleteRecurringExpense, saveRecurringExpense, calculateNextDueDate } from '../services/recurringExpenseService';
 import { Repeat, Search, Plus, DollarSign, CreditCard } from 'lucide-react';
-import ExpenseList from '../../components/ExpenseList';
+import ExpenseList from '../components/ExpenseList';
 
 export type CombinedExpense = 
     (ExpenseData & { type: 'one-time'; sortDate: string }) | 
@@ -218,23 +218,15 @@ const Expenses = () => {
   const paidExpenses = expenses.filter(e => e.status === 'paid').length;
 
   return (
-    <div className="space-y-8">
+    <div>
       {/* Header with Title and Action Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
         <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-[#FC5445]/20 to-[#F97316]/10 border border-[#1E2A36]">
-            <DollarSign className="h-8 w-8 text-[#FC5445]" />
+          <div className="p-3 rounded-xl bg-gradient-to-br from-[#F87171]/20 to-[#EF4444]/10 border border-[#1E2A36]">
+            <DollarSign className="h-8 w-8 text-[#F87171]" />
           </div>
           <div>
-            <h1 className="text-4xl font-bold mb-1" style={{
-                background: 'linear-gradient(135deg, #E2E8F0 0%, #94A3B8 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                lineHeight: '1.1',
-                display: 'inline-block',
-                paddingBottom: '2px'
-            }}>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-[#E2E8F0] to-[#94A3B8] bg-clip-text text-transparent mb-1">
               Ausgaben
             </h1>
           </div>
@@ -244,7 +236,7 @@ const Expenses = () => {
           <Button
             as={Link}
             to="/recurring-expense/new"
-            className="bg-gradient-to-r from-[#F97316] to-[#FC5445] text-white shadow-lg shadow-[#FC5445]/25 hover:shadow-xl hover:shadow-[#FC5445]/30"
+            className="bg-gradient-to-r from-[#F87171] to-[#EF4444] text-white shadow-lg shadow-[#F87171]/25 hover:shadow-xl hover:shadow-[#F87171]/30"
             radius="lg"
             size="lg"
             startContent={<Repeat className="h-5 w-5" />}
@@ -264,7 +256,7 @@ const Expenses = () => {
         </div>
       </div>
 
-      <div className="h-px bg-gradient-to-r from-transparent via-[#FC5445]/30 to-transparent" />
+      <div className="h-px bg-gradient-to-r from-transparent via-[#F87171]/30 to-transparent mb-8" />
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -280,12 +272,12 @@ const Expenses = () => {
 
         <div className="bg-gradient-to-br from-[#111B22]/80 to-[#16232B]/60 border border-[#1E2A36] rounded-xl p-4 backdrop-blur-xl">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#F9174A] to-[#FC5445] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#F87171] to-[#EF4444] flex items-center justify-center">
               <div className="w-3 h-3 bg-white rounded-full" />
             </div>
             <div>
               <p className="text-sm text-[#64748B] uppercase tracking-wider">Fällig</p>
-              <p className="text-2xl font-bold text-[#FC5445]">{dueExpenses}</p>
+              <p className="text-2xl font-bold text-[#F87171]">{dueExpenses}</p>
             </div>
           </div>
         </div>
@@ -340,7 +332,7 @@ const Expenses = () => {
 
         {/* Status Filter Tabs */}
         <div className="relative">
-          <div className="flex items-center gap-2 bg-[#16232B] border-2 border-[#1E2A36] rounded-2xl p-2 shadow-xl h-full">
+          <div className="flex items-center gap-2 bg-[#16232B] border-2 border-[#1E2A36] rounded-2xl p-2 shadow-xl">
             {/* Tab: Alle */}
             <button
               onClick={() => setStatusFilter('all')}
@@ -363,12 +355,12 @@ const Expenses = () => {
               onClick={() => setStatusFilter('due')}
               className={`relative px-4 py-2 rounded-xl font-medium transition-all duration-300 flex items-center gap-2 ${
                 statusFilter === 'due'
-                  ? 'bg-gradient-to-r from-[#F9174A] to-[#FC5445] text-white shadow-lg scale-105'
+                  ? 'bg-gradient-to-r from-[#F87171] to-[#EF4444] text-white shadow-lg scale-105'
                   : 'text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-[#1E2A36]'
               }`}
             >
               <div className={`w-2 h-2 rounded-full transition-colors duration-300 ${
-                statusFilter === 'due' ? 'bg-white' : 'bg-[#FC5445]'
+                statusFilter === 'due' ? 'bg-white' : 'bg-[#F87171]'
               }`} />
               Fällig
             </button>
@@ -389,14 +381,14 @@ const Expenses = () => {
 
           {/* Filter Results Counter */}
           {statusFilter !== 'all' && (
-            <div className="absolute -top-2 -right-2 bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white text-xs px-2 py-1 rounded-full font-medium shadow-lg">
+            <div className="absolute -top-2 -right-2 bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white text-xs px-2 py-1 rounded-full font-medium shadow-lg min-w-[20px] text-center">
               {statusFilter === 'paid' ? paidExpenses : dueExpenses}
             </div>
           )}
         </div>
       </div>
 
-      <ExpenseList
+      <ExpenseList 
         expenses={filteredAndSortedExpenses}
         onDelete={handleDelete}
         onStatusToggle={handleStatusToggle}

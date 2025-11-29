@@ -4,7 +4,7 @@ import Sidebar from './components/Sidebar';
 import Overview from './pages/Overview';
 // FIX: Corrected import path for Invoices component
 // FIX: Corrected import path for Invoices component - should be Invoices.tsx, not Dashboard.tsx
-import Invoices from '../pages/Invoices';
+import Invoices from './pages/Invoices';
 import InvoiceEditor from './pages/InvoiceEditor';
 import Expenses from './pages/Expenses';
 import ExpenseEditor from './pages/ExpenseEditor';
@@ -62,7 +62,7 @@ function App() {
           </div>
           {/* === END: Robuster Titelleisten-Container === */}
 
-          <main className="flex-1 overflow-x-hidden overflow-y-auto p-6">
+          <main className="flex-1 overflow-x-hidden overflow-y-auto px-6">
             <Routes>
               <Route path="/" element={<Overview />} />
               <Route path="/invoices" element={<Invoices />} />
