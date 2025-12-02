@@ -8,8 +8,10 @@ import { getSettings } from '../services/settingsService';
 import { getExpenses, createNewExpense, saveExpense } from '../services/expenseService';
 import ExpenseForm from '../components/ExpenseForm';
 import { createInvoiceFromProject } from '../services/invoiceService';
-import { Play, Square, PlusCircle, Trash2, Clock, ChevronDown, FolderOpen, Plus } from 'lucide-react';
-import { Button } from '@heroui/react';
+import { Play, Square, PlusCircle, Trash2, Clock, ChevronDown, FolderOpen, Plus, X, Check, DollarSign, Save, Unlock, Zap, CheckCircle, FileText } from 'lucide-react';
+import { Button, Input, Textarea, Chip, Select, SelectItem, Spinner } from '@heroui/react';
+import { useConfirm } from '../context/ConfirmContext';
+import PageHeader from '../components/PageHeader';
 
 const formatDuration = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -51,6 +53,7 @@ const ProjectEditor = () => {
     const [isTimeLogModalOpen, setIsTimeLogModalOpen] = useState(false);
     const [selectedTaskForTimeLog, setSelectedTaskForTimeLog] = useState<TaskData | null>(null);
     const [manualLog, setManualLog] = useState({ start: '', end: '' });
+    const { confirm } = useConfirm();
 
     const loadData = useCallback(async () => {
         const [fetchedCustomers, fetchedServices, allExpenses, fetchedSettings] = await Promise.all([getCustomers(), getServices(), getExpenses(), getSettings()]);
@@ -86,13 +89,15 @@ const ProjectEditor = () => {
         let interval: number | undefined;
         if (activeTimerTaskId && project) {
             const activeTask = project.tasks.find(t => t.id === activeTimerTaskId);
-            const runningLog = activeTask?.timeLogs.find(l => l.endTime === null);
-            if (runningLog) {
-                const alreadyTrackedMs = calculateTaskDuration(activeTask);
-                interval = window.setInterval(() => {
-                    const elapsed = new Date().getTime() - new Date(runningLog.startTime).getTime();
-                    setElapsedTime(alreadyTrackedMs + elapsed);
-                }, 1000);
+            if (activeTask) {
+                const runningLog = activeTask.timeLogs.find(l => l.endTime === null);
+                if (runningLog) {
+                    const alreadyTrackedMs = calculateTaskDuration(activeTask);
+                    interval = window.setInterval(() => {
+                        const elapsed = new Date().getTime() - new Date(runningLog.startTime).getTime();
+                        setElapsedTime(alreadyTrackedMs + elapsed);
+                    }, 1000);
+                }
             }
         }
         return () => clearInterval(interval);
@@ -168,8 +173,8 @@ const ProjectEditor = () => {
         setNewTaskData({ title: '', description: '', serviceId: '' });
     };
 
-    const handleDeleteTask = (taskId: string) => {
-        if (project && window.confirm("Aufgabe endgültig löschen?")) {
+    const handleDeleteTask = async (taskId: string) => {
+        if (project && await confirm("Aufgabe endgültig löschen?")) {
             if (activeTimerTaskId === taskId) {
                 setActiveTimerTaskId(null);
                 setElapsedTime(0);
@@ -202,7 +207,7 @@ const ProjectEditor = () => {
     };
     
     const handleDeleteProject = async () => {
-        if (project && id && window.confirm("Sind Sie sicher, dass Sie dieses Projekt und alle zugehörigen Aufgaben löschen möchten?")) {
+        if (project && id && await confirm("Sind Sie sicher, dass Sie dieses Projekt und alle zugehörigen Aufgaben löschen möchten?")) {
             await deleteProject(id);
             navigate('/projects');
         }
@@ -307,12 +312,16 @@ const ProjectEditor = () => {
         const totalDurationMs = isRunning ? elapsedTime : calculateTaskDuration(task);
 
         return (
-            <div draggable onDragStart={(e) => e.dataTransfer.setData('taskId', task.id)} className={`bg-gradient-to-br from-[#111B22]/80 to-[#16232B]/60 p-4 rounded-2xl shadow-2xl border border-[#1E2A36] space-y-3 relative backdrop-blur-xl hover:shadow-[#00E5FF]/10 transition-all duration-300 cursor-move group ${isRunning ? 'ring-2 ring-[#00E5FF]/50' : ''}`}>
-                <div className="flex justify-between items-start">
-                    <h4 className="font-bold text-[#E2E8F0] text-sm pr-8 leading-tight">{task.title}</h4>
+            <div 
+                draggable 
+                onDragStart={(e) => e.dataTransfer.setData('taskId', task.id)} 
+                className={`bg-[#16232B]/40 p-4 rounded-xl border border-[#2A3C4D]/50 hover:border-[#00E5FF]/30 transition-all duration-200 cursor-move group backdrop-blur-sm ${isRunning ? 'ring-1 ring-[#00E5FF]/50 border-[#00E5FF]/30 bg-[#00E5FF]/5' : ''}`}
+            >
+                <div className="flex justify-between items-start mb-2">
+                    <h4 className={`font-medium text-sm leading-snug ${isRunning ? 'text-[#00E5FF]' : 'text-[#E2E8F0]'}`}>{task.title}</h4>
                     <button
                         onClick={() => handleDeleteTask(task.id)}
-                        className="p-1 text-[#64748B] rounded-lg hover:text-[#F87171] hover:bg-[#F87171]/10 transition-all duration-200 opacity-60 hover:opacity-100"
+                        className="text-[#64748B] hover:text-[#EF4444] transition-colors duration-200 opacity-0 group-hover:opacity-100"
                         title="Aufgabe löschen"
                     >
                         <Trash2 size={14}/>
@@ -320,47 +329,38 @@ const ProjectEditor = () => {
                 </div>
 
                 {task.description && (
-                    <p className="text-xs text-[#94A3B8] leading-relaxed">{task.description}</p>
+                    <p className="text-xs text-[#94A3B8] mb-3 line-clamp-2">{task.description}</p>
                 )}
 
-                <div className="pt-3 border-t border-[#64748B]/30 space-y-3">
+                <div className="flex flex-wrap items-center justify-between mt-3 pt-3 border-t border-[#2A3C4D]/30 gap-2">
                     {service && (
-                        <div className="inline-flex">
-                            <span className="text-xs font-medium bg-gradient-to-r from-[#00E5FF]/20 to-[#34F0B1]/10 text-[#00E5FF] px-3 py-1 rounded-full border border-[#00E5FF]/30">
-                                {service.name}
-                            </span>
-                        </div>
+                        <Chip size="sm" variant="flat" className="h-5 text-[10px] bg-[#1E2A36] border border-[#2A3C4D]/50 text-[#94A3B8]">
+                            {service.name}
+                        </Chip>
                     )}
 
-                    <div className="flex justify-between items-center gap-2">
-                        <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-[#64748B]" />
-                            <span className="text-sm font-mono font-medium text-[#E2E8F0]">{formatDuration(totalDurationMs)}</span>
-                        </div>
-
+                    <div className="flex items-center gap-2 ml-auto">
+                        <span className={`text-xs font-mono ${isRunning ? 'text-[#00E5FF] font-bold' : 'text-[#94A3B8]'}`}>{formatDuration(totalDurationMs)}</span>
+                        
                         <div className="flex items-center gap-1">
                             <button
                                 onClick={() => openManualTimeLogModal(task)}
-                                className="p-1.5 text-[#64748B] rounded-lg hover:text-[#94A3B8] hover:bg-[#94A3B8]/10 transition-all duration-200"
-                                title="Zeit manuell erfassen"
+                                className="p-1 text-[#64748B] hover:text-[#E2E8F0] hover:bg-[#1E2A36] rounded transition-colors"
+                                title="Zeit erfassen"
                             >
                                 <Clock size={14} />
                             </button>
 
                             <button
                                 onClick={() => handleTimerToggle(task.id)}
-                                className={`p-1.5 rounded-lg transition-all duration-200 ${isRunning ? 'text-white bg-gradient-to-r from-[#F87171] to-[#EF4444]' : 'text-[#34F0B1] bg-gradient-to-r from-[#34F0B1]/20 to-[#A7F3D0]/10 hover:from-[#34F0B1]/30 hover:to-[#A7F3D0]/20'}`}
-                                title={isRunning ? 'Timer stoppen' : 'Timer starten'}
+                                className={`p-1 rounded transition-colors ${isRunning ? 'text-[#EF4444] hover:bg-[#EF4444]/10' : 'text-[#00E5FF] hover:bg-[#00E5FF]/10'}`}
+                                title={isRunning ? 'Stop' : 'Start'}
                             >
-                                {isRunning ? <Square size={14} fill="white" /> : <Play size={14} className="ml-0.5"/>}
+                                {isRunning ? <Square size={14} fill="currentColor" /> : <Play size={14} fill="currentColor"/>}
                             </button>
                         </div>
                     </div>
                 </div>
-
-                {isRunning && (
-                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] rounded-full animate-pulse border-2 border-[#0B141A]" />
-                )}
             </div>
         );
     };
@@ -462,50 +462,52 @@ const ProjectEditor = () => {
               </div>
             )}
 
-            {/* Header with Title and Action Button */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-gradient-to-br from-[#00E5FF]/20 to-[#34F0B1]/10 border border-[#1E2A36]">
-                  <FolderOpen className="h-8 w-8 text-[#00E5FF]" />
-                </div>
-                    <h1 className="text-4xl font-bold mb-1" style={{
-                        background: 'linear-gradient(135deg, #E2E8F0 0%, #94A3B8 100%)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
-                        lineHeight: '1.1',
-                        display: 'inline-block',
-                        paddingBottom: '2px'
-                    }}>
-                    {id ? 'Projekt bearbeiten' : 'Neues Projekt erstellen'}
-                    </h1>
-              </div>
-
-              <div className="flex gap-3">
-                {id && (
-                  <Button
-                    color="danger"
-                    variant="solid"
-                    onClick={handleDeleteProject}
-                    className="bg-gradient-to-r from-[#F87171] to-[#EF4444] text-white"
-                  >
-                    Löschen
-                  </Button>
-                )}
-                <Button
-                  as={"button" as any}
-                  onClick={handleSave}
-                  isLoading={isSaving}
-                  className="bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/25 hover:shadow-xl hover:shadow-[#00E5FF]/30"
-                  radius="lg"
-                  size="lg"
-                >
-                  {!isSaving && (id ? 'Speichern' : 'Erstellen')}
-                </Button>
-              </div>
-            </div>
-
-            <div className="h-px bg-gradient-to-r from-transparent via-[#00E5FF]/30 to-transparent mb-8" />
+            <PageHeader
+                title={id ? 'Projekt bearbeiten' : 'Neues Projekt erstellen'}
+                icon={<FolderOpen className="w-6 h-6" />}
+                actions={
+                    <div className="flex items-center gap-3">
+                        {id && (
+                            <>
+                                <Button
+                                    color="danger"
+                                    variant="flat"
+                                    onClick={handleDeleteProject}
+                                    className="text-[#EF4444] bg-[#EF4444]/10 border border-[#EF4444]/20 hover:bg-[#EF4444]/20 hidden md:inline-flex"
+                                    startContent={<Trash2 size={18} />}
+                                >
+                                    Löschen
+                                </Button>
+                                <Button
+                                    color="danger"
+                                    variant="flat"
+                                    onClick={handleDeleteProject}
+                                    className="text-[#EF4444] bg-[#EF4444]/10 border border-[#EF4444]/20 hover:bg-[#EF4444]/20 inline-flex md:hidden"
+                                    isIconOnly
+                                >
+                                    <Trash2 size={18} />
+                                </Button>
+                            </>
+                        )}
+                        <Button
+                            onClick={handleSave}
+                            isLoading={isSaving}
+                            className="bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/20 hover:shadow-[#00E5FF]/40 font-medium hidden md:inline-flex"
+                            startContent={!isSaving && <Save size={18} />}
+                        >
+                            {!isSaving && (id ? 'Speichern' : 'Erstellen')}
+                        </Button>
+                        <Button
+                            onClick={handleSave}
+                            isLoading={isSaving}
+                            className="bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/20 hover:shadow-[#00E5FF]/40 font-medium inline-flex md:hidden"
+                            isIconOnly
+                        >
+                            {isSaving ? <Spinner size="sm" color="white" /> : <Save size={18} />}
+                        </Button>
+                    </div>
+                }
+            />
 
             <main className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                 <div className="xl:col-span-2 space-y-6">
@@ -524,62 +526,84 @@ const ProjectEditor = () => {
                                    key={status}
                                    onDragOver={(e) => e.preventDefault()}
                                    onDrop={(e) => handleTaskDrop(e, status)}
-                                   className="bg-gradient-to-br from-[#16232B]/60 to-[#1E2A36]/40 p-4 rounded-xl border border-[#64748B]/30 backdrop-blur-xl hover:border-[#00E5FF]/30 transition-all duration-300 min-h-[300px]"
+                                   className="bg-[#111B22]/40 p-4 rounded-2xl border border-[#1E2A36] h-full flex flex-col min-h-[400px]"
                                >
-                                   <h4 className="text-center font-bold text-[#E2E8F0] mb-4 text-lg">{title}</h4>
-                                   <div className="space-y-3 mb-4">
+                                   <div className="flex items-center justify-between mb-4 px-1">
+                                       <h4 className="font-bold text-[#E2E8F0] text-sm">{title}</h4>
+                                       <span className="text-xs bg-[#1E2A36] text-[#64748B] px-2 py-0.5 rounded-md border border-[#2A3C4D]">{project.tasks.filter(t => t.status === status).length}</span>
+                                   </div>
+                                   
+                                   <div className="space-y-3 flex-1 overflow-y-auto pr-1">
                                        {project.tasks.filter(t => t.status === status).map(task => <TaskCard key={task.id} task={task} />)}
                                    </div>
 
                                    {showNewTaskFormForStatus === status ? (
-                                       <div className="bg-gradient-to-br from-[#64748B]/20 to-[#64748B]/10 p-4 rounded-xl border border-[#64748B]/20 backdrop-blur-xl">
-                                           <input
-                                               type="text"
+                                       <div className="mt-3 bg-[#16232B] p-4 rounded-xl border border-[#00E5FF]/30 shadow-lg shadow-[#00E5FF]/5 animate-in fade-in zoom-in-95 duration-200">
+                                           <h5 className="text-xs font-semibold text-[#00E5FF] mb-3 uppercase tracking-wider">Neue Aufgabe</h5>
+                                           <Input
                                                placeholder="Aufgabentitel"
                                                value={newTaskData.title}
-                                               onChange={e => setNewTaskData({...newTaskData, title: e.target.value})}
-                                               className="w-full bg-[#16232B] border border-[#64748B]/30 rounded-lg px-3 py-2 text-[#E2E8F0] mb-3 focus:outline-none focus:border-[#00E5FF]/50 transition-all duration-200"
+                                               onValueChange={val => setNewTaskData({...newTaskData, title: val})}
+                                               classNames={{
+                                                   input: "bg-[#111B22] border-0 text-[#E2E8F0] placeholder:text-[#64748B]",
+                                                   inputWrapper: "bg-[#111B22] border border-[#2A3C4D] hover:border-[#00E5FF]/50 focus-within:border-[#00E5FF] mb-3 shadow-none min-h-[36px] h-9 px-3",
+                                               }}
+                                               autoFocus
                                            />
-                                           <textarea
+                                           <Textarea
                                                placeholder="Beschreibung (optional)"
                                                value={newTaskData.description}
-                                               onChange={e => setNewTaskData({...newTaskData, description: e.target.value})}
-                                               className="w-full bg-[#16232B] border border-[#64748B]/30 rounded-lg px-3 py-2 text-[#E2E8F0] mb-3 focus:outline-none focus:border-[#00E5FF]/50 transition-all duration-200"
-                                               rows={2}
+                                               onValueChange={val => setNewTaskData({...newTaskData, description: val})}
+                                               classNames={{
+                                                   input: "bg-[#111B22] border-0 text-[#E2E8F0] placeholder:text-[#64748B]",
+                                                   inputWrapper: "bg-[#111B22] border border-[#2A3C4D] hover:border-[#00E5FF]/50 focus-within:border-[#00E5FF] mb-3 shadow-none py-2 px-3",
+                                               }}
+                                               minRows={2}
                                            />
-                                           <div className="relative mb-3">
-                                            <select
-                                                value={newTaskData.serviceId}
-                                                onChange={e => setNewTaskData({...newTaskData, serviceId: e.target.value})}
-                                                className="w-full appearance-none bg-[#16232B] border border-[#64748B]/30 rounded-lg px-3 py-2 pr-10 text-[#E2E8F0] focus:outline-none focus:border-[#00E5FF]/50 transition-all duration-200"
+                                           <div className="mb-4">
+                                            <Select 
+                                                placeholder="Leistung wählen" 
+                                                selectedKeys={newTaskData.serviceId ? [newTaskData.serviceId] : []}
+                                                onSelectionChange={(keys) => {
+                                                    const val = Array.from(keys)[0] as string;
+                                                    setNewTaskData({...newTaskData, serviceId: val})
+                                                }}
+                                                classNames={{
+                                                    trigger: "bg-[#111B22] border border-[#2A3C4D] hover:border-[#00E5FF]/50 shadow-none min-h-[36px] h-9",
+                                                    value: "text-[#E2E8F0] text-sm",
+                                                    popoverContent: "bg-[#111B22] border border-[#2A3C4D] text-[#E2E8F0]"
+                                                }}
+                                                aria-label="Leistung wählen"
                                             >
-                                                <option value="">-- Leistung --</option>
-                                                {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                            </select>
-                                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[#64748B]"><ChevronDown size={16} /></div>
+                                                {services.map(s => <SelectItem key={s.id} classNames={{base: "text-[#E2E8F0] data-[hover=true]:bg-[#1E2A36] data-[hover=true]:text-[#00E5FF]"}}>{s.name}</SelectItem>)}
+                                            </Select>
                                            </div>
                                            <div className="flex justify-end gap-2">
                                                <Button
                                                    onClick={() => setShowNewTaskFormForStatus(null)}
-                                                   variant="bordered"
+                                                   variant="light"
                                                    size="sm"
-                                                   className="border-[#64748B]/30 text-[#94A3B8] hover:border-[#00E5FF]/40 hover:text-[#E2E8F0]"
+                                                   className="text-[#94A3B8] hover:text-[#E2E8F0] min-w-0 px-3"
                                                >
-                                                   Abbrechen
+                                                   <X size={16} />
                                                </Button>
                                                <Button
                                                    onClick={handleCreateTask}
                                                    size="sm"
-                                                   className="bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/25"
+                                                   className="bg-[#00E5FF] text-black font-medium shadow-lg shadow-[#00E5FF]/20"
+                                                   startContent={<Check size={14} />}
                                                >
-                                                   Speichern
+                                                   Erstellen
                                                </Button>
                                            </div>
                                        </div>
                                    ) : (
-                                       <button onClick={() => setShowNewTaskFormForStatus(status)} className="flex items-center justify-center gap-2 text-[#94A3B8] hover:text-[#00E5FF] p-3 rounded-xl border-2 border-dashed border-[#64748B]/30 hover:border-[#00E5FF]/50 transition-all duration-200 group w-full">
-                                           <PlusCircle size={16} className="group-hover:scale-110 transition-transform duration-200"/>
-                                           <span className="font-medium">Neue Aufgabe</span>
+                                       <button 
+                                            onClick={() => setShowNewTaskFormForStatus(status)} 
+                                            className="mt-3 flex items-center justify-center gap-2 text-[#64748B] hover:text-[#00E5FF] hover:bg-[#00E5FF]/5 border border-dashed border-[#2A3C4D] hover:border-[#00E5FF]/30 px-4 py-3 rounded-xl transition-all duration-200 w-full text-sm font-medium group"
+                                       >
+                                           <PlusCircle size={18} className="group-hover:scale-110 transition-transform"/>
+                                           <span>Aufgabe hinzufügen</span>
                                        </button>
                                    )}
                                </div>
@@ -590,46 +614,57 @@ const ProjectEditor = () => {
                     <div className="bg-gradient-to-br from-[#111B22]/80 to-[#16232B]/60 p-6 rounded-2xl backdrop-blur-xl shadow-2xl border border-[#1E2A36]">
                         <div className="flex justify-between items-center mb-6">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 rounded-lg bg-gradient-to-br from-[#F87171]/20 to-[#EF4444]/10 border border-[#1E2A36]">
+                                <div className="p-2 rounded-lg bg-[#F87171]/10 border border-[#F87171]/20">
                                     <PlusCircle className="h-5 w-5 text-[#F87171]" />
                                 </div>
                                 <h3 className="text-2xl font-bold text-[#E2E8F0]">Projektausgaben</h3>
-                                <span className="text-sm text-[#94A3B8] bg-[#64748B]/20 px-2 py-1 rounded-full">{projectExpenses.length} Ausgaben</span>
+                                <span className="text-sm text-[#94A3B8] bg-[#1E2A36] border border-[#2A3C4D] px-2 py-0.5 rounded-md">{projectExpenses.length} Ausgaben</span>
                             </div>
 
                             {id && (
                                 <Button
                                     onClick={openNewExpenseModal}
-                                    className="bg-gradient-to-r from-[#F87171] to-[#EF4444] text-white shadow-lg shadow-[#F87171]/25 hover:shadow-xl hover:shadow-[#F87171]/30"
-                                    size="lg"
+                                    className="bg-[#F87171] text-white shadow-lg shadow-[#F87171]/20"
+                                    size="md"
+                                    radius="lg"
+                                    startContent={<Plus className="w-4 h-4" />}
                                 >
-                                    Neue Ausgabe
+                                    Ausgabe
                                 </Button>
                             )}
                         </div>
 
                         <div className="space-y-3">
                            {projectExpenses.map(expense => (
-                               <div key={expense.id} className="bg-gradient-to-br from-[#16232B]/60 to-[#1E2A36]/40 p-4 rounded-xl border border-[#64748B]/30 backdrop-blur-xl hover:border-[#F87171]/30 transition-all duration-300">
-                                   <div className="flex justify-between items-start">
-                                       <div className="flex-1">
-                                           <p className="font-bold text-[#E2E8F0] text-sm mb-1">{expense.vendor}</p>
-                                           <p className="text-[#94A3B8] text-xs leading-relaxed">{expense.description}</p>
+                               <div key={expense.id} className="bg-[#16232B]/40 p-4 rounded-xl border border-[#2A3C4D]/50 hover:border-[#F87171]/30 transition-all duration-200 group">
+                                   <div className="flex justify-between items-center">
+                                       <div className="flex items-center gap-3">
+                                            <div className="p-2 rounded-lg bg-[#1E2A36] border border-[#2A3C4D]/50 text-[#F87171]">
+                                                <DollarSign size={16} />
+                                            </div>
+                                            <div>
+                                               <p className="font-medium text-[#E2E8F0] text-sm">{expense.vendor}</p>
+                                               <p className="text-[#94A3B8] text-xs">{expense.description}</p>
+                                            </div>
                                        </div>
-                                       <div className="text-right ml-4">
-                                           <p className="font-mono font-bold text-[#F87171] text-lg">{expense.currency} {Number(expense.amount).toFixed(2)}</p>
-                                           <p className="text-[#64748B] text-xs mt-1">{new Date(expense.date).toLocaleDateString('de-CH')}</p>
+                                       <div className="text-right">
+                                           <p className="font-mono font-bold text-[#F87171] text-sm">{expense.currency} {Number(expense.amount).toFixed(2)}</p>
+                                           <p className="text-[#64748B] text-[10px]">{new Date(expense.date).toLocaleDateString('de-CH')}</p>
                                        </div>
                                    </div>
                                </div>
                            ))}
                            {projectExpenses.length === 0 && (
-                               <div className="text-center py-12">
-                                   <div className="mx-auto w-16 h-16 rounded-xl bg-gradient-to-br from-[#64748B]/20 to-[#64748B]/10 border-2 border-dashed border-[#64748B]/30 flex items-center justify-center mb-4">
-                                       <PlusCircle className="h-8 w-8 text-[#64748B]" />
+                               <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-[#2A3C4D]/30 rounded-xl">
+                                   <div className="w-12 h-12 rounded-full bg-[#16232B] flex items-center justify-center mb-3 text-[#64748B]">
+                                       <FolderOpen size={24} />
                                    </div>
-                                   <p className="text-[#64748B] text-sm font-medium">Keine Ausgaben für dieses Projekt erfasst</p>
-                                   <p className="text-[#64748B]/60 text-xs mt-1">Erstelle deine erste Ausgabe</p>
+                                   <p className="text-[#94A3B8] text-sm font-medium">Keine Ausgaben erfasst</p>
+                                   {id && (
+                                        <button onClick={openNewExpenseModal} className="mt-2 text-xs text-[#F87171] hover:underline">
+                                            Neue Ausgabe hinzufügen
+                                        </button>
+                                   )}
                                </div>
                            )}
                         </div>
@@ -659,34 +694,55 @@ const ProjectEditor = () => {
                         </div>
 
                         <div>
-                            <label className="mb-2 text-sm font-medium text-[#94A3B8] block">Kunde</label>
-                            <div className="relative">
-                              <select
-                                  value={project.customerId}
-                                  onChange={e => handleProjectDataChange('customerId', e.target.value)}
-                                  className="w-full appearance-none bg-[#16232B] border border-[#64748B]/30 rounded-xl px-4 py-3 pr-10 text-[#E2E8F0] focus:outline-none focus:border-[#00E5FF]/50 focus:ring-2 focus:ring-[#00E5FF]/20 transition-all duration-200"
-                              >
-                                  <option value="">-- Kunde auswählen --</option>
-                                  {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                              </select>
-                              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-[#64748B]"><ChevronDown size={20} /></div>
-                            </div>
+                            <Select
+                                label="Kunde"
+                                placeholder="Kunde auswählen"
+                                selectedKeys={project.customerId ? [project.customerId] : []}
+                                onSelectionChange={(keys) => handleProjectDataChange('customerId', Array.from(keys)[0] as string)}
+                                classNames={{
+                                    label: "text-sm font-medium text-[#94A3B8]",
+                                    trigger: "bg-[#16232B] border border-[#64748B]/30 hover:border-[#00E5FF]/50 text-[#E2E8F0]",
+                                    value: "text-[#E2E8F0]",
+                                    popoverContent: "bg-[#16232B] border border-[#2A3C4D] text-[#E2E8F0]"
+                                }}
+                                labelPlacement="outside"
+                            >
+                                {customers.map(c => <SelectItem key={c.id} classNames={{base: "text-[#E2E8F0] data-[hover=true]:bg-[#1E2A36] data-[hover=true]:text-[#00E5FF]"}}>{c.name}</SelectItem>)}
+                            </Select>
                         </div>
 
                         <div>
-                            <label className="mb-2 text-sm font-medium text-[#94A3B8] block">Status</label>
-                            <div className="relative">
-                              <select
-                                  value={project.status}
-                                  onChange={e => handleProjectDataChange('status', e.target.value as ProjectData['status'])}
-                                  className="w-full appearance-none bg-[#16232B] border border-[#64748B]/30 rounded-xl px-4 py-3 pr-10 text-[#E2E8F0] focus:outline-none focus:border-[#00E5FF]/50 focus:ring-2 focus:ring-[#00E5FF]/20 transition-all duration-200"
-                              >
-                                  <option value="open">🔓 Offen</option>
-                                  <option value="in-progress">⚡ In Arbeit</option>
-                                  <option value="done">✅ Erledigt</option>
-                              </select>
-                              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-[#64748B]"><ChevronDown size={20} /></div>
-                            </div>
+                            <Select
+                                label="Status"
+                                selectedKeys={project.status ? [project.status] : []}
+                                onSelectionChange={(keys) => handleProjectDataChange('status', Array.from(keys)[0] as string)}
+                                classNames={{
+                                    label: "text-sm font-medium text-[#94A3B8]",
+                                    trigger: "bg-[#16232B] border border-[#64748B]/30 hover:border-[#00E5FF]/50 text-[#E2E8F0]",
+                                    value: "text-[#E2E8F0]",
+                                    popoverContent: "bg-[#16232B] border border-[#2A3C4D] text-[#E2E8F0]"
+                                }}
+                                labelPlacement="outside"
+                            >
+                                <SelectItem key="open" textValue="Offen" classNames={{base: "text-[#E2E8F0] data-[hover=true]:bg-[#1E2A36] data-[hover=true]:text-[#00E5FF]"}}>
+                                    <div className="flex items-center gap-2">
+                                        <Unlock size={16} />
+                                        <span>Offen</span>
+                                    </div>
+                                </SelectItem>
+                                <SelectItem key="in-progress" textValue="In Arbeit" classNames={{base: "text-[#E2E8F0] data-[hover=true]:bg-[#1E2A36] data-[hover=true]:text-[#00E5FF]"}}>
+                                    <div className="flex items-center gap-2">
+                                        <Zap size={16} />
+                                        <span>In Arbeit</span>
+                                    </div>
+                                </SelectItem>
+                                <SelectItem key="done" textValue="Erledigt" classNames={{base: "text-[#E2E8F0] data-[hover=true]:bg-[#1E2A36] data-[hover=true]:text-[#00E5FF]"}}>
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle size={16} />
+                                        <span>Erledigt</span>
+                                    </div>
+                                </SelectItem>
+                            </Select>
                         </div>
 
                         <div>
@@ -707,11 +763,12 @@ const ProjectEditor = () => {
                                 <Button
                                     onClick={handleCreateInvoice}
                                     disabled={isSaving || project.tasks.length === 0}
-                                    className="w-full bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/25 hover:shadow-xl hover:shadow-[#00E5FF]/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/20 hover:shadow-[#00E5FF]/40 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                                     size="lg"
                                     radius="lg"
+                                    startContent={<FileText size={20} />}
                                 >
-                                    📄 Rechnung erstellen
+                                    Rechnung erstellen
                                 </Button>
                             </div>
                         )}
@@ -723,3 +780,4 @@ const ProjectEditor = () => {
 };
 
 export default ProjectEditor;
+

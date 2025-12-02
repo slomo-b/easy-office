@@ -5,6 +5,7 @@ import { ServiceData } from '../types';
 import { getServiceById, saveService, createNewService } from '../services/serviceService';
 import ServiceForm from '../components/ServiceForm';
 import { Briefcase, Save, X } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
 
 const ServiceEditor = () => {
   const { id } = useParams<{ id: string }>();
@@ -65,30 +66,31 @@ const ServiceEditor = () => {
 
   return (
     <div>
-        {/* Header with Title */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-[#83D6D7]/20 to-[#00E5FF]/10 border border-[#1E2A36]">
-              <Briefcase className="h-8 w-8 text-[#83D6D7]" />
-            </div>
-            <div>
-              <h1 className="text-4xl font-bold mb-1" style={{
-                  background: 'linear-gradient(135deg, #E2E8F0 0%, #94A3B8 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  lineHeight: '1.1',
-                  display: 'inline-block',
-                  paddingBottom: '2px'
-              }}>
-                {id ? 'Leistung bearbeiten' : 'Neue Leistung anlegen'}
-              </h1>
-            </div>
-          </div>
-        </div>
-
-        {/* Gradient Line Separator */}
-        <div className="h-px bg-gradient-to-r from-transparent via-[#00E5FF]/30 to-transparent mb-8" />
+        <PageHeader
+            title={id ? 'Leistung bearbeiten' : 'Neue Leistung anlegen'}
+            icon={<Briefcase className="h-6 w-6" />}
+            actions={
+                <>
+                    <Button
+                        onClick={() => navigate('/services')}
+                        className="bg-[#16232B] border border-[#64748B]/30 text-[#E2E8F0] hover:bg-[#1E2A36] hover:border-[#64748B]/50 font-medium"
+                        variant="solid"
+                        startContent={<X size={18} />}
+                    >
+                        Abbrechen
+                    </Button>
+                    <Button
+                        onClick={handleSave}
+                        isLoading={isSaving}
+                        className="bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/20 hover:shadow-[#00E5FF]/40 font-medium"
+                        variant="solid"
+                        startContent={!isSaving && <Save size={18} />}
+                    >
+                        {!isSaving && (id ? 'Speichern' : 'Erstellen')}
+                    </Button>
+                </>
+            }
+        />
 
         {/* Main Content */}
         <main className="max-w-2xl mx-auto">
@@ -106,32 +108,6 @@ const ServiceEditor = () => {
             />
           </div>
         </main>
-
-        {/* Action Button */}
-        <div className="flex flex-col sm:flex-row justify-between gap-4 mt-8">
-          <Button
-            onClick={() => navigate('/services')}
-            className="bg-[#16232B] border border-[#64748B]/30 text-[#E2E8F0] hover:bg-[#1E2A36] hover:border-[#64748B]/50"
-            variant="solid"
-            size="lg"
-            radius="lg"
-            startContent={<X className="h-5 w-5" />}
-          >
-            Abbrechen
-          </Button>
-
-          <Button
-            onClick={handleSave}
-            isLoading={isSaving}
-            className="bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/25 hover:shadow-xl hover:shadow-[#00E5FF]/30"
-            variant="solid"
-            size="lg"
-            radius="lg"
-            startContent={!isSaving && <Save className="h-5 w-5" />}
-          >
-            {!isSaving && (id ? 'Änderungen speichern' : 'Leistung erstellen')}
-          </Button>
-        </div>
     </div>
   );
 };

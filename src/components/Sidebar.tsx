@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Button, Image } from '@heroui/react';
+import { Button, Image, Tooltip } from '@heroui/react';
 import {
   LayoutDashboard,
   KanbanSquare,
@@ -14,41 +14,39 @@ import {
 } from 'lucide-react';
 
 const NavItem = ({ to, icon, label, isCollapsed }: { to: string, icon: React.ReactNode, label: string, isCollapsed: boolean }) => {
-  const [isHovered, setIsHovered] = React.useState(false);
-  
   return (
-    <div className="relative">
-      <NavLink
-        to={to}
-        end={to === '/'}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        className={({ isActive }) =>
-          `flex items-center px-4 py-3 rounded-xl transition-all duration-300 group relative overflow-hidden ${
-            isActive 
-              ? 'bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/25' 
-              : 'text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-[#16232B]'
-          } ${isCollapsed ? 'justify-center' : ''}`
-        }
-      >
-          <div className="relative z-10">
-            {icon}
-          </div>
-          
-          {!isCollapsed && (
-            <span className="ml-3 whitespace-nowrap font-medium relative z-10">
-              {label}
-            </span>
-          )}
-      </NavLink>
-      
-      {isCollapsed && isHovered && (
-        <div className="absolute left-16 bg-[#111B22] text-[#E2E8F0] px-3 py-2 rounded-lg shadow-xl pointer-events-none whitespace-nowrap z-50 border border-[#1E2A36]">
-          {label}
-          <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-[#111B22] rotate-45 border-l border-b border-[#1E2A36]" />
-        </div>
-      )}
-    </div>
+    <Tooltip 
+      content={label} 
+      placement="right" 
+      isDisabled={!isCollapsed}
+      classNames={{
+        content: "bg-[#111B22] text-[#E2E8F0] border border-[#1E2A36] shadow-xl"
+      }}
+    >
+      <div className="relative">
+        <NavLink
+          to={to}
+          end={to === '/'}
+          className={({ isActive }) =>
+            `flex items-center px-4 py-3 rounded-xl transition-all duration-300 group relative overflow-hidden ${
+              isActive 
+                ? 'bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/25' 
+                : 'text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-[#16232B]'
+            } ${isCollapsed ? 'justify-center' : ''}`
+          }
+        >
+            <div className="relative z-10">
+              {icon}
+            </div>
+            
+            {!isCollapsed && (
+              <span className="ml-3 whitespace-nowrap font-medium relative z-10">
+                {label}
+              </span>
+            )}
+        </NavLink>
+      </div>
+    </Tooltip>
   );
 };
 

@@ -10,7 +10,8 @@ import { generateQrCode } from '../services/qrBillService';
 import InvoiceForm from '../components/InvoiceForm';
 import InvoicePreview from '../components/InvoicePreview';
 import HtmlEditor from '../components/HtmlEditor';
-import { Download, X, FileText } from 'lucide-react';
+import { Download, X, FileText, Save } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -305,53 +306,30 @@ const InvoiceEditor = () => {
             </div>
         )}
 
-        {/* Header with Title and Action Button */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-[#00E5FF]/20 to-[#34F0B1]/10 border border-[#1E2A36]">
-              <FileText className="h-8 w-8 text-[#00E5FF]" />
-            </div>
-            <div>
-              <h1 className="text-4xl font-bold mb-1" style={{
-                  background: 'linear-gradient(135deg, #E2E8F0 0%, #94A3B8 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  lineHeight: '1.1',
-                  display: 'inline-block',
-                  paddingBottom: '2px'
-              }}>
-                {id ? 'Rechnung bearbeiten' : 'Neue Rechnung erstellen'}
-              </h1>
-            </div>
-          </div>
-
-          <div className="flex gap-3">
-            <Button
-              onClick={handlePrintPdf}
-              isLoading={isPrinting}
-              className="bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/25 hover:shadow-xl hover:shadow-[#00E5FF]/30"
-              radius="lg"
-              size="lg"
-              startContent={<Download className="h-5 w-5" />}
-              variant="solid"
-            >
-              {!isPrinting && 'PDF exportieren'}
-            </Button>
-            <Button
-              as={"button" as any}
-              onClick={handleSave}
-              isLoading={isSaving}
-              className="bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/25 hover:shadow-xl hover:shadow-[#00E5FF]/30"
-              radius="lg"
-              size="lg"
-            >
-              {!isSaving && (id ? 'Speichern' : 'Erstellen')}
-            </Button>
-          </div>
-        </div>
-
-        <div className="h-px bg-gradient-to-r from-transparent via-[#00E5FF]/30 to-transparent mb-8" />
+        <PageHeader
+            title={id ? 'Rechnung bearbeiten' : 'Neue Rechnung erstellen'}
+            icon={<FileText className="h-6 w-6" />}
+            actions={
+                <>
+                    <Button
+                        onClick={handlePrintPdf}
+                        isLoading={isPrinting}
+                        className="bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/20 hover:shadow-[#00E5FF]/40 font-medium"
+                        startContent={!isPrinting && <Download size={18} />}
+                    >
+                        {!isPrinting && 'PDF exportieren'}
+                    </Button>
+                    <Button
+                        onClick={handleSave}
+                        isLoading={isSaving}
+                        className="bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/20 hover:shadow-[#00E5FF]/40 font-medium"
+                        startContent={!isSaving && <Save size={18} />}
+                    >
+                        {!isSaving && (id ? 'Speichern' : 'Erstellen')}
+                    </Button>
+                </>
+            }
+        />
         
         <main className="flex flex-col lg:flex-row gap-6">
             <div className="flex-1 flex flex-col gap-6">

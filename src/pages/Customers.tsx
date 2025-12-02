@@ -5,6 +5,8 @@ import { CustomerData } from '../types';
 import { getCustomers, deleteCustomer } from '../services/customerService';
 import CustomerList from '../components/CustomerList';
 import { Search, Plus, Users } from 'lucide-react';
+import { useConfirm } from '../context/ConfirmContext';
+import PageHeader from '../components/PageHeader';
 
 export type SortableCustomerKeys = keyof Pick<CustomerData, 'name' | 'city'>;
 
@@ -16,6 +18,7 @@ const Customers = () => {
     key: 'name',
     direction: 'ascending',
   });
+  const { confirm } = useConfirm();
 
   const loadCustomers = useCallback(async () => {
     setLoading(true);
@@ -29,7 +32,7 @@ const Customers = () => {
   }, [loadCustomers]);
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Sind Sie sicher, dass Sie diesen Kunden löschen möchten? Alle zugehörigen Projekte und Rechnungen bleiben erhalten, sind aber nicht mehr verknüpft.')) {
+    if (await confirm('Sind Sie sicher, dass Sie diesen Kunden löschen möchten? Alle zugehörigen Projekte und Rechnungen bleiben erhalten, sind aber nicht mehr verknüpft.')) {
       await deleteCustomer(id);
       await loadCustomers();
     }
@@ -99,76 +102,40 @@ const Customers = () => {
 
   return (
     <div>
-      {/* Header with Title and Action Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-        <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-[#00E5FF]/20 to-[#34F0B1]/10 border border-[#1E2A36]">
-            <Users className="h-8 w-8 text-[#00E5FF]" />
-          </div>
-          <div>
-            <h1 className="text-4xl font-bold mb-1" style={{
-                background: 'linear-gradient(135deg, #E2E8F0 0%, #94A3B8 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                lineHeight: '1.1',
-                display: 'inline-block',
-                paddingBottom: '2px'
-            }}>
-              Kunden
-            </h1>
-          </div>
-        </div>
-
-        <Button
-          as={Link}
-          to="/customer/new"
-          className="bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/25 hover:shadow-xl hover:shadow-[#00E5FF]/30 self-start sm:self-center"
-          radius="lg"
-          size="lg"
-          startContent={<Plus className="h-5 w-5" />}
-        >
-          Neuen Kunden anlegen
-        </Button>
-      </div>
-
-      <div className="h-px bg-gradient-to-r from-transparent via-[#00E5FF]/30 to-transparent mb-8" />
-
-      {/* Enhanced Search Controls */}
-      <div className="flex flex-col sm:flex-row gap-6 mb-8">
-        {/* Search Input Container */}
-        <div className="flex-1 relative min-w-0 bg-[#16232B] border border-[#1E2A36] rounded-2xl shadow-xl h-full">
-          <div className="relative group h-full">
-            <div className="absolute inset-0 bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-sm" />
+      <PageHeader
+        title="Kunden"
+        icon={<Users className="h-6 w-6" />}
+        actions={
+          <Button
+            as={Link}
+            to="/customer/new"
+            className="bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/20 hover:shadow-[#00E5FF]/40 font-medium"
+            startContent={<Plus size={18} />}
+          >
+            Neuen Kunden anlegen
+          </Button>
+        }
+      >
+        <div className="relative max-w-md w-full mx-auto">
             <Input
-              label=" "
               placeholder="Kunden durchsuchen..."
               value={searchQuery}
               onValueChange={setSearchQuery}
               startContent={
-                <div className="flex items-center justify-center h-6 w-6 my-auto">
-                  <Search className="h-4 w-4 text-[#94A3B8] group-hover:text-[#E2E8F0] transition-colors duration-300" />
-                </div>
+                  <Search className="h-4 w-4 text-[#94A3B8]" />
               }
-              className="w-full"
               classNames={{
-                input: "bg-[#16232B] border-[#1E2A36] text-[#E2E8F0] placeholder:text-[#64748B] h-[42px] py-0",
-                inputWrapper: "bg-[#16232B] border-2 border-[#1E2A36] hover:border-[#00E5FF]/40 focus:border-[#00E5FF] hover:shadow-lg hover:shadow-[#00E5FF]/10 focus:shadow-none transition-all duration-300 rounded-[16px] h-[52px] py-0",
-                label: "text-[#94A3B8]",
-                base: "relative h-[52px]",
-                innerWrapper: "items-center h-[42px]"
+                input: "bg-[#16232B] text-[#E2E8F0] placeholder:text-[#64748B]",
+                inputWrapper: "bg-[#16232B] border border-[#2A3C4D] hover:border-[#00E5FF]/50 focus-within:border-[#00E5FF] h-10",
               }}
             />
-
-            {/* Search Results Indicator */}
             {searchQuery && (
-              <div className="absolute -top-2 -right-2 bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white text-xs px-2 py-1 rounded-full font-medium shadow-lg">
+              <div className="absolute -top-2 -right-2 bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium shadow-lg pointer-events-none">
                 {filteredAndSortedCustomers.length}
               </div>
             )}
-          </div>
         </div>
-      </div>
+      </PageHeader>
 
       <CustomerList
         customers={filteredAndSortedCustomers}

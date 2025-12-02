@@ -1,11 +1,12 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Input, Tabs, Tab, Button } from '@heroui/react';
+import { Input, Button, ButtonGroup } from '@heroui/react';
 import { InvoiceData } from '../types';
 import { getInvoices, deleteInvoice, saveInvoice } from '../services/invoiceService';
 import InvoiceList from '../components/InvoiceList';
 import { Search, Plus, FileText, CreditCard } from 'lucide-react';
+import { useConfirm } from '../context/ConfirmContext';
+import PageHeader from '../components/PageHeader';
 
 // Define a type for sortable keys to ensure type safety
 export type SortableInvoiceKeys = keyof Pick<InvoiceData, 'debtorName' | 'projectName' | 'unstructuredMessage' | 'total' | 'createdAt' | 'status'>;
@@ -19,6 +20,7 @@ const Invoices = () => {
       key: 'createdAt',
       direction: 'descending'
   });
+  const { confirm } = useConfirm();
 
   const loadInvoices = useCallback(async () => {
     setLoading(true);
@@ -32,7 +34,7 @@ const Invoices = () => {
   }, [loadInvoices]);
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Sind Sie sicher, dass Sie diese Rechnung löschen möchten?')) {
+    if (await confirm('Sind Sie sicher, dass Sie diese Rechnung löschen möchten?')) {
       await deleteInvoice(id);
       await loadInvoices();
     }
@@ -150,172 +152,116 @@ const Invoices = () => {
   const openInvoices = invoices.filter(inv => inv.status === 'open').length;
 
   return (
-    <div>
-      {/* Header with Title and Action Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-        <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-[#00E5FF]/20 to-[#34F0B1]/10 border border-[#1E2A36]">
-            <CreditCard className="h-8 w-8 text-[#00E5FF]" />
-          </div>
-          <div>
-            <h1 className="text-4xl font-bold mb-1" style={{
-                background: 'linear-gradient(135deg, #E2E8F0 0%, #94A3B8 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                lineHeight: '1.1',
-                display: 'inline-block',
-                paddingBottom: '2px'
-            }}>
-              Rechnungen / Einnahmen
-            </h1>
-          </div>
-        </div>
-
-        <Button
-          as={Link}
-          to="/invoice/new"
-          className="bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/25 hover:shadow-xl hover:shadow-[#00E5FF]/30 self-start sm:self-center"
-          radius="lg"
-          size="lg"
-          startContent={<Plus className="h-5 w-5" />}
-        >
-          Neue Rechnung
-        </Button>
-      </div>
-
-      <div className="h-px bg-gradient-to-r from-transparent via-[#00E5FF]/30 to-transparent mb-8" />
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="bg-gradient-to-br from-[#111B22]/80 to-[#16232B]/60 border border-[#1E2A36] rounded-xl p-4 backdrop-blur-xl">
-          <div className="flex items-center gap-3">
-            <FileText className="h-8 w-8 text-[#A7F3D0]" />
-            <div>
-              <p className="text-sm text-[#64748B] uppercase tracking-wider">Gesamt</p>
-              <p className="text-2xl font-bold text-[#E2E8F0]">{totalInvoices}</p>
+    <div className="space-y-6">
+      <PageHeader
+        title="Einnahmen"
+        icon={<CreditCard className="h-6 w-6" />}
+        actions={
+            <div className="flex items-center gap-3">
+                <Button
+                    as={Link}
+                    to="/invoice/new"
+                    className="bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/20 hover:shadow-[#00E5FF]/40 font-medium hidden lg:inline-flex"
+                    startContent={<Plus size={18} />}
+                >
+                    Neue Rechnung
+                </Button>
+                <Button
+                    as={Link}
+                    to="/invoice/new"
+                    className="bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/20 hover:shadow-[#00E5FF]/40 font-medium inline-flex lg:hidden"
+                    isIconOnly
+                >
+                    <Plus size={18} />
+                </Button>
             </div>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-[#111B22]/80 to-[#16232B]/60 border border-[#1E2A36] rounded-xl p-4 backdrop-blur-xl">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#FCD34D] to-[#FBBF24] flex items-center justify-center">
-              <div className="w-3 h-3 bg-white rounded-full" />
-            </div>
-            <div>
-              <p className="text-sm text-[#64748B] uppercase tracking-wider">Offen</p>
-              <p className="text-2xl font-bold text-[#FBBF24]">{openInvoices}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-[#111B22]/80 to-[#16232B]/60 border border-[#1E2A36] rounded-xl p-4 backdrop-blur-xl">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#A7F3D0] to-[#34F0B1] flex items-center justify-center">
-              <div className="w-3 h-3 bg-white rounded-full" />
-            </div>
-            <div>
-              <p className="text-sm text-[#64748B] uppercase tracking-wider">Bezahlt</p>
-              <p className="text-2xl font-bold text-[#34F0B1]">{paidInvoices}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Enhanced Search and Filter Controls */}
-      <div className="flex flex-col sm:flex-row gap-6 mb-8">
-        {/* Search Input Container */}
-        <div className="flex-1 relative min-w-0 bg-[#16232B] border border-[#1E2A36] rounded-2xl shadow-xl h-full">
-          <div className="relative group h-full">
-            <div className="absolute inset-0 bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-sm" />
+        }
+      >
+        <div className="relative max-w-md w-full mx-auto">
             <Input
-              label=" "
               placeholder="Rechnungen durchsuchen..."
               value={searchQuery}
               onValueChange={setSearchQuery}
               startContent={
-                <div className="flex items-center justify-center h-6 w-6 my-auto">
-                  <Search className="h-4 w-4 text-[#94A3B8] group-hover:text-[#E2E8F0] transition-colors duration-300" />
-                </div>
+                  <Search className="h-4 w-4 text-[#94A3B8]" />
               }
-              className="w-full"
               classNames={{
-                input: "bg-[#16232B] border-[#1E2A36] text-[#E2E8F0] placeholder:text-[#64748B] h-[42px] py-0",
-                inputWrapper: "bg-[#16232B] border-2 border-[#1E2A36] hover:border-[#00E5FF]/40 focus:border-[#00E5FF] hover:shadow-lg hover:shadow-[#00E5FF]/10 focus:shadow-none transition-all duration-300 rounded-[16px] h-[52px] py-0",
-                label: "text-[#94A3B8]",
-                base: "relative h-[52px]",
-                innerWrapper: "items-center h-[42px]"
+                input: "bg-[#16232B] text-[#E2E8F0] placeholder:text-[#64748B]",
+                inputWrapper: "bg-[#16232B] border border-[#2A3C4D] hover:border-[#00E5FF]/50 focus-within:border-[#00E5FF] h-10",
               }}
             />
-
-            {/* Search Results Indicator */}
             {searchQuery && (
-              <div className="absolute -top-2 -right-2 bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white text-xs px-2 py-1 rounded-full font-medium shadow-lg">
+              <div className="absolute -top-2 -right-2 bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium shadow-lg pointer-events-none">
                 {filteredAndSortedInvoices.length}
               </div>
             )}
-          </div>
         </div>
+      </PageHeader>
 
-        {/* Status Filter Tabs */}
-        <div className="relative">
-          <div className="flex items-center gap-2 bg-[#16232B] border-2 border-[#1E2A36] rounded-2xl p-2 shadow-xl">
-            {/* Tab: Alle */}
-            <button
-              onClick={() => setStatusFilter('all')}
-              className={`relative px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
-                statusFilter === 'all'
-                  ? 'bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg scale-105'
-                  : 'text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-[#1E2A36]'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full transition-colors duration-300 ${
-                  statusFilter === 'all' ? 'bg-white' : 'bg-[#00E5FF]'
-                }`} />
-                Alle
-              </span>
-            </button>
-
-            {/* Tab: Offen */}
-            <button
-              onClick={() => setStatusFilter('open')}
-              className={`relative px-4 py-2 rounded-xl font-medium transition-all duration-300 flex items-center gap-2 ${
-                statusFilter === 'open'
-                  ? 'bg-gradient-to-r from-[#FCD34D] to-[#FBBF24] text-white shadow-lg scale-105'
-                  : 'text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-[#1E2A36]'
-              }`}
-            >
-              <div className={`w-2 h-2 rounded-full transition-colors duration-300 ${
-                statusFilter === 'open' ? 'bg-white' : 'bg-[#FBBF24]'
-              }`} />
-              Offen
-            </button>
-
-            {/* Tab: Bezahlt */}
-            <button
-              onClick={() => setStatusFilter('paid')}
-              className={`relative px-4 py-2 rounded-xl font-medium transition-all duration-300 flex items-center gap-2 ${
-                statusFilter === 'paid'
-                  ? 'bg-gradient-to-r from-[#A7F3D0] to-[#34F0B1] text-white shadow-lg scale-105'
-                  : 'text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-[#1E2A36]'
-              }`}
-            >
-              <div className={`w-2 h-2 rounded-full transition-colors duration-300 ${
-                statusFilter === 'paid' ? 'bg-white' : 'bg-[#34F0B1]'
-              }`} />
-              Bezahlt
-            </button>
-          </div>
-
-          {/* Filter Results Counter */}
-          {statusFilter !== 'all' && (
-            <div className="absolute -top-2 -right-2 bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white text-xs px-2 py-1 rounded-full font-medium shadow-lg min-w-[20px] text-center">
-              {statusFilter === 'open' ? openInvoices : paidInvoices}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+         {/* Stats */}
+         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:flex-1">
+            <div className="bg-[#16232B]/40 border border-[#2A3C4D]/50 rounded-2xl p-4 flex items-center gap-4 backdrop-blur-sm">
+                <div className="p-2.5 rounded-xl bg-[#1E2A36] text-[#34F0B1] border border-[#2A3C4D]">
+                    <FileText size={20} />
+                </div>
+                <div>
+                    <p className="text-[10px] uppercase tracking-wider text-[#64748B] font-medium">Gesamt</p>
+                    <p className="text-2xl font-bold text-[#E2E8F0] leading-none">{totalInvoices}</p>
+                </div>
             </div>
-          )}
-        </div>
+            
+            <div className="bg-[#16232B]/40 border border-[#2A3C4D]/50 rounded-2xl p-4 flex items-center gap-4 backdrop-blur-sm">
+                <div className="p-2.5 rounded-xl bg-[#1E2A36] text-[#FBBF24] border border-[#2A3C4D]">
+                    <div className="w-5 h-5 rounded-full border-2 border-[#FBBF24] flex items-center justify-center">
+                        <div className="w-2 h-2 bg-[#FBBF24] rounded-full"></div>
+                    </div>
+                </div>
+                <div>
+                    <p className="text-[10px] uppercase tracking-wider text-[#64748B] font-medium">Offen</p>
+                    <p className="text-2xl font-bold text-[#FBBF24] leading-none">{openInvoices}</p>
+                </div>
+            </div>
+
+            <div className="bg-[#16232B]/40 border border-[#2A3C4D]/50 rounded-2xl p-4 flex items-center gap-4 backdrop-blur-sm">
+                <div className="p-2.5 rounded-xl bg-[#1E2A36] text-[#34F0B1] border border-[#2A3C4D]">
+                     <div className="w-5 h-5 rounded-full border-2 border-[#34F0B1] flex items-center justify-center">
+                        <div className="w-2 h-2 bg-[#34F0B1] rounded-full"></div>
+                    </div>
+                </div>
+                <div>
+                    <p className="text-[10px] uppercase tracking-wider text-[#64748B] font-medium">Bezahlt</p>
+                    <p className="text-2xl font-bold text-[#34F0B1] leading-none">{paidInvoices}</p>
+                </div>
+            </div>
+         </div>
+
+         {/* Filter Toggle */}
+         <div className="w-full lg:w-auto">
+             <ButtonGroup fullWidth>
+                <Button
+                    onClick={() => setStatusFilter('all')}
+                    variant={statusFilter === 'all' ? 'solid' : 'light'}
+                    className={`text-sm font-medium ${statusFilter === 'all' ? 'bg-[#1E2A36] text-[#E2E8F0] shadow-sm border border-[#2A3C4D]' : 'text-[#64748B] hover:text-[#94A3B8]'}`}
+                >
+                    Alle
+                </Button>
+                <Button
+                    onClick={() => setStatusFilter('open')}
+                    variant={statusFilter === 'open' ? 'solid' : 'light'}
+                    className={`text-sm font-medium ${statusFilter === 'open' ? 'bg-[#1E2A36] text-[#FBBF24] shadow-sm border border-[#2A3C4D]' : 'text-[#64748B] hover:text-[#FBBF24]'}`}
+                >
+                    Offen
+                </Button>
+                <Button
+                    onClick={() => setStatusFilter('paid')}
+                    variant={statusFilter === 'paid' ? 'solid' : 'light'}
+                    className={`text-sm font-medium ${statusFilter === 'paid' ? 'bg-[#1E2A36] text-[#34F0B1] shadow-sm border border-[#2A3C4D]' : 'text-[#64748B] hover:text-[#34F0B1]'}`}
+                >
+                    Bezahlt
+                </Button>
+             </ButtonGroup>
+         </div>
       </div>
 
       <InvoiceList

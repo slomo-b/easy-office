@@ -5,6 +5,7 @@ import { ExpenseData } from '../types';
 import { getExpenseById, saveExpense, createNewExpense } from '../services/expenseService';
 import ExpenseForm from '../components/ExpenseForm';
 import { CheckCircle, XCircle, DollarSign, Save, X } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
 
 const ExpenseEditor = () => {
   const { id } = useParams<{ id: string }>();
@@ -93,48 +94,52 @@ const ExpenseEditor = () => {
 
   return (
     <div>
-        {/* Header with Title and Status */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#F7931E]/10 border border-[#1E2A36]">
-              <DollarSign className="h-8 w-8 text-[#FF6B35]" />
-            </div>
-            <div>
-              <h1 className="text-4xl font-bold mb-1" style={{
-                  background: 'linear-gradient(135deg, #E2E8F0 0%, #94A3B8 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  lineHeight: '1.1',
-                  display: 'inline-block',
-                  paddingBottom: '2px'
-              }}>
-                {id ? 'Ausgabe bearbeiten' : 'Neue Ausgabe erfassen'}
-              </h1>
-            </div>
-          </div>
+        <PageHeader
+            title={id ? 'Ausgabe bearbeiten' : 'Neue Ausgabe erfassen'}
+            icon={<DollarSign className="h-6 w-6" />}
+            actions={
+                <div className="flex items-center gap-3">
+                    <Button
+                        onClick={handleCancel}
+                        className="bg-[#16232B] border border-[#64748B]/30 text-[#E2E8F0] hover:bg-[#1E2A36] hover:border-[#64748B]/50 font-medium"
+                        variant="solid"
+                        startContent={<X className="h-4 w-4" />}
+                    >
+                        Abbrechen
+                    </Button>
 
-          {expenseData.status === 'paid' ? (
-            <div className="bg-gradient-to-r from-[#34F0B1] to-[#00E5FF] px-4 py-2 rounded-full border border-[#1E2A36] shadow-lg shadow-[#34F0B1]/20">
-              <div className="flex items-center gap-2 text-sm font-semibold text-[#0B141A]">
-                <CheckCircle className="h-4 w-4" />
-                <span>Bezahlt am {expenseData.paidAt ? new Date(expenseData.paidAt).toLocaleDateString('de-CH') : ''}</span>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-gradient-to-r from-[#FF6B35]/20 to-[#F7931E]/20 px-4 py-2 rounded-full border border-[#FF6B35]/30">
-              <div className="flex items-center gap-2 text-sm font-semibold text-[#FF6B35]">
-                <XCircle className="h-4 w-4" />
-                <span>Fällig</span>
-              </div>
-            </div>
-          )}
-        </div>
+                    {expenseData.status === 'due' ? (
+                      <Button
+                        onClick={handleStatusToggle}
+                        className="bg-[#16232B] border border-[#34F0B1]/30 text-[#34F0B1] hover:bg-[#34F0B1]/10 font-medium"
+                        variant="solid"
+                        startContent={<CheckCircle className="h-4 w-4" />}
+                      >
+                        Als bezahlt markieren
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={handleStatusToggle}
+                        className="bg-[#16232B] border border-[#FF6B35]/30 text-[#FF6B35] hover:bg-[#FF6B35]/10 font-medium"
+                        variant="solid"
+                        startContent={<XCircle className="h-4 w-4" />}
+                      >
+                        Zahlung zurücksetzen
+                      </Button>
+                    )}
 
-        {/* Gradient Line Separator */}
-        <div className="h-px bg-gradient-to-r from-transparent via-[#00E5FF]/30 to-transparent mb-8" />
-
-        
+                    <Button
+                        onClick={handleSave}
+                        isLoading={isSaving}
+                        className="bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/20 hover:shadow-[#00E5FF]/40 font-medium"
+                        variant="solid"
+                        startContent={!isSaving && <Save className="h-4 w-4" />}
+                    >
+                        Speichern
+                    </Button>
+                </div>
+            }
+        />
 
         {/* Main Content */}
         <main className="max-w-2xl mx-auto">
@@ -152,58 +157,6 @@ const ExpenseEditor = () => {
             />
           </div>
         </main>
-
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row justify-between gap-4 mt-8">
-          <Button
-            onClick={handleCancel}
-            className="bg-[#16232B] border border-[#64748B]/30 text-[#E2E8F0] hover:bg-[#1E2A36] hover:border-[#64748B]/50"
-            variant="solid"
-            size="lg"
-            radius="lg"
-            startContent={<X className="h-5 w-5" />}
-          >
-            Abbrechen
-          </Button>
-
-          <div className="flex gap-3">
-            {expenseData.status === 'due' ? (
-              <Button
-                onClick={handleStatusToggle}
-                className="bg-gradient-to-r from-[#34F0B1] to-[#00E5FF] text-white shadow-lg shadow-[#34F0B1]/25 hover:shadow-xl hover:shadow-[#34F0B1]/30"
-                variant="solid"
-                size="lg"
-                radius="lg"
-                startContent={<CheckCircle className="h-5 w-5" />}
-              >
-                Als bezahlt markieren
-              </Button>
-            ) : (
-              <Button
-                onClick={handleStatusToggle}
-                className="bg-[#16232B] border border-[#64748B]/30 text-[#E2E8F0] hover:bg-[#1E2A36] hover:border-[#64748B]/50"
-                variant="solid"
-                size="lg"
-                radius="lg"
-                startContent={<XCircle className="h-5 w-5" />}
-              >
-                Zahlung zurücksetzen
-              </Button>
-            )}
-
-            <Button
-              onClick={handleSave}
-              isLoading={isSaving}
-              className="bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/25 hover:shadow-xl hover:shadow-[#00E5FF]/30"
-              variant="solid"
-              size="lg"
-              radius="lg"
-              startContent={!isSaving && <Save className="h-5 w-5" />}
-            >
-              {!isSaving && (id ? 'Änderungen speichern' : 'Ausgabe erstellen')}
-            </Button>
-          </div>
-        </div>
     </div>
   );
 };

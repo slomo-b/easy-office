@@ -2,17 +2,22 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { SettingsData } from '../types';
 import { getSettings, saveSettings } from '../services/settingsService';
 import { exportAllData, importAllData } from '../services/fileSystem';
+import { seedMockData } from '../utils/seedData';
 import SettingsForm from '../components/SettingsForm';
-import { Download, Upload, Settings as SettingsIcon } from 'lucide-react';
+import { Download, Upload, Settings as SettingsIcon, Database, Save } from 'lucide-react';
 import { Button, Card, CardBody, Alert } from '@heroui/react';
+import { useConfirm } from '../context/ConfirmContext';
+import PageHeader from '../components/PageHeader';
 
 const Settings = () => {
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
   const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { confirm } = useConfirm();
 
 
   useEffect(() => {
@@ -72,7 +77,12 @@ const Settings = () => {
       const file = event.target.files?.[0];
       if (!file) return;
       
-      if (!window.confirm("Bestehende Daten werden überschrieben. Sind Sie sicher, dass Sie die Daten importieren möchten?")) {
+      if (!await confirm({
+          title: "Daten importieren",
+          message: "Bestehende Daten werden überschrieben. Sind Sie sicher, dass Sie die Daten importieren möchten?",
+          confirmText: "Importieren",
+          type: "warning"
+      })) {
           // Reset file input
           event.target.value = '';
           return;
@@ -90,6 +100,27 @@ const Settings = () => {
           setIsImporting(false);
           // Reset file input
           event.target.value = '';
+      }
+  };
+
+  const handleSeed = async () => {
+      if (await confirm({
+          title: "Demo-Daten generieren",
+          message: "Möchten Sie Demo-Daten generieren? Dies fügt Beispiel-Kunden, Rechnungen und Projekte hinzu.",
+          confirmText: "Generieren",
+          type: "info"
+      })) {
+          setIsSeeding(true);
+          try {
+              await seedMockData();
+              showMessage('Demo-Daten erfolgreich generiert. Seite wird neu geladen.');
+              setTimeout(() => window.location.reload(), 1500);
+          } catch (error) {
+              console.error("Seed failed:", error);
+              showMessage('Fehler beim Generieren der Daten.', 'error');
+          } finally {
+              setIsSeeding(false);
+          }
       }
   };
 
@@ -120,39 +151,20 @@ const Settings = () => {
 
   return (
     <div className="space-y-8">
-      {/* Header with Title and Action Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-        <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-[#00E5FF]/20 to-[#34F0B1]/10 border border-[#1E2A36]">
-            <SettingsIcon className="h-8 w-8 text-[#00E5FF]" />
-          </div>
-          <div>
-            <h1 className="text-4xl font-bold mb-1" style={{
-                background: 'linear-gradient(135deg, #E2E8F0 0%, #94A3B8 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                lineHeight: '1.1',
-                display: 'inline-block',
-                paddingBottom: '2px'
-            }}>
-              Einstellungen
-            </h1>
-          </div>
-        </div>
-
-        <Button
-          onClick={handleSave}
-          isLoading={isSaving}
-          className="bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/25 hover:shadow-xl hover:shadow-[#00E5FF]/30 self-start sm:self-center"
-          radius="lg"
-          size="lg"
-        >
-          {!isSaving && "Speichern"}
-        </Button>
-      </div>
-
-      <div className="h-px bg-gradient-to-r from-transparent via-[#00E5FF]/30 to-transparent mb-8" />
+      <PageHeader
+        title="Einstellungen"
+        icon={<SettingsIcon className="h-6 w-6" />}
+        actions={
+          <Button
+            onClick={handleSave}
+            isLoading={isSaving}
+            className="bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/20 hover:shadow-[#00E5FF]/40 font-medium"
+            startContent={!isSaving && <Save size={18} />}
+          >
+            {!isSaving && "Speichern"}
+          </Button>
+        }
+      />
 
       {message && (
         <Alert
@@ -169,22 +181,11 @@ const Settings = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <Card className="bg-gradient-to-br from-[#111B22]/80 to-[#16232B]/60 backdrop-blur-xl shadow-2xl border border-[#1E2A36]">
-            <CardBody className="p-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 rounded-lg bg-gradient-to-br from-[#00E5FF]/20 to-[#34F0B1]/10 border border-[#1E2A36]">
-                  <SettingsIcon className="h-5 w-5 text-[#00E5FF]" />
-                </div>
-                <h3 className="text-2xl font-bold text-[#E2E8F0]">Anwendungs-Einstellungen</h3>
-              </div>
-
-              <SettingsForm
-                data={settings}
-                onDataChange={handleDataChange}
-                onLogoChange={handleLogoChange}
-              />
-            </CardBody>
-          </Card>
+            <SettingsForm
+              data={settings}
+              onDataChange={handleDataChange}
+              onLogoChange={handleLogoChange}
+            />
         </div>
 
         <Card className="bg-gradient-to-br from-[#111B22]/80 to-[#16232B]/60 backdrop-blur-xl shadow-2xl border border-[#1E2A36] h-fit">
@@ -232,6 +233,19 @@ const Settings = () => {
                 accept=".zip"
                 className="hidden"
               />
+
+              <div className="h-px bg-gradient-to-r from-[#00E5FF]/30 to-transparent my-6" />
+              
+              <Button
+                  onClick={handleSeed}
+                  isLoading={isSeeding}
+                  variant="flat"
+                  className="w-full bg-[#1E2A36] text-[#94A3B8] hover:text-[#E2E8F0] border border-[#2A3C4D] hover:border-[#00E5FF]/40"
+                  size="lg"
+                  startContent={!isSeeding && <Database className="h-5 w-5" />}
+              >
+                  {!isSeeding && "Demo-Daten generieren"}
+              </Button>
             </div>
           </CardBody>
         </Card>

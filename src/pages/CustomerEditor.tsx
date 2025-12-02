@@ -5,6 +5,7 @@ import { CustomerData } from '../types';
 import { getCustomerById, saveCustomer, createNewCustomer } from '../services/customerService';
 import CustomerForm from '../components/CustomerForm';
 import { Users, Save, X } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
 
 const CustomerEditor = () => {
   const { id } = useParams<{ id: string }>();
@@ -65,31 +66,31 @@ const CustomerEditor = () => {
 
   return (
     <div>
-        {/* Header with Title */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-[#00E5FF]/20 to-[#34F0B1]/10 border border-[#1E2A36]">
-              <Users className="h-8 w-8 text-[#00E5FF]" />
-            </div>
-            <div>
-              <h1 className="text-4xl font-bold mb-1" style={{
-                  background: 'linear-gradient(135deg, #E2E8F0 0%, #94A3B8 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  lineHeight: '1.1',
-                  display: 'inline-block',
-                  paddingBottom: '2px'
-              }}>
-                {id ? 'Kunde bearbeiten' : 'Neuen Kunden anlegen'}
-              </h1>
-            </div>
-          </div>
-        </div>
-
-        {/* Gradient Line Separator */}
-        <div className="h-px bg-gradient-to-r from-transparent via-[#00E5FF]/30 to-transparent mb-8" />
-
+        <PageHeader
+            title={id ? 'Kunde bearbeiten' : 'Neuen Kunden anlegen'}
+            icon={<Users className="h-6 w-6" />}
+            actions={
+                <>
+                    <Button
+                        onClick={() => navigate('/customers')}
+                        className="bg-[#16232B] border border-[#64748B]/30 text-[#E2E8F0] hover:bg-[#1E2A36] hover:border-[#64748B]/50 font-medium"
+                        variant="solid"
+                        startContent={<X size={18} />}
+                    >
+                        Abbrechen
+                    </Button>
+                    <Button
+                        onClick={handleSave}
+                        isLoading={isSaving}
+                        className="bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/20 hover:shadow-[#00E5FF]/40 font-medium"
+                        variant="solid"
+                        startContent={!isSaving && <Save size={18} />}
+                    >
+                        {!isSaving && (id ? 'Speichern' : 'Erstellen')}
+                    </Button>
+                </>
+            }
+        />
         
         {/* Main Content */}
         <main className="max-w-2xl mx-auto">
@@ -101,42 +102,12 @@ const CustomerEditor = () => {
               <h2 className="text-2xl font-bold text-[#E2E8F0]">Kundendaten</h2>
             </div>
 
-            
-
-        
-
-
             <CustomerForm
               data={customerData}
               onDataChange={handleDataChange}
             />
           </div>
         </main>
-        {/* Action Button */}
-        <div className="flex flex-col sm:flex-row justify-between gap-4 mt-8">
-          <Button
-            onClick={() => navigate('/customers')}
-            className="bg-[#16232B] border border-[#64748B]/30 text-[#E2E8F0] hover:bg-[#1E2A36] hover:border-[#64748B]/50"
-            variant="solid"
-            size="lg"
-            radius="lg"
-            startContent={<X className="h-5 w-5" />}
-          >
-            Abbrechen
-          </Button>
-
-          <Button
-            onClick={handleSave}
-            isLoading={isSaving}
-            className="bg-gradient-to-r from-[#00E5FF] to-[#34F0B1] text-white shadow-lg shadow-[#00E5FF]/25 hover:shadow-xl hover:shadow-[#00E5FF]/30"
-            variant="solid"
-            size="lg"
-            radius="lg"
-            startContent={!isSaving && <Save className="h-5 w-5" />}
-          >
-            {!isSaving && (id ? 'Änderungen speichern' : 'Kunden anlegen')}
-          </Button>
-        </div>
     </div>
   );
 };

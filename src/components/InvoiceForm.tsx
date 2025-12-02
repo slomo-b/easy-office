@@ -1,7 +1,7 @@
 import React from 'react';
-import { Button } from '@heroui/react';
+import { Button, Select, SelectItem } from '@heroui/react';
 import { InvoiceData, CustomerData, InvoiceItem } from '../types';
-import { Trash2, ChevronDown } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 
 interface InvoiceFormProps {
   data: InvoiceData;
@@ -49,8 +49,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, customers, onDataChange
     onDataChange(name as keyof InvoiceData, type === 'number' ? parseFloat(value) || '' : value);
   };
 
-  const handleCustomerSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const customerId = e.target.value;
+  const handleCustomerSelect = (keys: any) => {
+    const customerId = Array.from(keys)[0] as string;
     const selectedCustomer = customers.find(c => c.id === customerId);
     if (selectedCustomer) {
         onDataChange('debtorName', selectedCustomer.name);
@@ -160,24 +160,23 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, customers, onDataChange
 
       <FormSection title="Zahler (Debitor)">
          <div className="flex flex-col col-span-2">
-            <label htmlFor="customer-select" className="mb-1 text-sm font-medium text-default-500">
-                Kunde auswählen (optional)
-            </label>
-            <div className="relative">
-              <select
-                  id="customer-select"
-                  onChange={handleCustomerSelect}
-                  className="w-full appearance-none bg-content2 border border-divider rounded-md px-3 py-2 pr-10 text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition"
-              >
-                  <option value="">-- Manuelle Eingabe --</option>
-                  {customers.map(customer => (
-                      <option key={customer.id} value={customer.id}>{customer.name}</option>
-                  ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-default-500">
-                  <ChevronDown size={20} />
-              </div>
-            </div>
+            <Select
+                label="Kunde auswählen (optional)"
+                placeholder="-- Manuelle Eingabe --"
+                onSelectionChange={handleCustomerSelect}
+                className="w-full"
+                classNames={{
+                    label: "mb-1 text-sm font-medium text-default-500",
+                    trigger: "bg-content2 border border-divider rounded-md text-foreground shadow-none",
+                    value: "text-foreground",
+                    popoverContent: "bg-content2 border border-divider text-foreground"
+                }}
+                labelPlacement="outside"
+            >
+                {customers.map(customer => (
+                    <SelectItem key={customer.id} textValue={customer.name} classNames={{base: "text-foreground data-[hover=true]:bg-content3"}}>{customer.name}</SelectItem>
+                ))}
+            </Select>
         </div>
         <InputField label="Name" id="debtorName" value={data.debtorName} onChange={handleChange} className="col-span-2" />
         <InputField label="Strasse" id="debtorStreet" value={data.debtorStreet} onChange={handleChange} />
@@ -189,24 +188,23 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, customers, onDataChange
 
       <FormSection title="Zahlungsdetails">
         <div className="flex flex-col">
-            <label htmlFor="currency" className="mb-1 text-sm font-medium text-default-500">
-                Währung
-            </label>
-            <div className="relative">
-              <select
-                  id="currency"
-                  name="currency"
-                  value={data.currency}
-                  onChange={handleChange}
-                  className="w-full appearance-none bg-content2 border border-divider rounded-md px-3 py-2 pr-10 text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition"
-              >
-                  <option value="CHF">CHF</option>
-                  <option value="EUR">EUR</option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-default-500">
-                  <ChevronDown size={20} />
-              </div>
-            </div>
+            <Select
+                label="Währung"
+                selectedKeys={[data.currency]}
+                onSelectionChange={(keys) => onDataChange('currency', Array.from(keys)[0] as string)}
+                className="w-full"
+                classNames={{
+                    label: "mb-1 text-sm font-medium text-default-500",
+                    trigger: "bg-content2 border border-divider rounded-md text-foreground shadow-none",
+                    value: "text-foreground",
+                    popoverContent: "bg-content2 border border-divider text-foreground"
+                }}
+                labelPlacement="outside"
+                disallowEmptySelection
+            >
+                <SelectItem key="CHF" classNames={{base: "text-foreground data-[hover=true]:bg-content3"}}>CHF</SelectItem>
+                <SelectItem key="EUR" classNames={{base: "text-foreground data-[hover=true]:bg-content3"}}>EUR</SelectItem>
+            </Select>
         </div>
         <div></div>
         <InputField label="Referenznummer (QR-R)" id="reference" value={data.reference} onChange={handleChange} className="col-span-2" />

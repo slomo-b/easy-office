@@ -53,16 +53,12 @@ function App() {
         {/* Abgerundete Ecke oben links */}
         <div className="flex-1 flex flex-col overflow-hidden bg-background rounded-r-2xl relative">
           {/* === START: Robuster Titelleisten-Container === */}
-          <div className="w-full h-10 flex justify-between items-center flex-shrink-0">
-            {/* 1. Die Drag-Fläche: wächst, um den gesamten freien Platz zu füllen. */}
-            <div className="flex-grow h-full titlebar-drag-region" />
-
-            {/* 2. Die Buttons: haben eine feste Größe und werden an den rechten Rand geschoben. */}
+          <div className="w-full h-10 flex justify-end items-center flex-shrink-0 titlebar-drag-region">
             <WindowControls />
           </div>
           {/* === END: Robuster Titelleisten-Container === */}
 
-          <main className="flex-1 overflow-x-hidden overflow-y-auto px-6">
+          <main className="flex-1 overflow-x-hidden overflow-y-auto px-6 pb-8">
             <Routes>
               <Route path="/" element={<Overview />} />
               <Route path="/invoices" element={<Invoices />} />
